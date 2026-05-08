@@ -39,6 +39,15 @@ export class User {
   @Column({ type: 'varchar', nullable: true, length: 200, default: null })
   bio: string | null;
 
+  @Column({ type: 'varchar', nullable: true, length: 100, default: null })
+  location: string | null;
+
+  @Column({ type: 'float', nullable: true, default: null })
+  locationLat: number | null;
+
+  @Column({ type: 'float', nullable: true, default: null })
+  locationLon: number | null;
+
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
 

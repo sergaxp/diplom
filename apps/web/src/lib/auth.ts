@@ -6,6 +6,10 @@ export interface User {
   email: string;
   displayName: string | null;
   avatarUrl: string | null;
+  bio: string | null;
+  location: string | null;
+  locationLat: number | null;
+  locationLon: number | null;
   role: 'user' | 'admin';
   isEmailVerified: boolean;
   createdAt: string;
@@ -23,8 +27,9 @@ export const authApi = {
   login: (body: { identifier: string; password: string }) =>
     api.post<AuthResult>('/auth/login', body).then((r) => r.data),
 
+  // /users/me возвращает полный объект из БД (включая displayName, bio, avatarUrl)
   me: () =>
-    api.get<{ user: User }>('/auth/me').then((r) => r.data.user),
+    api.get<User>('/users/me').then((r) => r.data),
 };
 
 export const saveAuth = (result: AuthResult) => {

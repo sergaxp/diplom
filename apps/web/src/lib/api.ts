@@ -1,4 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosHeaders, InternalAxiosRequestConfig } from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -25,6 +25,14 @@ export const tokens = {
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = tokens.getAccess();
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // FormData: браузер сам выставит multipart/form-data с boundary
+  if (config.data instanceof FormData) {
+    if (config.headers instanceof AxiosHeaders) {
+      config.headers.delete('Content-Type');
+    } else {
+      delete (config.headers as Record<string, unknown>)['Content-Type'];
+    }
+  }
   return config;
 });
 

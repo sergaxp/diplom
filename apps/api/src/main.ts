@@ -22,13 +22,12 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  // Глобальный перехват необработанных ошибок — покажет реальную причину 500
   process.on('unhandledRejection', (reason) => {
     Logger.error('Unhandled Rejection:', String(reason), 'Bootstrap');
   });
 
   const port = process.env.PORT ?? '3001';
   await app.listen(port);
-  Logger.log(`🚀 API запущен на http://localhost:${port}`, 'Bootstrap');
+  Logger.log(`API запущен на http://localhost:${port}`, 'Bootstrap');
 }
 bootstrap();

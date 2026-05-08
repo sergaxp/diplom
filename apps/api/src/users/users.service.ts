@@ -3,6 +3,7 @@ import {
   ConflictException,
   NotFoundException,
   Logger,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -89,7 +90,25 @@ export class UsersService {
   // ── Обновить профиль ───────────────────────────────────────
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.findById(id);
-    Object.assign(user, updateUserDto);
+
+    if (updateUserDto.username && updateUserDto.username !== user.username) {
+      const taken = await this.findByUsername(updateUserDto.username);
+      if (taken) throw new ConflictException('Это имя пользователя уже занято');
+    }
+
+    // Применяем только явно переданные поля (фильтруем undefined от class-transformer)
+    const patch = Object.fromEntries(
+      Object.entries(updateUserDto).filter(([, v]) => v !== undefined),
+    );
+    Object.assign(user, patch);
+    return this.usersRepository.save(user);
+  }
+
+  // ── Обновить аватар ────────────────────────────────────────
+  async updateAvatar(id: string, avatarUrl: string): Promise<User> {
+    const user = await this.findById(id);
+    if (!user) throw new BadRequestException('Пользователь не найден');
+    user.avatarUrl = avatarUrl;
     return this.usersRepository.save(user);
   }
 

@@ -91,6 +91,18 @@
   margin: 0.25rem 0;
 }
 
+.dropdownLink {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border-radius: 3px;
+  font-size: 0.875rem;
+  color: #1a1a1a;
+  text-decoration: none;
+  transition: background 0.15s;
+  &:hover { background: rgba(0, 0, 0, 0.06); }
+}
+
 .dropdownLogout {
   display: block;
   width: 100%;

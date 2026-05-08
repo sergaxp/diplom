@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Task, toDateStr, getTasksForDate } from '../../lib/tasks';
 import { useMonthWeather } from '../../lib/weather';
+import { useAuthStore } from '../../store/authStore';
 import styles from './Calendar.module.scss';
 
 const WEEKDAYS    = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
@@ -74,7 +75,7 @@ function PickerPanel({ type, currentMonth, currentYear, onPick, onClose }: Picke
       <div ref={ref} className={styles.picker}>
         <div className={styles.pickerTitle}>Выбор месяца</div>
         <div className={styles.pickerGrid}>
-          {MONTHS.map((m, i) => (
+          {MONTHS.map((_m, i) => (
             <button
               key={i}
               className={[styles.pickerCell, i === currentMonth ? styles.pickerCellActive : ''].join(' ')}
@@ -361,7 +362,12 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
 
   const today = new Date(); today.setHours(0,0,0,0);
 
-  const { data: weather } = useMonthWeather(viewYear, viewMonth);
+  const { user } = useAuthStore();
+  const { data: weather } = useMonthWeather(viewYear, viewMonth, {
+    lat:  user?.locationLat,
+    lon:  user?.locationLon,
+    name: user?.location,
+  });
 
   useEffect(() => {
     setViewYear(selectedDate.getFullYear());

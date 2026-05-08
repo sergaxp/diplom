@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsOptional, MaxLength, MinLength, Matches, IsNumber } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -8,6 +8,28 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  @MinLength(3)
+  @MaxLength(32)
+  @Matches(/^[a-zA-Z0-9_-]+$/, {
+    message: 'Имя пользователя может содержать только буквы, цифры, _ и -',
+  })
+  username?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(200)
   bio?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  location?: string;
+
+  @IsOptional()
+  @IsNumber()
+  locationLat?: number;
+
+  @IsOptional()
+  @IsNumber()
+  locationLon?: number;
 }

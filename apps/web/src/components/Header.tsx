@@ -57,6 +57,21 @@ export function Header() {
                     <span className={styles.dropdownEmail}>{user.email}</span>
                   </div>
                   <div className={styles.dropdownDivider} />
+                  <Link
+                    href={`/profile/${user.username}`}
+                    className={styles.dropdownLink}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Мой профиль
+                  </Link>
+                  <Link
+                    href="/settings"
+                    className={styles.dropdownLink}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Настройки
+                  </Link>
+                  <div className={styles.dropdownDivider} />
                   <button className={styles.dropdownLogout} onClick={handleLogout}>
                     Выйти
                   </button>
