@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Task, getMockTemp, toDateStr, getTasksForDate } from '../../lib/tasks';
+import { Task, toDateStr, getTasksForDate } from '../../lib/tasks';
+import { useMonthWeather } from '../../lib/weather';
 import styles from './Calendar.module.scss';
 
 const WEEKDAYS    = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
@@ -360,6 +361,8 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
 
   const today = new Date(); today.setHours(0,0,0,0);
 
+  const { data: weather } = useMonthWeather(viewYear, viewMonth);
+
   useEffect(() => {
     setViewYear(selectedDate.getFullYear());
     setViewMonth(selectedDate.getMonth());
@@ -376,8 +379,7 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
     setGridPicker(null);
   };
 
-  const cells  = buildCells(viewYear, viewMonth);
-  const todStr = toDateStr(today);
+  const cells = buildCells(viewYear, viewMonth);
 
   const isSelected = (day: number) =>
     selectedDate.getFullYear()===viewYear && selectedDate.getMonth()===viewMonth && selectedDate.getDate()===day;
@@ -463,14 +465,15 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
             {cells.map((day, i) => {
               if (!day) return <div key={i} className={styles.empty} />;
               const dayTasks = getTasksForDate(tasks, new Date(viewYear, viewMonth, day));
-              const temp     = getMockTemp(new Date(viewYear, viewMonth, day));
+              const ds       = toDateStr(new Date(viewYear, viewMonth, day));
+              const tempMax  = weather?.get(ds)?.tempMax;
               return (
                 <button key={i}
                   className={[styles.cell, isSelected(day)?styles.cellSelected:'', isToday(day)?styles.cellToday:''].join(' ')}
                   onClick={() => handleDayClick(day)}
                 >
                   <span className={styles.dayNum}>{day}</span>
-                  <span className={styles.temp}>{temp>0?`+${temp}`:temp}°</span>
+                  <span className={styles.temp}>{tempMax != null ? (tempMax > 0 ? `+${tempMax}` : tempMax) + '°' : 't°'}</span>
                   <div className={styles.dots}>{renderDots(dayTasks.length)}</div>
                 </button>
               );
