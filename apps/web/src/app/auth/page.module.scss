@@ -1,0 +1,157 @@
+$bg:        #0F0A06;
+$surface:   #1A1108;
+$surface2:  #211508;
+$border:    rgba(#C87941, 0.18);
+$border-f:  rgba(#C87941, 0.55);
+$amber:     #C87941;
+$amber-lt:  #E8A062;
+$cream:     #F5ECD7;
+$muted:     rgba(#F5ECD7, 0.45);
+$error:     #E05C5C;
+
+$font-display: 'Playfair Display', 'Georgia', serif;
+$font-body:    'Literata', 'Georgia', serif;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Literata:wght@300;400&display=swap');
+
+@keyframes fadeUp  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+@keyframes blobPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06) translate(1%,-1%); } }
+@keyframes spin    { to { transform:rotate(360deg); } }
+
+// ── Root ──────────────────────────────────────────────────────
+.root {
+  position: relative; min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  background: $bg; font-family: $font-body; padding: 2rem 1rem;
+}
+
+.grain {
+  position: fixed; inset: -50%; width: 200%; height: 200%;
+  z-index: 0; pointer-events: none; opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px;
+}
+
+.blob1 {
+  position: fixed; width: 500px; height: 500px; top: -150px; right: -150px;
+  border-radius: 50%; filter: blur(100px); pointer-events: none; z-index: 0;
+  background: radial-gradient(circle, rgba(#C87941,.18) 0%, transparent 70%);
+  animation: blobPulse 14s ease-in-out infinite;
+}
+.blob2 {
+  position: fixed; width: 380px; height: 380px; bottom: -100px; left: -100px;
+  border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0;
+  background: radial-gradient(circle, rgba(#7C4A1E,.22) 0%, transparent 70%);
+  animation: blobPulse 10s ease-in-out 5s infinite;
+}
+
+// ── Логотип ───────────────────────────────────────────────────
+.logo {
+  position: fixed; top: 1.5rem; left: 2rem; z-index: 10;
+  font-family: $font-display; font-size: 1.2rem; font-weight: 600;
+  color: $amber-lt; letter-spacing: .04em; text-decoration: none;
+  transition: color .2s;
+  &:hover { color: $amber; }
+}
+
+// ── Карточка ──────────────────────────────────────────────────
+.card {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 420px;
+  background: $surface; border: 1px solid $border; border-radius: 1.25rem;
+  padding: 2.5rem 2rem;
+  animation: fadeUp .5s ease both;
+  &::before {
+    content: '';
+    position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba($amber,.4), transparent);
+  }
+}
+
+.cardHeader  { margin-bottom: 1.75rem; }
+.cardTitle   { font-family: $font-display; font-size: 1.75rem; font-weight: 400; color: #FDFAF5; margin-bottom: .4rem; line-height: 1.2; }
+.cardSubtitle { font-size: .875rem; font-weight: 300; color: $muted; line-height: 1.5; }
+
+// ── Вкладки ───────────────────────────────────────────────────
+.tabs {
+  display: flex; gap: 0;
+  background: rgba(#000,.25); border: 1px solid $border; border-radius: .6rem;
+  padding: 3px; margin-bottom: 1.75rem;
+}
+.tab {
+  flex: 1; padding: .55rem 1rem; border-radius: .45rem;
+  font-family: $font-body; font-size: .875rem; font-weight: 300; color: $muted;
+  background: transparent; border: none; cursor: pointer; transition: background .2s, color .2s;
+  &:hover:not(.tabActive) { color: $cream; }
+}
+.tabActive { background: $surface2; color: $amber-lt; border: 1px solid $border; }
+
+// ── Ошибка сервера ────────────────────────────────────────────
+.serverError {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .75rem 1rem;
+  background: rgba($error,.10); border: 1px solid rgba($error,.3); border-radius: .6rem;
+  font-size: .875rem; font-weight: 300; color: $error;
+  margin-bottom: 1.25rem; animation: fadeUp .3s ease both;
+}
+.errorIcon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%; border: 1px solid currentColor;
+  font-size: .7rem; font-weight: 600; flex-shrink: 0;
+}
+
+// ── Форма ─────────────────────────────────────────────────────
+.form { display: flex; flex-direction: column; gap: 1rem; animation: fadeUp .3s ease both; }
+
+.field { display: flex; flex-direction: column; gap: .4rem; }
+.label { font-size: .8rem; font-weight: 300; color: $muted; letter-spacing: .04em; }
+
+.input {
+  padding: .7rem .9rem;
+  background: rgba(#000,.25); border: 1px solid $border; border-radius: .6rem;
+  font-family: $font-body; font-size: .95rem; font-weight: 300; color: $cream;
+  outline: none; width: 100%;
+  transition: border-color .2s, box-shadow .2s;
+  &::placeholder { color: rgba($muted,.6); font-size: .875rem; }
+  &:focus { border-color: $border-f; box-shadow: 0 0 0 3px rgba($amber,.08); }
+  &:-webkit-autofill,
+  &:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #1A1108 inset;
+    -webkit-text-fill-color: $cream;
+    caret-color: $cream;
+  }
+}
+.inputError {
+  border-color: rgba($error,.5);
+  &:focus { border-color: rgba($error,.7); box-shadow: 0 0 0 3px rgba($error,.08); }
+}
+.fieldError { font-size: .78rem; font-weight: 300; color: $error; }
+
+// ── Кнопка ───────────────────────────────────────────────────
+.submitBtn {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: .85rem; margin-top: .5rem;
+  background: $amber; border: none; border-radius: .6rem;
+  font-family: $font-body; font-size: .95rem; font-weight: 400; color: #0F0A06;
+  cursor: pointer; min-height: 46px;
+  transition: background .2s, transform .15s, box-shadow .2s;
+  box-shadow: 0 0 24px rgba($amber,.2);
+  &:hover:not(:disabled) { background: $amber-lt; transform: translateY(-1px); box-shadow: 0 4px 30px rgba($amber,.35); }
+  &:active:not(:disabled) { transform: none; }
+  &:disabled { opacity: .7; cursor: not-allowed; }
+}
+
+.spinner {
+  display: inline-block; width: 18px; height: 18px;
+  border: 2px solid rgba(#0F0A06,.3); border-top-color: #0F0A06;
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+
+// ── Подсказка ─────────────────────────────────────────────────
+.hint { text-align: center; font-size: .82rem; font-weight: 300; color: $muted; margin-top: .25rem; }
+.hintLink {
+  background: none; border: none; color: $amber;
+  font-family: $font-body; font-size: inherit; font-weight: 300;
+  cursor: pointer; padding: 0; transition: color .2s;
+  &:hover { color: $amber-lt; }
+}

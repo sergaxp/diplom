@@ -1,0 +1,206 @@
+$bg:       #0F0A06;
+$border:   rgba(#C87941, 0.18);
+$amber:    #C87941;
+$amber-lt: #E8A062;
+$cream:    #F5ECD7;
+$muted:    rgba(#F5ECD7, 0.45);
+$surface:  #1A1108;
+
+$font-display: 'Playfair Display', 'Georgia', serif;
+$font-body:    'Literata', 'Georgia', serif;
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(1.5rem, 5vw, 4rem);
+  height: 64px;
+  background: rgba($bg, 0.82);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid $border;
+}
+
+.logo {
+  font-family: $font-display;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: $amber-lt;
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+  text-decoration: none;
+  &:hover { color: $amber; }
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  @media (max-width: 768px) { display: none; }
+}
+
+.navLink {
+  font-family: $font-body;
+  font-size: 0.875rem;
+  font-weight: 300;
+  color: $muted;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: color 0.2s;
+  &:hover { color: $cream; }
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  min-width: 80px;
+  justify-content: flex-end;
+}
+
+// ── Кнопка входа ─────────────────────────────────────────────
+.loginBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 1.2rem;
+  border: 1px solid $border;
+  border-radius: 2rem;
+  font-family: $font-body;
+  font-size: 0.875rem;
+  font-weight: 300;
+  color: $cream;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  &:hover {
+    border-color: $amber;
+    color: $amber-lt;
+    background: rgba($amber, 0.08);
+  }
+}
+
+// ── Аватар ───────────────────────────────────────────────────
+.avatarWrap {
+  position: relative;
+}
+
+.avatarBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid $border;
+  background: $surface;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+  &:hover { border-color: $amber; }
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarInitial {
+  font-family: $font-display;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $amber-lt;
+  line-height: 1;
+}
+
+// ── Дропдаун меню ────────────────────────────────────────────
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 200px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+  animation: dropIn 0.15s ease both;
+  box-shadow: 0 8px 32px rgba(#000, 0.4);
+
+  // Тонкая подсветка сверху
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba($amber, 0.35), transparent);
+  }
+}
+
+.dropdownUser {
+  padding: 0.6rem 0.75rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dropdownUsername {
+  font-family: $font-display;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $cream;
+}
+
+.dropdownEmail {
+  font-size: 0.78rem;
+  font-weight: 300;
+  color: $muted;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: $border;
+  margin: 0.25rem 0;
+}
+
+.dropdownItem {
+  display: block;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.4rem;
+  font-family: $font-body;
+  font-size: 0.875rem;
+  font-weight: 300;
+  color: $muted;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  &:hover {
+    background: rgba($amber, 0.08);
+    color: $cream;
+  }
+}
+
+.dropdownLogout {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.4rem;
+  border: none;
+  background: none;
+  font-family: $font-body;
+  font-size: 0.875rem;
+  font-weight: 300;
+  color: #E05C5C;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:hover {
+    background: rgba(#E05C5C, 0.08);
+  }
+}

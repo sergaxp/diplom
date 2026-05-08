@@ -1,0 +1,23 @@
+{
+  "name": "warmingtea-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Warmingtea.su - Full-stack project with Next.js + NestJS",
+  "scripts": {
+    "dev": "pnpm run --parallel --filter \"./apps/**\" dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api dev",
+    "build": "pnpm run --filter \"./apps/**\" build",
+    "build:web": "pnpm --filter web build",
+    "build:api": "pnpm --filter api build",
+    "lint": "pnpm run --filter \"./apps/**\" lint",
+    "clean": "pnpm run --filter \"./apps/**\" clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
