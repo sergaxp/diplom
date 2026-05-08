@@ -1,103 +1,46 @@
-$bg:       #0F0A06;
-$border:   rgba(#C87941, 0.18);
-$amber:    #C87941;
-$amber-lt: #E8A062;
-$cream:    #F5ECD7;
-$muted:    rgba(#F5ECD7, 0.45);
-$surface:  #1A1108;
-
-$font-display: 'Playfair Display', 'Georgia', serif;
-$font-body:    'Literata', 'Georgia', serif;
-
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 clamp(1.5rem, 5vw, 4rem);
-  height: 64px;
-  background: rgba($bg, 0.82);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid $border;
-}
-
-.logo {
-  font-family: $font-display;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: $amber-lt;
-  letter-spacing: 0.04em;
-  transition: color 0.2s;
-  text-decoration: none;
-  &:hover { color: $amber; }
-}
-
-.nav {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  @media (max-width: 768px) { display: none; }
-}
-
-.navLink {
-  font-family: $font-body;
-  font-size: 0.875rem;
-  font-weight: 300;
-  color: $muted;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  transition: color 0.2s;
-  &:hover { color: $cream; }
+  justify-content: flex-end;
+  padding: 0 1.5rem;
+  height: 52px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #d4d4d4;
 }
 
 .right {
   display: flex;
   align-items: center;
-  min-width: 80px;
-  justify-content: flex-end;
 }
 
-// ── Кнопка входа ─────────────────────────────────────────────
 .loginBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.45rem 1.2rem;
-  border: 1px solid $border;
-  border-radius: 2rem;
-  font-family: $font-body;
+  padding: 0.4rem 1rem;
+  border: 1px solid #999;
+  border-radius: 4px;
   font-size: 0.875rem;
-  font-weight: 300;
-  color: $cream;
+  color: #1a1a1a;
   text-decoration: none;
-  transition: border-color 0.2s, color 0.2s, background 0.2s;
-  &:hover {
-    border-color: $amber;
-    color: $amber-lt;
-    background: rgba($amber, 0.08);
-  }
+  transition: background 0.15s;
+  &:hover { background: #e0e0e0; }
 }
 
-// ── Аватар ───────────────────────────────────────────────────
 .avatarWrap {
   position: relative;
 }
 
 .avatarBtn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 1.5px solid $border;
-  background: $surface;
+  border: 1px solid #999;
+  background: #e0e0e0;
   cursor: pointer;
   padding: 0;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.2s;
-  &:hover { border-color: $amber; }
+  &:hover { border-color: #555; }
 }
 
 .avatarImg {
@@ -107,100 +50,58 @@ $font-body:    'Literata', 'Georgia', serif;
 }
 
 .avatarInitial {
-  font-family: $font-display;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: $amber-lt;
-  line-height: 1;
-}
-
-// ── Дропдаун меню ────────────────────────────────────────────
-@keyframes dropIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  color: #1a1a1a;
 }
 
 .dropdown {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 8px);
   right: 0;
-  min-width: 200px;
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: 0.75rem;
-  padding: 0.5rem;
-  animation: dropIn 0.15s ease both;
-  box-shadow: 0 8px 32px rgba(#000, 0.4);
-
-  // Тонкая подсветка сверху
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 15%;
-    right: 15%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba($amber, 0.35), transparent);
-  }
+  min-width: 180px;
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.4rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .dropdownUser {
-  padding: 0.6rem 0.75rem 0.75rem;
+  padding: 0.5rem 0.6rem;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
 }
 
 .dropdownUsername {
-  font-family: $font-display;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: $cream;
+  color: #1a1a1a;
 }
 
 .dropdownEmail {
-  font-size: 0.78rem;
-  font-weight: 300;
-  color: $muted;
+  font-size: 0.75rem;
+  color: #666;
 }
 
 .dropdownDivider {
   height: 1px;
-  background: $border;
+  background: #ddd;
   margin: 0.25rem 0;
-}
-
-.dropdownItem {
-  display: block;
-  padding: 0.55rem 0.75rem;
-  border-radius: 0.4rem;
-  font-family: $font-body;
-  font-size: 0.875rem;
-  font-weight: 300;
-  color: $muted;
-  text-decoration: none;
-  transition: background 0.15s, color 0.15s;
-  &:hover {
-    background: rgba($amber, 0.08);
-    color: $cream;
-  }
 }
 
 .dropdownLogout {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 0.55rem 0.75rem;
-  border-radius: 0.4rem;
+  padding: 0.45rem 0.6rem;
   border: none;
   background: none;
-  font-family: $font-body;
   font-size: 0.875rem;
-  font-weight: 300;
-  color: #E05C5C;
+  color: #cc3333;
   cursor: pointer;
+  border-radius: 3px;
   transition: background 0.15s;
-  &:hover {
-    background: rgba(#E05C5C, 0.08);
-  }
+  &:hover { background: rgba(204, 51, 51, 0.08); }
 }

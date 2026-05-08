@@ -1,0 +1,290 @@
+.root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  overflow-y: auto;
+}
+
+// ── Clock ─────────────────────────────────────────────────────
+.clock {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  &:hover .clockTime { opacity: 0.75; }
+}
+
+.clockTime {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.clockDay {
+  font-size: 1.1rem;
+  color: #777;
+  font-weight: 500;
+}
+
+// ── Section ───────────────────────────────────────────────────
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sectionLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #999;
+}
+
+.addBtn {
+  width: 22px;
+  height: 22px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  &:hover { background: #e0e0e0; }
+}
+
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.empty {
+  font-size: 0.85rem;
+  color: #bbb;
+  padding: 0.25rem 0;
+}
+
+// ── Task ──────────────────────────────────────────────────────
+.task {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  background: #ebebeb;
+  border: 1px solid #d8d8d8;
+  border-radius: 6px;
+  position: relative;
+}
+
+.task_done {
+  opacity: 0.55;
+  .taskTitle { text-decoration: line-through; }
+}
+
+.task_missed {
+  opacity: 0.45;
+}
+
+// ── Checkbox ──────────────────────────────────────────────────
+.checkbox {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid #bbb;
+  border-radius: 4px;
+  background: #f4f4f4;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: #fff;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.1s, border-color 0.1s;
+  &:hover { border-color: #888; }
+}
+
+.checkboxDone {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+}
+
+.checkboxMissed {
+  background: #999;
+  border-color: #999;
+}
+
+// ── Task body ─────────────────────────────────────────────────
+.taskBody {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.taskTime {
+  font-size: 0.75rem;
+  color: #888;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.taskText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.taskTitle {
+  font-size: 0.875rem;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.taskDesc {
+  font-size: 0.72rem;
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.repeatBadge {
+  font-size: 0.65rem;
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+.taskDateBadge {
+  font-size: 0.68rem;
+  color: #fff;
+  background: #888;
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+// ── Menu ──────────────────────────────────────────────────────
+.menuWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.menuBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #bbb;
+  padding: 0 0.25rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  &:hover { color: #555; }
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 0.3rem;
+  z-index: 20;
+  min-width: 140px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.menuDivider {
+  height: 1px;
+  background: #ddd;
+  margin: 0.2rem 0;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: none;
+  font-size: 0.85rem;
+  color: #1a1a1a;
+  cursor: pointer;
+  border-radius: 3px;
+  &:hover { background: #e0e0e0; }
+}
+
+.menuItemArrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.menuItemDanger {
+  color: #cc3333;
+  &:hover { background: rgba(204, 51, 51, 0.08); }
+}
+
+// ── Postpone submenu ──────────────────────────────────────────
+.postponeItem {
+  position: relative;
+}
+
+.submenu {
+  position: absolute;
+  right: calc(100% + 2px); // opens LEFT of the main menu — avoids going into calendar panel
+  left: auto;
+  top: 0;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 0.3rem;
+  min-width: 140px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  z-index: 30;
+}
+
+.submenuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: none;
+  font-size: 0.82rem;
+  color: #1a1a1a;
+  cursor: pointer;
+  border-radius: 3px;
+  &:hover { background: #e0e0e0; }
+}
+
+.submenuDivider {
+  height: 1px;
+  background: #ddd;
+  margin: 0.2rem 0;
+}

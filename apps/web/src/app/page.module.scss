@@ -1,194 +1,25 @@
-$bg:       #0F0A06;
-$surface:  #1A1108;
-$border:   rgba(#C87941, 0.18);
-$amber:    #C87941;
-$amber-lt: #E8A062;
-$cream:    #F5ECD7;
-$muted:    rgba(#F5ECD7, 0.45);
-
-$font-display: 'Playfair Display', 'Georgia', serif;
-$font-body:    'Literata', 'Georgia', serif;
-
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Literata:wght@300;400&display=swap');
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes blobPulse {
-  0%, 100% { transform: scale(1) translate(0,0); }
-  50%       { transform: scale(1.08) translate(2%,-2%); }
-}
-@keyframes shimmer {
-  from { background-position: -200% center; }
-  to   { background-position:  200% center; }
-}
-
 .root {
-  position: relative;
   min-height: 100dvh;
-  background: $bg;
-  color: $cream;
-  font-family: $font-body;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #f0f0f0;
+  color: #1a1a1a;
 }
 
-// ── Grain ────────────────────────────────────────────────────
-.grain {
-  position: fixed;
-  inset: -50%;
-  width: 200%; height: 200%;
-  z-index: 0; pointer-events: none; opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 200px;
-}
-
-// ── Blobs ────────────────────────────────────────────────────
-%blob { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; }
-
-.blob1 {
-  @extend %blob;
-  width: 560px; height: 560px; top: -180px; right: -120px;
-  background: radial-gradient(circle, rgba(#C87941,.22) 0%, transparent 70%);
-  animation: blobPulse 12s ease-in-out infinite;
-}
-.blob2 {
-  @extend %blob;
-  width: 400px; height: 400px; bottom: 120px; left: -100px;
-  background: radial-gradient(circle, rgba(#7C4A1E,.28) 0%, transparent 70%);
-  animation: blobPulse 12s ease-in-out 4s infinite;
-}
-.blob3 {
-  @extend %blob;
-  width: 300px; height: 300px; top: 50%; left: 40%;
-  background: radial-gradient(circle, rgba(#C87941,.10) 0%, transparent 70%);
-  animation: blobPulse 12s ease-in-out 8s infinite;
-}
-
-// ── Main ─────────────────────────────────────────────────────
 .main {
-  position: relative; z-index: 1;
-  max-width: 1200px; margin: 0 auto;
-  padding: 0 clamp(1.5rem, 5vw, 4rem);
-}
-
-// ── Hero ─────────────────────────────────────────────────────
-.hero {
-  display: flex; flex-direction: column; align-items: flex-start;
-  padding: clamp(4rem, 12vw, 9rem) 0 clamp(4rem, 8vw, 7rem);
-  animation: fadeUp .8s ease both;
-}
-
-.eyebrow {
-  display: flex; align-items: center; gap: .6rem;
-  font-size: .8rem; font-weight: 300; letter-spacing: .15em;
-  text-transform: uppercase; color: $amber; margin-bottom: 1.5rem;
-}
-.dot { width: 6px; height: 6px; border-radius: 50%; background: $amber; flex-shrink: 0; }
-
-.title {
-  font-family: $font-display;
-  font-size: clamp(3rem, 7vw, 5.5rem);
-  font-weight: 400; line-height: 1.12; color: #FDFAF5; margin-bottom: 1.5rem;
-  em {
-    font-style: italic;
-    background: linear-gradient(135deg, $amber-lt 0%, $amber 50%, #7C4A1E 100%);
-    background-size: 200% auto;
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 4s linear infinite;
-  }
-}
-
-.subtitle {
-  font-size: clamp(1rem, 2vw, 1.2rem); font-weight: 300;
-  line-height: 1.7; color: $muted; max-width: 540px; margin-bottom: 2.5rem;
-}
-
-.cta { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
-
-.ctaPrimary {
-  display: inline-flex; align-items: center;
-  padding: .85rem 2rem; background: $amber; border-radius: 2rem;
-  font-family: $font-body; font-size: .95rem; color: $bg;
-  transition: background .2s, transform .2s, box-shadow .2s;
-  box-shadow: 0 0 32px rgba($amber,.25); text-decoration: none;
-  &:hover { background: $amber-lt; transform: translateY(-2px); box-shadow: 0 4px 40px rgba($amber,.4); }
-}
-.ctaSecondary {
-  font-size: .95rem; font-weight: 300; color: $muted;
-  transition: color .2s; text-decoration: none;
-  &:hover { color: $cream; }
-}
-
-// ── Grid ─────────────────────────────────────────────────────
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
-  gap: 1px; background: $border;
-  border: 1px solid $border; border-radius: 1rem; overflow: hidden;
-  margin-bottom: clamp(4rem, 10vw, 8rem);
-}
-
-.card {
-  display: flex; align-items: center; gap: 1rem;
-  padding: 1.5rem 1.75rem; background: $surface;
-  transition: background .25s; text-decoration: none;
-  animation: fadeUp .6s ease both;
-  animation-delay: calc(var(--i) * .07s);
-  &:hover {
-    background: rgba($amber, .07);
-    .cardArrow { opacity: 1; transform: translate(2px,-2px); color: $amber-lt; }
-    .cardLabel  { color: $amber-lt; }
-  }
-}
-.cardIcon  { font-size: 1.5rem; color: rgba($amber,.6); flex-shrink: 0; width: 2rem; text-align: center; }
-.cardBody  { display: flex; flex-direction: column; gap: .2rem; flex: 1; }
-.cardLabel { font-family: $font-display; font-size: 1rem; font-weight: 600; color: $cream; transition: color .2s; }
-.cardDesc  { font-size: .82rem; font-weight: 300; color: $muted; }
-.cardArrow { font-size: 1rem; color: $muted; opacity: 0; transition: opacity .2s, transform .2s, color .2s; flex-shrink: 0; }
-
-// ── About ────────────────────────────────────────────────────
-.about {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;
+  flex: 1;
+  display: flex;
   align-items: center;
-  padding: clamp(3rem, 8vw, 6rem) 0;
-  border-top: 1px solid $border;
-  margin-bottom: clamp(3rem, 8vw, 6rem);
-  animation: fadeUp .8s ease .4s both;
-  @media (max-width: 640px) { grid-template-columns: 1fr; gap: 2.5rem; }
+  justify-content: center;
 }
-.aboutLeft { display: flex; flex-direction: column; gap: 1.25rem; }
-.aboutTitle {
-  font-family: $font-display;
-  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
-  font-weight: 400; line-height: 1.2; color: #FDFAF5;
-}
-.aboutText { font-size: .97rem; font-weight: 300; line-height: 1.75; color: $muted; max-width: 440px; }
-.socials   { display: flex; gap: 1.5rem; }
-.social    { font-size: .875rem; font-weight: 300; color: $amber; transition: color .2s; text-decoration: none; &:hover { color: $amber-lt; } }
 
-.stats {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 1px; background: $border;
-  border: 1px solid $border; border-radius: .75rem; overflow: hidden;
+.startBtn {
+  padding: 0.75rem 2.5rem;
+  background: #1a1a1a;
+  color: #f0f0f0;
+  border-radius: 4px;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: background 0.15s;
+  &:hover { background: #333; }
 }
-.stat       { display: flex; flex-direction: column; align-items: center; gap: .4rem; padding: 1.75rem 1rem; background: $surface; }
-.statNum    { font-family: $font-display; font-size: 1.75rem; font-weight: 600; color: $amber-lt; }
-.statLabel  { font-size: .75rem; font-weight: 300; color: $muted; text-align: center; letter-spacing: .05em; }
-
-// ── Footer ───────────────────────────────────────────────────
-.footer {
-  position: relative; z-index: 1;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 1rem;
-  padding: 1.5rem clamp(1.5rem, 5vw, 4rem);
-  border-top: 1px solid $border;
-  @media (max-width: 640px) { flex-direction: column; align-items: flex-start; }
-}
-.footerLogo  { font-family: $font-display; font-size: .95rem; color: $amber; letter-spacing: .04em; }
-.footerLinks { display: flex; gap: 1.5rem; flex-wrap: wrap;
-  a { font-size: .8rem; font-weight: 300; color: $muted; transition: color .2s; text-decoration: none;
-      &:hover { color: $cream; } }
-}
-.footerCopy { font-size: .78rem; font-weight: 300; color: rgba($muted,.6); }

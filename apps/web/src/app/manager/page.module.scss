@@ -1,0 +1,61 @@
+.root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: #f0f0f0;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  height: calc(100dvh - 52px); // 52px = header height
+  overflow: hidden;
+}
+
+// ── Left panel (tasks) ────────────────────────────────────────
+.left {
+  flex: 0 0 360px;
+  border-right: 1px solid #d4d4d4;
+  overflow-y: auto;
+  background: #f0f0f0;
+}
+
+// ── Right panel (calendar) ────────────────────────────────────
+.right {
+  flex: 1;
+  overflow: hidden;
+  background: #e8e8e8;
+}
+
+.loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: #999;
+}
+
+// ── Mobile ────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .body {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .left {
+    flex: none;
+    border-right: none;
+    border-top: 1px solid #d4d4d4;
+    order: 2;
+    min-height: 300px;
+  }
+
+  .right {
+    flex: none;
+    order: 1;
+    height: 340px;
+    overflow-y: auto;
+  }
+}

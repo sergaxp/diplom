@@ -96,8 +96,8 @@ export class AuthService {
     const refreshSecret = process.env.JWT_REFRESH_SECRET ?? 'fallback-dev-refresh-secret';
 
     // expiresIn — число секунд
-    const accessToken  = this.jwtService.sign(payload, { secret: accessSecret,  expiresIn: 900 });
-    const refreshToken = this.jwtService.sign(payload, { secret: refreshSecret, expiresIn: 604800 });
+    const accessToken  = this.jwtService.sign(payload, { secret: accessSecret,  expiresIn: 86400 });   // 24h
+    const refreshToken = this.jwtService.sign(payload, { secret: refreshSecret, expiresIn: 2592000 }); // 30d
 
     return { accessToken, refreshToken };
   }

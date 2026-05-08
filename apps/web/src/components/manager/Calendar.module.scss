@@ -1,0 +1,604 @@
+.root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #e8e8e8;
+}
+
+// ── Head ─────────────────────────────────────────────────────
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #d4d4d4;
+  flex-shrink: 0;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.monthName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.year {
+  font-size: 1rem;
+  color: #666;
+}
+
+.navBtn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  padding: 0 0.2rem;
+  &:hover { color: #1a1a1a; }
+}
+
+.viewToggle {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.viewBtn {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: #888;
+  transition: background 0.1s;
+  &:hover { background: #ddd; }
+}
+
+.viewBtnActive {
+  background: #d4d4d4;
+  border-color: #aaa;
+  color: #1a1a1a;
+}
+
+// ── Grid ─────────────────────────────────────────────────────
+.gridWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.75rem 0.75rem;
+  gap: 0.25rem;
+  overflow-y: auto;
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 0.1rem;
+}
+
+.weekday {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #999;
+  padding: 0.2rem 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.empty {
+  background: transparent;
+  min-height: 60px;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.35rem 0.4rem;
+  background: #ebebeb;
+  border: 1px solid #d8d8d8;
+  border-radius: 6px;
+  cursor: pointer;
+  min-height: 60px;
+  gap: 0.15rem;
+  transition: background 0.1s;
+  text-align: left;
+
+  &:hover { background: #e0e0e0; }
+}
+
+.cellSelected {
+  background: #d0d0d0;
+  border-color: #999;
+}
+
+.cellToday {
+  border-color: #555;
+  border-width: 2px;
+}
+
+.dayNum {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1;
+}
+
+.temp {
+  font-size: 0.62rem;
+  color: #888;
+  line-height: 1;
+}
+
+.dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: auto;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #555;
+  flex-shrink: 0;
+}
+
+.dotPlus {
+  font-size: 0.6rem;
+  color: #555;
+  font-weight: 700;
+  line-height: 1;
+}
+
+// ── Month / Year picker ───────────────────────────────────────
+.pickerWrap {
+  position: relative;
+}
+
+.navPickerBtn {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s, border-color 0.1s;
+  &:hover { background: #e0e0e0; border-color: #ccc; }
+}
+
+.navPickerBtnActive {
+  background: #d8d8d8;
+  border-color: #aaa;
+}
+
+.navSep {
+  color: #aaa;
+  font-size: 0.9rem;
+  padding: 0 0.1rem;
+}
+
+.picker {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0.6rem;
+  z-index: 200;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  min-width: 200px;
+}
+
+.pickerTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #999;
+  margin-bottom: 0.5rem;
+  padding: 0 0.1rem;
+}
+
+.pickerNav {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #888;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  line-height: 1;
+  &:hover { color: #1a1a1a; }
+}
+
+.pickerGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+}
+
+.pickerCell {
+  padding: 0.4rem 0.25rem;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #1a1a1a;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  transition: background 0.1s;
+  &:hover { background: #e0e0e0; }
+}
+
+.pickerCellActive {
+  background: #1a1a1a;
+  color: #f0f0f0;
+  &:hover { background: #333; }
+}
+
+// Chart picker group (month + year chips next to nav label)
+.chartPickerGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 0.5rem;
+}
+
+// ── Mini month (month/quarter/year views) ─────────────────────
+.miniMonth {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  padding: 0.75rem;
+}
+
+.miniMonthCompact {
+  padding: 0.4rem;
+  gap: 0.3rem;
+}
+
+.miniMonthHead {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+  padding-bottom: 0.25rem;
+}
+
+.miniMonthYear {
+  font-weight: 400;
+  color: #888;
+  font-size: 0.78rem;
+}
+
+.miniGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+
+.miniWeekday {
+  font-size: 0.6rem;
+  color: #bbb;
+  text-align: center;
+  padding: 0.1rem 0;
+  font-weight: 500;
+}
+
+.miniCell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #333;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  gap: 1px;
+  &:hover { background: #e4e4e4; }
+}
+
+.miniCellToday {
+  font-weight: 700;
+  color: #1a1a1a;
+  background: #d8d8d8;
+}
+
+.miniCellSelected {
+  background: #c4c4c4;
+  border: 1px solid #999;
+}
+
+.miniCellHasTasks { color: #1a1a1a; }
+
+.miniDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #888;
+  flex-shrink: 0;
+}
+
+// Views
+.chartSingleMonth {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.chartQuarter {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  overflow-y: auto;
+  border-top: 1px solid #e0e0e0;
+  & > * { border-right: 1px solid #e0e0e0; &:last-child { border-right: none; } }
+}
+
+.chartYear {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  overflow-y: auto;
+  & > * { border-right: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; }
+}
+
+// Period buttons
+.chartNavLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.chartPeriods {
+  display: flex;
+  gap: 2px;
+}
+
+.periodBtn {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: #888;
+  font-family: inherit;
+  &:hover { background: #e0e0e0; }
+}
+
+.periodBtnActive {
+  background: #d4d4d4;
+  border-color: #aaa;
+  color: #1a1a1a;
+}
+
+// ── Chart ─────────────────────────────────────────────────────
+.chart {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.chartNavRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid #d8d8d8;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+.chartWeekLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.chartHeaders {
+  display: flex;
+  border-bottom: 1px solid #d4d4d4;
+  flex-shrink: 0;
+}
+
+.chartGutterHead {
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.chartDayHead {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.35rem 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-left: 1px solid #e4e4e4;
+  transition: background 0.1s;
+  &:hover { background: #e8e8e8; }
+}
+
+.chartDayToday .chartDayNum {
+  background: #1a1a1a;
+  color: #f0f0f0;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chartDaySelected {
+  background: #e0e0e0;
+}
+
+.chartDayName {
+  font-size: 0.65rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chartDayNum {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Scrollable body
+.chartBody {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  min-height: 0;
+}
+
+.chartGutter {
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.chartHourLabel {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 2px 6px 0 0;
+  font-size: 0.62rem;
+  color: #bbb;
+  box-sizing: border-box;
+  border-top: 1px solid #e8e8e8;
+}
+
+.chartCols {
+  flex: 1;
+  display: flex;
+  position: relative;
+}
+
+.chartCol {
+  flex: 1;
+  position: relative;
+  border-left: 1px solid #e4e4e4;
+  min-width: 0;
+}
+
+.chartColToday {
+  background: rgba(0, 0, 0, 0.018);
+}
+
+.chartHourLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid #ebebeb;
+  box-sizing: border-box;
+}
+
+// Current time indicator
+.nowLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #555;
+  z-index: 5;
+  pointer-events: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: -3px;
+    top: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #555;
+  }
+}
+
+// All-day badge
+.allDayBadge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: #999;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 600;
+  border-radius: 3px;
+  padding: 1px 4px;
+  z-index: 3;
+}
+
+// Task blocks
+.chartTask {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  border-radius: 3px;
+  padding: 2px 5px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  z-index: 2;
+}
+
+.chartTaskNormal    { background: #d4d4d4; color: #1a1a1a; }
+.chartTaskMandatory { background: #999;    color: #fff;    }
+.chartTaskEvent     { background: #555;    color: #fff;    }
+
+.chartTaskTime {
+  font-size: 0.6rem;
+  opacity: 0.75;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.chartTaskTitle {
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
