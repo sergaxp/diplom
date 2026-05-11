@@ -47,6 +47,9 @@ export class Task {
   @Column({ type: 'varchar', length: 64, nullable: true, default: null })
   icon: string | null;
 
+  @Column({ type: 'json', nullable: true, default: null })
+  subtasks: object[] | null;
+
   @ManyToMany(() => Tag, tag => tag.tasks, { eager: false, cascade: false })
   @JoinTable({
     name: 'task_tags',

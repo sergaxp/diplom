@@ -8,6 +8,18 @@ export type TaskStatus = 'done' | 'missed' | 'pending';
 export type TaskRepeat = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 export type TaskType   = 'normal' | 'mandatory' | 'event';
 
+export interface SubtaskItem {
+  id: string;
+  title: string;
+  done: boolean;
+}
+
+export interface SubtaskSection {
+  id: string;
+  title: string;
+  items: SubtaskItem[];
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -23,6 +35,7 @@ export interface Task {
   isGlobal?: boolean;
   icon?: string | null;
   tags?: Tag[];
+  subtasks?: SubtaskSection[] | null;
 }
 
 export function toDateStr(d: Date): string {
@@ -31,6 +44,44 @@ export function toDateStr(d: Date): string {
 
 export function completionKey(taskId: string, dateStr: string) {
   return `${taskId}__${dateStr}`;
+}
+
+// Проверяет, активна ли повторяющаяся многодневная задача на указанную дату
+function isRepeatMultiDayActiveOn(task: Task, dateStr: string): boolean {
+  if (!task.endDate || task.repeat === 'none') return false;
+  if (task.repeatUntil && dateStr > task.repeatUntil) return false;
+
+  const checkDate = new Date(dateStr    + 'T00:00:00');
+  const origStart = new Date(task.date  + 'T00:00:00');
+  const origEnd   = new Date(task.endDate + 'T00:00:00');
+
+  if (checkDate < origStart) return false;
+
+  const durationDays = Math.round((origEnd.getTime() - origStart.getTime()) / 86_400_000);
+
+  if (task.repeat === 'daily') return true; // каждый день покрыт
+
+  let occStart: Date;
+
+  if (task.repeat === 'weekly') {
+    const dayDiff = (checkDate.getDay() - origStart.getDay() + 7) % 7;
+    occStart = new Date(checkDate);
+    occStart.setDate(occStart.getDate() - dayDiff);
+  } else if (task.repeat === 'monthly') {
+    occStart = new Date(checkDate.getFullYear(), checkDate.getMonth(), origStart.getDate());
+    if (occStart > checkDate) occStart.setMonth(occStart.getMonth() - 1);
+  } else if (task.repeat === 'yearly') {
+    occStart = new Date(checkDate.getFullYear(), origStart.getMonth(), origStart.getDate());
+    if (occStart > checkDate) occStart.setFullYear(occStart.getFullYear() - 1);
+  } else {
+    return false;
+  }
+
+  if (occStart < origStart) return false;
+
+  const occEnd = new Date(occStart);
+  occEnd.setDate(occEnd.getDate() + durationDays);
+  return checkDate <= occEnd;
 }
 
 export function getTasksForDate(
@@ -45,8 +96,13 @@ export function getTasksForDate(
     let isMatch = false;
 
     if (task.endDate) {
-      // Многодневная задача: видна на всех датах в диапазоне [date, endDate]
-      isMatch = task.date <= dateStr && task.endDate >= dateStr;
+      // Первое вхождение диапазона
+      if (task.date <= dateStr && task.endDate >= dateStr) {
+        isMatch = true;
+      } else if (task.repeat !== 'none' && task.date < dateStr) {
+        // Повторяющееся многодневное событие
+        isMatch = isRepeatMultiDayActiveOn(task, dateStr);
+      }
     } else if (task.date === dateStr) {
       isMatch = true;
     } else if (task.date < dateStr && task.repeat !== 'none') {
@@ -81,6 +137,7 @@ interface ApiTask {
   date: string; time: string | null; endTime: string | null; endDate: string | null;
   repeat: string; repeatUntil: string | null; type: string; icon: string | null;
   tags?: Tag[];
+  subtasks?: object[] | null;
 }
 
 function fromApi(t: ApiTask): Task {
@@ -96,6 +153,7 @@ function fromApi(t: ApiTask): Task {
     type: t.type as TaskType,
     icon: t.icon ?? null,
     tags: t.tags ?? [],
+    subtasks: (t.subtasks ?? null) as SubtaskSection[] | null,
     status: 'pending',
   };
 }
@@ -130,7 +188,9 @@ export const tasksApi = {
       repeat:      p.repeat,
       repeatUntil: p.repeatUntil ?? null,
       type:        p.type,
+      icon:        p.icon        ?? null,
       tagIds:      p.tags?.map(t => t.id) ?? [],
+      subtasks:    p.subtasks    ?? null,
     }).then(r => ({ task: fromApi(r.data), newAchievements: r.data.newAchievements ?? [] })),
 
   update: (id: string, p: Payload): Promise<Task> =>
@@ -144,7 +204,9 @@ export const tasksApi = {
       repeat:      p.repeat,
       repeatUntil: p.repeatUntil ?? null,
       type:        p.type,
+      icon:        p.icon        ?? null,
       tagIds:      p.tags?.map(t => t.id) ?? [],
+      subtasks:    p.subtasks    ?? null,
     }).then(r => fromApi(r.data)),
 
   delete: (id: string): Promise<void> =>

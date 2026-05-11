@@ -43,7 +43,7 @@ function AdminSetup({ username }: { username: string }) {
     setError(''); setBusy(true);
     try {
       const updated = await adminApi.promote(username, secret.trim());
-      setUser({ ...updated, email: '', bio: null, location: null, locationLat: null, locationLon: null, showGlobalEvents: true, isEmailVerified: false, createdAt: updated.createdAt });
+      setUser({ ...updated, email: '', bio: null, coverUrl: null, location: null, locationLat: null, locationLon: null, showGlobalEvents: true, isEmailVerified: false, createdAt: updated.createdAt });
       window.location.reload();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Ошибка');

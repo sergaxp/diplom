@@ -128,6 +128,14 @@ export class UsersService {
     return saved;
   }
 
+  // ── Обновить баннер ────────────────────────────────────────
+  async updateCover(id: string, coverUrl: string): Promise<User> {
+    const user = await this.findById(id);
+    if (!user) throw new BadRequestException('Пользователь не найден');
+    user.coverUrl = coverUrl;
+    return this.usersRepository.save(user);
+  }
+
   // ── Обновить lastSeenAt ────────────────────────────────────
   async updateLastSeen(id: string): Promise<void> {
     await this.usersRepository.update(id, { lastSeenAt: new Date() });

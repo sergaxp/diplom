@@ -6,6 +6,7 @@ export interface User {
   email: string;
   displayName: string | null;
   avatarUrl: string | null;
+  coverUrl: string | null;
   bio: string | null;
   location: string | null;
   locationLat: number | null;

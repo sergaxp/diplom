@@ -8,6 +8,13 @@
 }
 
 // ── Clock ─────────────────────────────────────────────────────
+.clockRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .clock {
   display: flex;
   align-items: baseline;
@@ -15,6 +22,21 @@
   cursor: pointer;
   user-select: none;
   &:hover .clockTime { opacity: 0.75; }
+}
+
+.clockWeather {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.clockTemp {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #555;
+  font-variant-numeric: tabular-nums;
 }
 
 .clockTime {
@@ -170,6 +192,10 @@
   align-items: center;
   gap: 0.45rem;
   min-width: 0;
+  cursor: pointer;
+  border-radius: 3px;
+  outline: none;
+  &:hover .taskTitle { opacity: 0.75; }
 }
 
 .taskTime {

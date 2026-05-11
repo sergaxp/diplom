@@ -79,6 +79,29 @@ export class UsersController {
     return this.usersService.updateAvatar(req.user.id, avatarUrl);
   }
 
+  // POST /users/me/cover
+  @UseGuards(JwtAuthGuard)
+  @Post('me/cover')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      fileFilter: avatarFilter,
+      limits: { fileSize: 8 * 1024 * 1024 }, // 8 МБ
+    }),
+  )
+  async uploadCover(
+    @Request() req,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Файл не загружен');
+    const coverUrl = await this.storageService.uploadAvatar(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+    );
+    return this.usersService.updateCover(req.user.id, coverUrl);
+  }
+
   // POST /users/me/ping — обновить lastSeenAt (вызывается периодически с фронтенда)
   @UseGuards(JwtAuthGuard)
   @Post('me/ping')

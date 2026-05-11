@@ -47,14 +47,54 @@ function taskBlockHeight(t: Task): number {
   return TASK_H;
 }
 
+/** Активна ли повторяющаяся многодневная задача на dateStr */
+function isRepeatMultiDayActiveOn(t: Task, dateStr: string): boolean {
+  if (!t.endDate || t.repeat === 'none') return false;
+  if (t.repeatUntil && dateStr > t.repeatUntil) return false;
+
+  const checkDate = new Date(dateStr    + 'T00:00:00');
+  const origStart = new Date(t.date     + 'T00:00:00');
+  const origEnd   = new Date(t.endDate  + 'T00:00:00');
+
+  if (checkDate < origStart) return false;
+
+  const durationDays = Math.round((origEnd.getTime() - origStart.getTime()) / 86_400_000);
+
+  if (t.repeat === 'daily') return true;
+
+  let occStart: Date;
+  if (t.repeat === 'weekly') {
+    const dayDiff = (checkDate.getDay() - origStart.getDay() + 7) % 7;
+    occStart = new Date(checkDate);
+    occStart.setDate(occStart.getDate() - dayDiff);
+  } else if (t.repeat === 'monthly') {
+    occStart = new Date(checkDate.getFullYear(), checkDate.getMonth(), origStart.getDate());
+    if (occStart > checkDate) occStart.setMonth(occStart.getMonth() - 1);
+  } else if (t.repeat === 'yearly') {
+    occStart = new Date(checkDate.getFullYear(), origStart.getMonth(), origStart.getDate());
+    if (occStart > checkDate) occStart.setFullYear(occStart.getFullYear() - 1);
+  } else {
+    return false;
+  }
+
+  if (occStart < origStart) return false;
+  const occEnd = new Date(occStart);
+  occEnd.setDate(occEnd.getDate() + durationDays);
+  return checkDate <= occEnd;
+}
+
 /** Активна ли задача на данной дате (учитывает endDate и repeat) */
 function taskActiveOn(t: Task, dateStr: string): boolean {
-  if (t.endDate) return t.date <= dateStr && t.endDate >= dateStr;
+  if (t.endDate) {
+    if (t.date <= dateStr && t.endDate >= dateStr) return true;
+    if (t.repeat !== 'none' && t.date < dateStr) return isRepeatMultiDayActiveOn(t, dateStr);
+    return false;
+  }
   if (t.date === dateStr) return true;
   if (t.date < dateStr && t.repeat !== 'none') {
     if (t.repeatUntil && dateStr > t.repeatUntil) return false;
     const td = new Date(t.date + 'T00:00:00');
-    const d  = new Date(dateStr  + 'T00:00:00');
+    const d  = new Date(dateStr + 'T00:00:00');
     switch (t.repeat) {
       case 'daily':   return true;
       case 'weekly':  return td.getDay() === d.getDay();

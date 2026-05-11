@@ -5,6 +5,8 @@ import * as LucideIcons from 'lucide-react';
 import { Task, TaskStatus, toDateStr, getTasksForDate, completionKey } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { TaskFormModal } from './TaskFormModal';
+import { useCurrentWeather, weatherCodeToInfo } from '../../lib/weather';
+import { useAuthStore } from '../../store/authStore';
 import styles from './TaskList.module.scss';
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
@@ -102,15 +104,16 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
           task.status === 'done'   ? styles.checkboxDone   : '',
           task.status === 'missed' ? styles.checkboxMissed : '',
         ].join(' ')}
-        onClick={() => onToggle(task.id, dateStr)}
+        onClick={e => { e.stopPropagation(); onToggle(task.id, dateStr); }}
         aria-label={task.status === 'done' ? 'Снять отметку' : 'Отметить выполненным'}
       >
         {task.status === 'done'   && '✓'}
         {task.status === 'missed' && '✕'}
       </button>
 
-      {/* Body */}
-      <div className={styles.taskBody}>
+      {/* Body — кликабельно для открытия редактора */}
+      <div className={styles.taskBody} onClick={() => onEdit(task)} role="button" tabIndex={0}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onEdit(task); }}>
         {task.time && <span className={styles.taskTime}>{task.time}</span>}
         <div className={styles.taskText}>
           <span className={styles.taskTitle}>{task.title}</span>
@@ -141,17 +144,10 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
 
       {/* Menu */}
       <div className={styles.menuWrap} ref={menuRef}>
-        <button className={styles.menuBtn} onClick={() => setMenuOpen(v => !v)}>···</button>
+        <button className={styles.menuBtn} onClick={e => { e.stopPropagation(); setMenuOpen(v => !v); }}>···</button>
 
         {menuOpen && (
           <div className={styles.menu}>
-            <button
-              className={styles.menuItem}
-              onClick={() => { onEdit(task); close(); }}
-            >
-              Изменить
-            </button>
-
             {/* Перенести + submenu */}
             {!hidePostpone && (
               <div
@@ -191,7 +187,7 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
               </div>
             )}
 
-            <div className={styles.menuDivider} />
+            {!hidePostpone && <div className={styles.menuDivider} />}
             <button
               className={[styles.menuItem, styles.menuItemDanger].join(' ')}
               onClick={() => { onDelete(task.id); close(); }}
@@ -228,6 +224,10 @@ export function TaskList({
   const [createOpen,  setCreateOpen]  = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
+  const user     = useAuthStore(s => s.user);
+  const location = { lat: user?.locationLat, lon: user?.locationLon, name: user?.location };
+  const { data: currentWeather } = useCurrentWeather(location);
+
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
@@ -256,10 +256,24 @@ export function TaskList({
   return (
     <>
       <div className={styles.root}>
-        {/* Clock — click to return to today */}
-        <div className={styles.clock} onClick={onGoToToday} title="Вернуться к сегодня" role="button" tabIndex={0}>
-          <span className={styles.clockTime}>{pad(now.getHours())}:{pad(now.getMinutes())}</span>
-          <span className={styles.clockDay}>{DAY_SHORT[now.getDay()]}</span>
+        {/* Clock + текущая погода */}
+        <div className={styles.clockRow}>
+          <div className={styles.clock} onClick={onGoToToday} title="Вернуться к сегодня" role="button" tabIndex={0}>
+            <span className={styles.clockTime}>{pad(now.getHours())}:{pad(now.getMinutes())}</span>
+            <span className={styles.clockDay}>{DAY_SHORT[now.getDay()]}</span>
+          </div>
+          {currentWeather && (() => {
+            const { icon } = weatherCodeToInfo(currentWeather.weatherCode);
+            const WeatherIc = Icons[icon];
+            return (
+              <div className={styles.clockWeather}>
+                {WeatherIc && <WeatherIc size={16} strokeWidth={1.5} />}
+                <span className={styles.clockTemp}>
+                  {currentWeather.temp > 0 ? '+' : ''}{currentWeather.temp}°
+                </span>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Day tasks */}
@@ -335,6 +349,7 @@ export function TaskList({
           userTags={userTags}
           onSave={(data) => onUpdate(editingTask.id, data)}
           onClose={() => setEditingTask(null)}
+          onDelete={() => { onDelete(editingTask.id); setEditingTask(null); }}
         />
       )}
     </>

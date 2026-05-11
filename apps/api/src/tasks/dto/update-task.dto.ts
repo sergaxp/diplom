@@ -46,4 +46,11 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsString({ each: true })
   tagIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  icon?: string | null;
+
+  @IsOptional()
+  subtasks?: object[] | null;
 }

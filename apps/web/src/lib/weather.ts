@@ -7,21 +7,53 @@ export interface DayWeather {
   tempMin: number;
 }
 
+export interface DetailedDayWeather {
+  date: string;
+  tempMax: number;
+  tempMin: number;
+  feelsLikeMax: number;
+  weatherCode: number;
+  precipSum: number;
+  precipProbMax: number;
+  windSpeedMax: number;
+  uvIndex: number;
+}
+
+export interface CurrentWeather {
+  temp: number;
+  feelsLike: number;
+  weatherCode: number;
+  windSpeed: number;
+  humidity: number;
+}
+
 // Координаты по умолчанию — Челябинск
 const DEFAULT_LAT = 55.16;
 const DEFAULT_LON = 61.40;
 const DEFAULT_TZ  = 'Asia/Yekaterinburg';
 
-// ── Геокодинг города через open-meteo ────────────────────────
+// ── WMO коды погоды → описание и иконка ──────────────────────
+export function weatherCodeToInfo(code: number): { label: string; icon: string } {
+  if (code === 0)                 return { label: 'Ясно',                  icon: 'Sun'            };
+  if (code === 1)                 return { label: 'Преим. ясно',           icon: 'Sun'            };
+  if (code === 2)                 return { label: 'Переменная облачность', icon: 'CloudSun'       };
+  if (code === 3)                 return { label: 'Пасмурно',              icon: 'Cloud'          };
+  if (code === 45 || code === 48) return { label: 'Туман',                 icon: 'Cloud'          };
+  if (code >= 51 && code <= 57)   return { label: 'Морось',                icon: 'CloudDrizzle'   };
+  if (code >= 61 && code <= 67)   return { label: 'Дождь',                 icon: 'CloudRain'      };
+  if (code >= 71 && code <= 77)   return { label: 'Снег',                  icon: 'CloudSnow'      };
+  if (code >= 80 && code <= 82)   return { label: 'Ливень',                icon: 'CloudRain'      };
+  if (code >= 85 && code <= 86)   return { label: 'Снегопад',              icon: 'CloudSnow'      };
+  if (code === 95)                return { label: 'Гроза',                 icon: 'CloudLightning' };
+  if (code >= 96)                 return { label: 'Гроза с градом',        icon: 'CloudLightning' };
+  return { label: 'Облачно', icon: 'Cloud' };
+}
+
+// ── Геокодинг города ─────────────────────────────────────────
 interface GeoResult { lat: number; lon: number; timezone: string }
 
 async function geocodeCity(city: string): Promise<GeoResult | null> {
-  const params = new URLSearchParams({
-    name:     city,
-    count:    '1',
-    language: 'ru',
-    format:   'json',
-  });
+  const params = new URLSearchParams({ name: city, count: '1', language: 'ru', format: 'json' });
   const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?${params}`);
   if (!res.ok) return null;
   const json = await res.json();
@@ -30,11 +62,10 @@ async function geocodeCity(city: string): Promise<GeoResult | null> {
   return { lat: r.latitude, lon: r.longitude, timezone: r.timezone ?? DEFAULT_TZ };
 }
 
-// ── Получение названия города по координатам (Nominatim) ─────
+// ── Обратный геокодинг (Nominatim) ───────────────────────────
 export async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
   const params = new URLSearchParams({
-    lat: String(lat), lon: String(lon),
-    format: 'json', 'accept-language': 'ru',
+    lat: String(lat), lon: String(lon), format: 'json', 'accept-language': 'ru',
   });
   const res = await fetch(
     `https://nominatim.openstreetmap.org/reverse?${params}`,
@@ -43,19 +74,14 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string |
   if (!res.ok) return null;
   const json = await res.json();
   const addr = json.address ?? {};
-  // Приоритет: city → town → municipality → county (без «округ»/«район»)
   return addr.city ?? addr.town ?? addr.municipality ?? addr.county ?? null;
 }
 
-// ── Загрузка погоды за месяц ──────────────────────────────────
+// ── Погода за месяц (для календаря) ──────────────────────────
 async function fetchWeatherForMonth(
-  year: number,
-  month: number,
-  lat: number,
-  lon: number,
-  tz: string,
+  year: number, month: number, lat: number, lon: number, tz: string,
 ): Promise<Map<string, DayWeather>> {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const today      = new Date(); today.setHours(0, 0, 0, 0);
   const monthStart = new Date(year, month, 1);
   const lastDay    = new Date(year, month + 1, 0).getDate();
   const monthEnd   = new Date(year, month, lastDay);
@@ -63,44 +89,31 @@ async function fetchWeatherForMonth(
   const start = toDateStr(monthStart);
   const end   = toDateStr(monthEnd);
 
-  // Дней от начала месяца до сегодня (отрицательно если месяц в будущем)
   const daysSinceStart = Math.round((today.getTime() - monthStart.getTime()) / 86_400_000);
-  // Дней от сегодня до конца месяца (отрицательно если месяц уже закончился)
   const daysToEnd      = Math.round((monthEnd.getTime()  - today.getTime())  / 86_400_000);
 
   const commonParams = {
-    latitude:  String(lat),
-    longitude: String(lon),
-    daily:     'temperature_2m_max,temperature_2m_min',
-    timezone:  tz,
+    latitude: String(lat), longitude: String(lon),
+    daily: 'temperature_2m_max,temperature_2m_min', timezone: tz,
   };
 
   let fetchUrl: string;
-
   if (daysSinceStart > 85) {
-    // Старый месяц (> 85 дней назад): archive API
     fetchUrl = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({
       ...commonParams, start_date: start, end_date: end,
     });
   } else if (daysToEnd < 0) {
-    // Месяц полностью в прошлом (в пределах 85 дней):
-    // forecast API + past_days чтобы покрыть весь месяц
     const pastDays = Math.min(daysSinceStart + 5, 92);
     fetchUrl = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
       ...commonParams, past_days: String(pastDays), forecast_days: '1',
     });
   } else if (daysSinceStart < -16) {
-    // Месяц начинается более чем через 16 дней: данных нет
     return new Map();
   } else {
-    // Текущий месяц или ближайшее будущее:
-    // past_days + forecast_days — единственный способ получить и прошлое, и прогноз
     const pastDays     = Math.max(0, daysSinceStart);
     const forecastDays = Math.min(16, Math.max(1, daysToEnd + 1));
     fetchUrl = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
-      ...commonParams,
-      past_days:     String(pastDays),
-      forecast_days: String(forecastDays),
+      ...commonParams, past_days: String(pastDays), forecast_days: String(forecastDays),
     });
   }
 
@@ -110,7 +123,6 @@ async function fetchWeatherForMonth(
 
   const map = new Map<string, DayWeather>();
   (json.daily.time as string[]).forEach((date: string, i: number) => {
-    // Фильтруем только дни текущего месяца
     if (date >= start && date <= end && json.daily.temperature_2m_max[i] != null) {
       map.set(date, {
         date,
@@ -122,43 +134,148 @@ async function fetchWeatherForMonth(
   return map;
 }
 
+// ── Детальная погода на конкретный день ───────────────────────
+async function fetchDayWeatherData(
+  date: string, lat: number, lon: number, tz: string,
+): Promise<DetailedDayWeather | null> {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(date + 'T00:00:00');
+  const daysDiff = Math.round((target.getTime() - today.getTime()) / 86_400_000);
+
+  const daily = 'temperature_2m_max,temperature_2m_min,apparent_temperature_max,weathercode,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max';
+
+  let url: string;
+  if (daysDiff > 16) {
+    // Слишком далеко в будущем — данных нет
+    return null;
+  } else if (daysDiff < -92) {
+    url = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({
+      latitude: String(lat), longitude: String(lon), timezone: tz,
+      start_date: date, end_date: date, daily,
+    });
+  } else {
+    const pastDays     = Math.max(0, -daysDiff);
+    const forecastDays = Math.max(1, daysDiff + 1);
+    url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
+      latitude: String(lat), longitude: String(lon), timezone: tz,
+      past_days: String(pastDays), forecast_days: String(forecastDays), daily,
+    });
+  }
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Weather API ${res.status}`);
+  const json = await res.json();
+
+  const idx = (json.daily.time as string[]).indexOf(date);
+  if (idx === -1) return null;
+
+  return {
+    date,
+    tempMax:      Math.round(json.daily.temperature_2m_max[idx]),
+    tempMin:      Math.round(json.daily.temperature_2m_min[idx]),
+    feelsLikeMax: Math.round(json.daily.apparent_temperature_max[idx] ?? json.daily.temperature_2m_max[idx]),
+    weatherCode:  json.daily.weathercode[idx] ?? 0,
+    precipSum:    Math.round((json.daily.precipitation_sum[idx] ?? 0) * 10) / 10,
+    precipProbMax: Math.round(json.daily.precipitation_probability_max[idx] ?? 0),
+    windSpeedMax: Math.round(json.daily.wind_speed_10m_max[idx] ?? 0),
+    uvIndex:      Math.round(json.daily.uv_index_max[idx] ?? 0),
+  };
+}
+
+// ── Текущая погода ────────────────────────────────────────────
+async function fetchCurrentWeatherData(
+  lat: number, lon: number, tz: string,
+): Promise<CurrentWeather | null> {
+  const url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
+    latitude: String(lat), longitude: String(lon), timezone: tz,
+    current: 'temperature_2m,apparent_temperature,weathercode,wind_speed_10m,relative_humidity_2m',
+  });
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Weather API ${res.status}`);
+  const json = await res.json();
+  if (!json.current) return null;
+
+  return {
+    temp:        Math.round(json.current.temperature_2m),
+    feelsLike:   Math.round(json.current.apparent_temperature),
+    weatherCode: json.current.weathercode ?? 0,
+    windSpeed:   Math.round(json.current.wind_speed_10m ?? 0),
+    humidity:    Math.round(json.current.relative_humidity_2m ?? 0),
+  };
+}
+
+// ── Resolve location helper ───────────────────────────────────
 export interface LocationData {
   lat?: number | null;
   lon?: number | null;
   name?: string | null;
 }
 
-// ── Хук: погода за месяц с учётом локации пользователя ───────
-export function useMonthWeather(
-  year: number,
-  month: number,
-  locationData?: LocationData,
-) {
-  const { lat: savedLat, lon: savedLon, name } = locationData ?? {};
-  const key = savedLat != null ? `${savedLat},${savedLon}` : (name ?? '');
+async function resolveCoords(
+  loc?: LocationData,
+): Promise<{ lat: number; lon: number; tz: string }> {
+  let lat = DEFAULT_LAT, lon = DEFAULT_LON, tz = DEFAULT_TZ;
+  if (loc?.lat != null && loc?.lon != null) {
+    lat = loc.lat; lon = loc.lon;
+  } else if (loc?.name?.trim()) {
+    try {
+      const geo = await geocodeCity(loc.name.trim());
+      if (geo) { lat = geo.lat; lon = geo.lon; tz = geo.timezone; }
+    } catch { /* используем дефолтные */ }
+  }
+  return { lat, lon, tz };
+}
+
+// ── Хук: погода за месяц ─────────────────────────────────────
+export function useMonthWeather(year: number, month: number, locationData?: LocationData) {
+  const locKey = locationData?.lat != null
+    ? `${locationData.lat},${locationData.lon}`
+    : (locationData?.name ?? '');
 
   return useQuery({
-    queryKey: ['weather', year, month, key],
+    queryKey: ['weather', year, month, locKey],
     queryFn: async () => {
-      let lat = DEFAULT_LAT, lon = DEFAULT_LON, tz = DEFAULT_TZ;
-
-      if (savedLat != null && savedLon != null) {
-        // Координаты сохранены напрямую — геокодинг не нужен
-        lat = savedLat;
-        lon = savedLon;
-      } else if (name?.trim()) {
-        // Запасной вариант: геокодинг по имени
-        try {
-          const geo = await geocodeCity(name.trim());
-          if (geo) { lat = geo.lat; lon = geo.lon; tz = geo.timezone; }
-        } catch {
-          // геокодинг не удался — используем Челябинск
-        }
-      }
-
+      const { lat, lon, tz } = await resolveCoords(locationData);
       return fetchWeatherForMonth(year, month, lat, lon, tz);
     },
     staleTime: 1000 * 60 * 60,
     retry: 1,
+  });
+}
+
+// ── Хук: детальная погода на день ────────────────────────────
+export function useDayWeather(date: string, locationData?: LocationData) {
+  const locKey = locationData?.lat != null
+    ? `${locationData.lat},${locationData.lon}`
+    : (locationData?.name ?? '');
+
+  return useQuery({
+    queryKey: ['weather', 'day', date, locKey],
+    queryFn: async () => {
+      const { lat, lon, tz } = await resolveCoords(locationData);
+      return fetchDayWeatherData(date, lat, lon, tz);
+    },
+    staleTime: 1000 * 60 * 30,
+    retry: 1,
+    enabled: !!date,
+  });
+}
+
+// ── Хук: текущая погода ───────────────────────────────────────
+export function useCurrentWeather(locationData?: LocationData) {
+  const locKey = locationData?.lat != null
+    ? `${locationData.lat},${locationData.lon}`
+    : (locationData?.name ?? '');
+
+  return useQuery({
+    queryKey: ['weather', 'current', locKey],
+    queryFn: async () => {
+      const { lat, lon, tz } = await resolveCoords(locationData);
+      return fetchCurrentWeatherData(lat, lon, tz);
+    },
+    staleTime: 1000 * 60 * 10,
+    retry: 1,
+    refetchInterval: 1000 * 60 * 15,
   });
 }

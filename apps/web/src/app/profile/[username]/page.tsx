@@ -101,7 +101,10 @@ export default function ProfilePage({
 
       {profile && (
         <div className={styles.body}>
-          <div className={styles.banner} />
+          <div
+            className={styles.banner}
+            style={profile.coverUrl ? { backgroundImage: `url(${profile.coverUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+          />
 
           <div className={styles.content}>
             <div className={styles.avatarWrap}>

@@ -51,9 +51,10 @@ export class TasksService {
       repeat:      dto.repeat       ?? 'none',
       repeatUntil: dto.repeatUntil  ?? null,
       type:        dto.type         ?? 'normal',
-      icon:        null,
+      icon:        dto.icon         ?? null,
       endTime:     dto.endTime      ?? null,
       endDate:     dto.endDate      ?? null,
+      subtasks:    dto.subtasks     ?? null,
       tags,
     });
     const saved = await this.taskRepo.save(task);
@@ -87,6 +88,8 @@ export class TasksService {
         ? await this.tagsService.findByIds(userId, dto.tagIds)
         : [];
     }
+    if (dto.icon     !== undefined) task.icon     = dto.icon     ?? null;
+    if (dto.subtasks !== undefined) task.subtasks = dto.subtasks ?? null;
 
     return this.taskRepo.save(task);
   }

@@ -66,6 +66,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const fileInputRef   = useRef<HTMLInputElement>(null);
+  const coverInputRef  = useRef<HTMLInputElement>(null);
   const locationWrapRef = useRef<HTMLDivElement>(null);
   const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -111,6 +112,12 @@ export default function SettingsPage() {
     mutationFn: profileApi.uploadAvatar,
     onSuccess: (updated: User) => { setUser(updated); setError(''); },
     onError: () => setError('Не удалось загрузить фото'),
+  });
+
+  const coverMut = useMutation({
+    mutationFn: profileApi.uploadCover,
+    onSuccess: (updated: User) => { setUser(updated); setError(''); },
+    onError: () => setError('Не удалось загрузить баннер'),
   });
 
   const profileMut = useMutation({
@@ -206,6 +213,12 @@ export default function SettingsPage() {
     e.target.value = '';
   };
 
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) coverMut.mutate(file);
+    e.target.value = '';
+  };
+
   // ── Сохранение формы ──────────────────────────────────────
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,7 +254,7 @@ export default function SettingsPage() {
   if (!ready || !user) return null;
 
   const initial_ = (user.displayName || user.username || '?')[0].toUpperCase();
-  const loading  = avatarMut.isPending || profileMut.isPending;
+  const loading  = avatarMut.isPending || profileMut.isPending || coverMut.isPending;
 
   return (
     <div className={styles.root}>
@@ -266,6 +279,33 @@ export default function SettingsPage() {
             <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/gif"
               className={styles.fileInput} onChange={handleFileChange} />
             <div className={styles.avatarHint}>PNG, JPG или GIF · до 5 МБ</div>
+          </div>
+
+          {/* Баннер */}
+          <div className={styles.coverSection}>
+            <span className={styles.label}>Баннер профиля</span>
+            <button
+              className={styles.coverBtn}
+              onClick={() => coverInputRef.current?.click()}
+              disabled={coverMut.isPending}
+              title="Нажмите для загрузки баннера"
+              type="button"
+            >
+              {user.coverUrl
+                ? <img src={user.coverUrl} alt="banner" className={styles.coverImg} />
+                : <span className={styles.coverPlaceholder}>
+                    {coverMut.isPending ? 'Загрузка...' : '+ Загрузить баннер'}
+                  </span>
+              }
+              {user.coverUrl && (
+                <span className={styles.coverOverlay}>
+                  {coverMut.isPending ? '...' : '🖼 Изменить'}
+                </span>
+              )}
+            </button>
+            <input ref={coverInputRef} type="file" accept="image/png,image/jpeg,image/gif"
+              className={styles.fileInput} onChange={handleCoverChange} />
+            <div className={styles.avatarHint}>PNG, JPG или GIF · до 8 МБ · рекомендуется 1500×500</div>
           </div>
 
           {/* Форма */}
