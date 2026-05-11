@@ -1,5 +1,6 @@
 import { api } from './api';
 import type { Tag } from './tags';
+import type { AchievementResult } from './achievements';
 
 export type { Tag };
 
@@ -118,8 +119,8 @@ export const tasksApi = {
   getCompletions: (): Promise<string[]> =>
     api.get<string[]>('/tasks/completions').then(r => r.data),
 
-  create: (p: Payload): Promise<Task> =>
-    api.post<ApiTask>('/tasks', {
+  create: (p: Payload): Promise<{ task: Task; newAchievements: AchievementResult[] }> =>
+    api.post<ApiTask & { newAchievements?: AchievementResult[] }>('/tasks', {
       title:       p.title,
       description: p.description ?? null,
       date:        p.date,
@@ -130,7 +131,7 @@ export const tasksApi = {
       repeatUntil: p.repeatUntil ?? null,
       type:        p.type,
       tagIds:      p.tags?.map(t => t.id) ?? [],
-    }).then(r => fromApi(r.data)),
+    }).then(r => ({ task: fromApi(r.data), newAchievements: r.data.newAchievements ?? [] })),
 
   update: (id: string, p: Payload): Promise<Task> =>
     api.patch<ApiTask>(`/tasks/${id}`, {
@@ -149,6 +150,6 @@ export const tasksApi = {
   delete: (id: string): Promise<void> =>
     api.delete(`/tasks/${id}`).then(() => undefined),
 
-  toggleCompletion: (taskId: string, date: string): Promise<{ done: boolean }> =>
+  toggleCompletion: (taskId: string, date: string): Promise<{ done: boolean; newAchievements: AchievementResult[] }> =>
     api.post(`/tasks/${taskId}/complete/${date}`).then(r => r.data),
 };

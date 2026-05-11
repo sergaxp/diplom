@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { authApi, hasToken, clearAuth } from '../lib/auth';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../lib/api';
+import { AchievementToast } from '../components/AchievementToast';
 
 const PING_INTERVAL = 2 * 60 * 1000; // 2 минуты
 
@@ -50,6 +51,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <AuthInitializer />
       {children}
+      <AchievementToast />
     </QueryClientProvider>
   );
 }

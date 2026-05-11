@@ -9,12 +9,14 @@ import { TaskList } from '../../components/manager/TaskList';
 import { Task, tasksApi, completionKey, toDateStr } from '../../lib/tasks';
 import { tagsApi } from '../../lib/tags';
 import { useAuthStore } from '../../store/authStore';
+import { useAchievementStore } from '../../store/achievementStore';
 import styles from './page.module.scss';
 
 export default function ManagerPage() {
   const { user, ready } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
+  const pushAchievement = useAchievementStore(s => s.push);
 
   const [selectedDate, setSelectedDate] = useState(() => {
     const d = new Date(); d.setHours(0, 0, 0, 0); return d;
@@ -65,6 +67,13 @@ export default function ManagerPage() {
       qc.setQueryData<Task[]>(['tasks'], old => [...(old ?? []), optimistic]);
       return { prev };
     },
+    onSuccess: ({ newAchievements }) => {
+      newAchievements.forEach(pushAchievement);
+      if (newAchievements.length > 0) {
+        qc.invalidateQueries({ queryKey: ['achievements'] });
+        if (user) qc.invalidateQueries({ queryKey: ['profile', user.username] });
+      }
+    },
     onError: (_, __, ctx) => qc.setQueryData(['tasks'], ctx?.prev),
     onSettled: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
   });
@@ -109,6 +118,13 @@ export default function ManagerPage() {
         return [...set];
       });
       return { prev };
+    },
+    onSuccess: ({ newAchievements }) => {
+      newAchievements.forEach(pushAchievement);
+      if (newAchievements.length > 0) {
+        qc.invalidateQueries({ queryKey: ['achievements'] });
+        if (user) qc.invalidateQueries({ queryKey: ['profile', user.username] });
+      }
     },
     onError: (_, __, ctx) => qc.setQueryData(['completions'], ctx?.prev),
     onSettled: () => qc.invalidateQueries({ queryKey: ['completions'] }),

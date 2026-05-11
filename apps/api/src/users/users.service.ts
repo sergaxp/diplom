@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { AchievementsService } from '../achievements/achievements.service';
 
 @Injectable()
 export class UsersService {
@@ -19,6 +20,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    private readonly achievementsService: AchievementsService,
   ) {}
 
   // ── Создание пользователя ──────────────────────────────────
@@ -101,7 +103,14 @@ export class UsersService {
       Object.entries(updateUserDto).filter(([, v]) => v !== undefined),
     );
     Object.assign(user, patch);
-    return this.usersRepository.save(user);
+    const saved = await this.usersRepository.save(user);
+    await this.achievementsService.checkAndUnlock(saved.id, {
+      type:        'profile_updated',
+      displayName: saved.displayName,
+      avatarUrl:   saved.avatarUrl,
+      bio:         saved.bio,
+    });
+    return saved;
   }
 
   // ── Обновить аватар ────────────────────────────────────────
@@ -109,7 +118,14 @@ export class UsersService {
     const user = await this.findById(id);
     if (!user) throw new BadRequestException('Пользователь не найден');
     user.avatarUrl = avatarUrl;
-    return this.usersRepository.save(user);
+    const saved = await this.usersRepository.save(user);
+    await this.achievementsService.checkAndUnlock(saved.id, {
+      type:        'profile_updated',
+      displayName: saved.displayName,
+      avatarUrl:   saved.avatarUrl,
+      bio:         saved.bio,
+    });
+    return saved;
   }
 
   // ── Обновить lastSeenAt ────────────────────────────────────
@@ -130,20 +146,12 @@ export class UsersService {
   }
 
   // ── Публичный профиль ──────────────────────────────────────
-  async getPublicProfile(username: string): Promise<Partial<User>> {
+  async getPublicProfile(username: string): Promise<Partial<User> & { level: number }> {
     const user = await this.usersRepository.findOne({
       where: { username, isActive: true },
-      select: [
-        'id',
-        'username',
-        'displayName',
-        'avatarUrl',
-        'coverUrl',
-        'bio',
-        'createdAt',
-      ],
+      select: ['id', 'username', 'displayName', 'avatarUrl', 'coverUrl', 'bio', 'createdAt', 'xp'],
     });
     if (!user) throw new NotFoundException('Пользователь не найден');
-    return user;
+    return { ...user, level: Math.floor((user.xp ?? 0) / 1000) };
   }
 }

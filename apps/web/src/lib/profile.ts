@@ -11,6 +11,8 @@ export interface PublicProfile {
   coverUrl: string | null;
   bio: string | null;
   createdAt: string;
+  xp: number;
+  level: number;
 }
 
 export interface UpdateProfilePayload {

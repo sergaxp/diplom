@@ -110,3 +110,190 @@
 
   &:hover { background: var(--surface, #1e1e2e); }
 }
+
+// ── Level badge & XP bar ──────────────────────────────────────
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.levelBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: #312e81;
+  color: #c7d2fe;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  flex-shrink: 0;
+}
+
+.xpWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.xpBar {
+  flex: 1;
+  max-width: 240px;
+  height: 6px;
+  background: rgba(255, 255, 255, .1);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.xpFill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+  border-radius: 99px;
+  transition: width .4s ease;
+  min-width: 2px;
+}
+
+.xpLabel {
+  font-size: .75rem;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+}
+
+// ── Achievements section ──────────────────────────────────────
+.achSection {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.achHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.achTitle2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.achCount {
+  font-size: .8125rem;
+  color: var(--text-muted, #888);
+}
+
+.achGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.achGroupLabel {
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.achGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+}
+
+// ── Achievement card ──────────────────────────────────────────
+.achCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid;
+  position: relative;
+  transition: opacity .15s;
+
+  // CSS tooltip
+  &[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111827;
+    color: #f9fafb;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    padding: 5px 9px;
+    border-radius: 6px;
+    white-space: normal;
+    max-width: 180px;
+    text-align: center;
+    z-index: 200;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,.35);
+    word-break: break-word;
+  }
+}
+
+.achCardUnlocked {
+  border-color: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+}
+
+.achCardLocked {
+  border-color: rgba(255,255,255,.06);
+  background: transparent;
+  opacity: .45;
+}
+
+.achIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.06);
+  color: var(--text-muted, #888);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.achSecretGlyph {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-muted, #888);
+}
+
+.achBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.achTitle {
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.achRank {
+  font-size: .7rem;
+  color: var(--text-muted, #888);
+}
+
+.achCheck {
+  font-size: .75rem;
+  color: #4ade80;
+  font-weight: 700;
+  flex-shrink: 0;
+}

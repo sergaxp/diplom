@@ -7,6 +7,7 @@ import { GlobalTask } from './entities/global-task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TagsService } from '../tags/tags.service';
+import { AchievementsService, AchievementDef } from '../achievements/achievements.service';
 
 @Injectable()
 export class TasksService {
@@ -18,6 +19,7 @@ export class TasksService {
     @InjectRepository(GlobalTask)
     private readonly globalTaskRepo: Repository<GlobalTask>,
     private readonly tagsService: TagsService,
+    private readonly achievementsService: AchievementsService,
   ) {}
 
   findGlobalTasks(): Promise<GlobalTask[]> {
@@ -32,7 +34,10 @@ export class TasksService {
     });
   }
 
-  async create(userId: string, dto: CreateTaskDto): Promise<Task> {
+  async create(
+    userId: string,
+    dto: CreateTaskDto,
+  ): Promise<{ task: Task; newAchievements: AchievementDef[] }> {
     const tags = dto.tagIds?.length
       ? await this.tagsService.findByIds(userId, dto.tagIds)
       : [];
@@ -51,7 +56,16 @@ export class TasksService {
       endDate:     dto.endDate      ?? null,
       tags,
     });
-    return this.taskRepo.save(task);
+    const saved = await this.taskRepo.save(task);
+
+    const newAchievements = await this.achievementsService.checkAndUnlock(userId, {
+      type:       'task_created',
+      taskRepeat: saved.repeat,
+      taskType:   saved.type,
+      hasEndDate: !!saved.endDate,
+    });
+
+    return { task: saved, newAchievements };
   }
 
   async update(userId: string, id: string, dto: UpdateTaskDto): Promise<Task> {
@@ -88,18 +102,29 @@ export class TasksService {
     userId: string,
     taskId: string,
     date: string,
-  ): Promise<{ done: boolean }> {
+  ): Promise<{ done: boolean; newAchievements: AchievementDef[] }> {
     const existing = await this.completionRepo.findOne({
       where: { taskId, userId, date },
     });
+
     if (existing) {
       await this.completionRepo.remove(existing);
-      return { done: false };
+      return { done: false, newAchievements: [] };
     }
+
     await this.completionRepo.save(
       this.completionRepo.create({ taskId, userId, date }),
     );
-    return { done: true };
+
+    // Загружаем задачу для контекста достижений
+    const task = await this.taskRepo.findOne({ where: { id: taskId } });
+    const newAchievements = await this.achievementsService.checkAndUnlock(userId, {
+      type:     'task_completed',
+      taskTime: task?.time ?? null,
+      taskType: task?.type ?? 'normal',
+    });
+
+    return { done: true, newAchievements };
   }
 
   async getCompletionKeys(userId: string): Promise<string[]> {

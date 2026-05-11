@@ -8,11 +8,13 @@ import { AuthModule } from './auth/auth.module';
 import { TasksModule } from './tasks/tasks.module';
 import { AdminModule } from './admin/admin.module';
 import { TagsModule } from './tags/tags.module';
+import { AchievementsModule } from './achievements/achievements.module';
 import { User } from './users/entities/user.entity';
 import { Task } from './tasks/entities/task.entity';
 import { TaskCompletion } from './tasks/entities/task-completion.entity';
 import { GlobalTask } from './tasks/entities/global-task.entity';
 import { Tag } from './tags/entities/tag.entity';
+import { UserAchievement } from './achievements/entities/user-achievement.entity';
 
 @Module({
   imports: [
@@ -29,7 +31,7 @@ import { Tag } from './tags/entities/tag.entity';
       username: process.env.DATABASE_USER ?? 'sergey',
       password: process.env.DATABASE_PASSWORD ?? '',
       database: process.env.DATABASE_NAME ?? 'warmingtea_dev',
-      entities: [User, Task, TaskCompletion, GlobalTask, Tag],
+      entities: [User, Task, TaskCompletion, GlobalTask, Tag, UserAchievement],
       synchronize: true, // ⚠️ ТОЛЬКО в DEV! В продакшене — миграции
       logging: process.env.NODE_ENV === 'development',
     }),
@@ -40,6 +42,7 @@ import { Tag } from './tags/entities/tag.entity';
     TasksModule,
     AdminModule,
     TagsModule,
+    AchievementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

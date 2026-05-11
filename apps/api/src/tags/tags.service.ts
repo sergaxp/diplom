@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tag } from './entities/tag.entity';
 import { CreateTagDto } from './dto/create-tag.dto';
+import { AchievementsService } from '../achievements/achievements.service';
 
 const DEFAULT_TAGS = [
   { name: 'Работа',  icon: 'Briefcase', color: '#4F46E5' },
@@ -15,6 +16,7 @@ export class TagsService {
   constructor(
     @InjectRepository(Tag)
     private readonly tagRepo: Repository<Tag>,
+    private readonly achievementsService: AchievementsService,
   ) {}
 
   async findAll(userId: string): Promise<Tag[]> {
@@ -34,7 +36,9 @@ export class TagsService {
       icon:  dto.icon  ?? null,
       color: dto.color ?? '#6b7280',
     });
-    return this.tagRepo.save(tag);
+    const saved = await this.tagRepo.save(tag);
+    await this.achievementsService.checkAndUnlock(userId, { type: 'tag_created' });
+    return saved;
   }
 
   async update(userId: string, id: string, dto: CreateTagDto): Promise<Tag> {

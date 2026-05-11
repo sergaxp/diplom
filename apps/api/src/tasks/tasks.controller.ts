@@ -30,11 +30,12 @@ export class TasksController {
   }
 
   @Post()
-  create(
+  async create(
     @Request() req: { user: { id: string } },
     @Body() dto: CreateTaskDto,
   ) {
-    return this.tasksService.create(req.user.id, dto);
+    const { task, newAchievements } = await this.tasksService.create(req.user.id, dto);
+    return { ...task, newAchievements };
   }
 
   @Patch(':id')
