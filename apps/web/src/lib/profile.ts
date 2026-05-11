@@ -20,6 +20,7 @@ export interface UpdateProfilePayload {
   location?: string;
   locationLat?: number;
   locationLon?: number;
+  showGlobalEvents?: boolean;
 }
 
 export const profileApi = {

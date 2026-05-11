@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Header } from '../../components/Header';
 import { useAuthStore } from '../../store/authStore';
 import { profileApi, UpdateProfilePayload } from '../../lib/profile';
 import { reverseGeocode } from '../../lib/weather';
 import { User } from '../../lib/auth';
+import { tagsApi } from '../../lib/tags';
+import { TagManager } from '../../components/manager/TagManager';
 import styles from './page.module.scss';
 
 // ── Тип подсказки геокодинга ──────────────────────────────────
@@ -23,22 +25,24 @@ interface GeoSuggestion {
 
 // ── Состояние формы ───────────────────────────────────────────
 interface FormValues {
-  displayName: string;
-  username:    string;
-  bio:         string;
-  location:    string;
-  locationLat: number | null;
-  locationLon: number | null;
+  displayName:      string;
+  username:         string;
+  bio:              string;
+  location:         string;
+  locationLat:      number | null;
+  locationLon:      number | null;
+  showGlobalEvents: boolean;
 }
 
 function fromUser(user: User): FormValues {
   return {
-    displayName: user.displayName  ?? '',
-    username:    user.username     ?? '',
-    bio:         user.bio          ?? '',
-    location:    user.location     ?? '',
-    locationLat: user.locationLat  ?? null,
-    locationLon: user.locationLon  ?? null,
+    displayName:      user.displayName      ?? '',
+    username:         user.username         ?? '',
+    bio:              user.bio              ?? '',
+    location:         user.location         ?? '',
+    locationLat:      user.locationLat      ?? null,
+    locationLon:      user.locationLon      ?? null,
+    showGlobalEvents: user.showGlobalEvents ?? true,
   };
 }
 
@@ -60,11 +64,12 @@ async function fetchGeoSuggestions(query: string): Promise<GeoSuggestion[]> {
 export default function SettingsPage() {
   const { user, ready, setUser } = useAuthStore();
   const router = useRouter();
+  const qc = useQueryClient();
   const fileInputRef   = useRef<HTMLInputElement>(null);
   const locationWrapRef = useRef<HTMLDivElement>(null);
   const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const emptyForm: FormValues = { displayName: '', username: '', bio: '', location: '', locationLat: null, locationLon: null };
+  const emptyForm: FormValues = { displayName: '', username: '', bio: '', location: '', locationLat: null, locationLon: null, showGlobalEvents: true };
 
   const [form,        setForm]        = useState<FormValues>(emptyForm);
   const [initial,     setInitial]     = useState<FormValues>(emptyForm);
@@ -122,6 +127,28 @@ export default function SettingsPage() {
     onError: (err: { response?: { data?: { message?: string } } }) => {
       setError(err?.response?.data?.message ?? 'Не удалось сохранить');
     },
+  });
+
+  // ── Теги ─────────────────────────────────────────────────────
+  const { data: userTags = [] } = useQuery({
+    queryKey: ['tags'],
+    queryFn: tagsApi.getAll,
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  const createTagMut = useMutation({
+    mutationFn: tagsApi.create,
+    onSettled: () => qc.invalidateQueries({ queryKey: ['tags'] }),
+  });
+  const deleteTagMut = useMutation({
+    mutationFn: tagsApi.remove,
+    onSettled: () => qc.invalidateQueries({ queryKey: ['tags'] }),
+  });
+  const updateTagMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof tagsApi.update>[1] }) =>
+      tagsApi.update(id, data),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['tags'] }),
   });
 
   // ── Локация: ввод с дебаунсом ─────────────────────────────
@@ -202,6 +229,8 @@ export default function SettingsPage() {
       payload.locationLat = form.locationLat        ?? undefined;
       payload.locationLon = form.locationLon        ?? undefined;
     }
+    if (form.showGlobalEvents !== initial.showGlobalEvents)
+      payload.showGlobalEvents = form.showGlobalEvents;
 
     if (Object.keys(payload).length === 0) {
       setSaved(true); setTimeout(() => setSaved(false), 2000); return;
@@ -318,6 +347,20 @@ export default function SettingsPage() {
               </span>
             </div>
 
+            {/* Менеджер задач */}
+            <div className={styles.field}>
+              <span className={styles.label}>Менеджер задач</span>
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  className={styles.checkbox}
+                  checked={form.showGlobalEvents}
+                  onChange={e => setForm(f => ({ ...f, showGlobalEvents: e.target.checked }))}
+                />
+                <span className={styles.checkboxLabel}>Показывать глобальные события администратора</span>
+              </label>
+            </div>
+
             {error && <div className={styles.error}>{error}</div>}
             {saved  && <div className={styles.success}>Сохранено</div>}
 
@@ -325,6 +368,19 @@ export default function SettingsPage() {
               {loading ? 'Сохранение...' : 'Сохранить'}
             </button>
           </form>
+
+          {/* ── Теги ── */}
+          <div className={styles.tagsSection}>
+            <h2 className={styles.tagsSectionTitle}>Теги задач</h2>
+            <p className={styles.tagsSectionDesc}>Теги помогают группировать задачи. Иконка тега отображается в календаре вместо точки.</p>
+            <TagManager
+              tags={userTags}
+              alwaysOpen
+              onCreate={d => createTagMut.mutate(d)}
+              onDelete={id => deleteTagMut.mutate(id)}
+              onUpdate={(id, d) => updateTagMut.mutate({ id, data: d })}
+            />
+          </div>
         </div>
       </div>
     </div>

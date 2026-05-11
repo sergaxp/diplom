@@ -7,6 +7,7 @@ import { Header } from '../../components/Header';
 import { ManagerCalendar } from '../../components/manager/Calendar';
 import { TaskList } from '../../components/manager/TaskList';
 import { Task, tasksApi, completionKey, toDateStr } from '../../lib/tasks';
+import { tagsApi } from '../../lib/tags';
 import { useAuthStore } from '../../store/authStore';
 import styles from './page.module.scss';
 
@@ -28,6 +29,18 @@ export default function ManagerPage() {
     queryFn: tasksApi.getAll,
     enabled: !!user,
   });
+
+  const { data: globalEvents = [] } = useQuery({
+    queryKey: ['tasks', 'events'],
+    queryFn: tasksApi.getGlobalEvents,
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const allTasks = useMemo(
+    () => (user?.showGlobalEvents !== false ? [...tasks, ...globalEvents] : tasks),
+    [tasks, globalEvents, user?.showGlobalEvents],
+  );
 
   const { data: completionKeys = [] } = useQuery({
     queryKey: ['completions'],
@@ -101,6 +114,14 @@ export default function ManagerPage() {
     onSettled: () => qc.invalidateQueries({ queryKey: ['completions'] }),
   });
 
+  // ── Tags ──────────────────────────────────────────────────────
+  const { data: userTags = [] } = useQuery({
+    queryKey: ['tags'],
+    queryFn: tagsApi.getAll,
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
   // ── Handlers ──────────────────────────────────────────────────
   const handleToggle   = (taskId: string, dateStr: string) =>
     toggleMut.mutate({ taskId, date: dateStr });
@@ -115,9 +136,16 @@ export default function ManagerPage() {
   const handlePostpone = (id: string, days: number) => {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
-    const d = new Date(task.date + 'T00:00:00');
-    d.setDate(d.getDate() + days);
-    updateMut.mutate({ id, data: { ...task, date: toDateStr(d) } });
+    const shiftDate = (s: string) => {
+      const d = new Date(s + 'T00:00:00');
+      d.setDate(d.getDate() + days);
+      return toDateStr(d);
+    };
+    updateMut.mutate({ id, data: {
+      ...task,
+      date:    shiftDate(task.date),
+      endDate: task.endDate ? shiftDate(task.endDate) : undefined,
+    }});
   };
 
   const goToToday = () => {
@@ -142,9 +170,10 @@ export default function ManagerPage() {
         <div className={styles.left}>
           <TaskList
             selectedDate={selectedDate}
-            tasks={tasks}
+            tasks={allTasks}
             completions={completions}
             isAdmin={user.role === 'admin'}
+            userTags={userTags}
             onToggle={handleToggle}
             onDelete={handleDelete}
             onAdd={handleAdd}
@@ -157,7 +186,7 @@ export default function ManagerPage() {
           <ManagerCalendar
             selectedDate={selectedDate}
             onSelect={setSelectedDate}
-            tasks={tasks}
+            tasks={allTasks}
           />
         </div>
       </div>

@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import * as LucideIcons from 'lucide-react';
 import { Task, toDateStr, getTasksForDate } from '../../lib/tasks';
+
+type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number; color?: string }>;
+const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 import { useMonthWeather } from '../../lib/weather';
 import { useAuthStore } from '../../store/authStore';
 import styles from './Calendar.module.scss';
@@ -20,10 +24,93 @@ const PERIOD_LABELS: Record<ChartPeriod, string> = {
   week: 'Нед', month: 'Мес', quarter: 'Кв', year: 'Год',
 };
 
-const HOURS  = Array.from({ length: 17 }, (_, i) => i + 7);
-const HOUR_H = 52;
+const HOURS         = Array.from({ length: 17 }, (_, i) => i + 7); // 7–23
+const HOUR_H        = 52;
+const TASK_H        = Math.max(Math.round(HOUR_H * 0.65), 30);      // ~34px
+const TASK_MINS     = Math.ceil((TASK_H / HOUR_H) * 60);             // ~40 мин — окно перекрытия
+const ALLDAY_TASK_H = 22;
+const ALLDAY_GAP    = 3;
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
+
+// ── Вспомогательные функции ───────────────────────────────────
+
+/** Высота блока задачи в пикселях исходя из длительности */
+function taskBlockHeight(t: Task): number {
+  if (!t.time) return ALLDAY_TASK_H;
+  if (t.endTime) {
+    const [sh, sm] = t.time.split(':').map(Number);
+    const [eh, em] = t.endTime.split(':').map(Number);
+    const dur = (eh * 60 + em) - (sh * 60 + sm);
+    if (dur > 0) return Math.max(dur / 60 * HOUR_H, 24);
+  }
+  return TASK_H;
+}
+
+/** Активна ли задача на данной дате (учитывает endDate и repeat) */
+function taskActiveOn(t: Task, dateStr: string): boolean {
+  if (t.endDate) return t.date <= dateStr && t.endDate >= dateStr;
+  if (t.date === dateStr) return true;
+  if (t.date < dateStr && t.repeat !== 'none') {
+    if (t.repeatUntil && dateStr > t.repeatUntil) return false;
+    const td = new Date(t.date + 'T00:00:00');
+    const d  = new Date(dateStr  + 'T00:00:00');
+    switch (t.repeat) {
+      case 'daily':   return true;
+      case 'weekly':  return td.getDay() === d.getDay();
+      case 'monthly': return td.getDate() === d.getDate();
+      case 'yearly':  return td.getDate() === d.getDate() && td.getMonth() === d.getMonth();
+    }
+  }
+  return false;
+}
+
+// ── Раскладка перекрывающихся задач по колонкам ───────────────
+function computeLayout(tasks: Task[]): Map<string, { col: number; totalCols: number }> {
+  const map = new Map<string, { col: number; totalCols: number }>();
+
+  const items = tasks
+    .filter(t => t.time)
+    .map(t => {
+      const [h, m] = t.time!.split(':').map(Number);
+      return { id: t.id, start: h * 60 + m, col: 0 };
+    })
+    .sort((a, b) => a.start - b.start);
+
+  const endOf = (it: { start: number }) => it.start + TASK_MINS;
+
+  // Проход 1: жадное назначение колонок
+  for (let i = 0; i < items.length; i++) {
+    const prev = items.slice(0, i).filter(j => endOf(j) > items[i].start);
+    const used = new Set(prev.map(j => j.col));
+    let col = 0;
+    while (used.has(col)) col++;
+    items[i].col = col;
+    map.set(items[i].id, { col, totalCols: 1 });
+  }
+
+  // Проход 2: totalCols для кластеров (BFS связных компонент)
+  const visited = new Uint8Array(items.length);
+  for (let i = 0; i < items.length; i++) {
+    if (visited[i]) continue;
+    const cluster: number[] = [];
+    const queue = [i];
+    while (queue.length) {
+      const cur = queue.pop()!;
+      if (visited[cur]) continue;
+      visited[cur] = 1;
+      cluster.push(cur);
+      for (let j = 0; j < items.length; j++) {
+        if (!visited[j] && items[cur].start < endOf(items[j]) && items[j].start < endOf(items[cur]))
+          queue.push(j);
+      }
+    }
+    const totalCols = Math.max(...cluster.map(j => items[j].col)) + 1;
+    cluster.forEach(j => { map.get(items[j].id)!.totalCols = totalCols; });
+  }
+
+  return map;
+}
 
 function getWeekDays(date: Date): Date[] {
   const s = new Date(date); s.setHours(0,0,0,0);
@@ -299,48 +386,127 @@ function ChartView({ selectedDate, tasks, onSelect }: ChartProps) {
               );
             })}
           </div>
-          <div className={styles.chartBody}>
-            <div className={styles.chartGutter}>
-              {HOURS.map(h => (
-                <div key={h} className={styles.chartHourLabel} style={{ height: HOUR_H }}>
-                  {pad(h)}:00
+          {(() => {
+            const maxAllDay = Math.max(0, ...weekDays.map(d =>
+              getTasksForDate(tasks, d).filter(t => !t.time).length,
+            ));
+            const alldaySectH = maxAllDay > 0
+              ? 14 + maxAllDay * (ALLDAY_TASK_H + ALLDAY_GAP) + 8
+              : 0;
+            const colH    = HOURS.length * HOUR_H + alldaySectH;
+            const alldayY = HOURS.length * HOUR_H + 10;
+
+            return (
+              <div className={styles.chartBody}>
+                <div className={styles.chartGutter}>
+                  {HOURS.map(h => (
+                    <div key={h} className={styles.chartHourLabel} style={{ height: HOUR_H }}>
+                      {pad(h)}:00
+                    </div>
+                  ))}
+                  {alldaySectH > 0 && (
+                    <div className={styles.alldayGutterLabel} style={{ height: alldaySectH }}>
+                      без<br />вр.
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-            <div className={styles.chartCols}>
-              {weekDays.map(d => {
-                const ds     = toDateStr(d);
-                const timed  = getTasksForDate(tasks, d).filter(t => t.time);
-                const allDay = getTasksForDate(tasks, d).filter(t => !t.time);
-                return (
-                  <div key={ds}
-                    className={[styles.chartCol, ds === todStr ? styles.chartColToday : ''].join(' ')}
-                    style={{ height: HOURS.length * HOUR_H }}
-                  >
-                    {HOURS.map(h => <div key={h} className={styles.chartHourLine} style={{ top: (h-7)*HOUR_H, height: HOUR_H }} />)}
-                    {ds === todStr && showNow && <div className={styles.nowLine} style={{ top: nowTop }} />}
-                    {allDay.length > 0 && (
-                      <div className={styles.allDayBadge} title={allDay.map(t=>t.title).join(', ')}>+{allDay.length}</div>
-                    )}
-                    {timed.map(t => {
-                      const [h, m] = t.time!.split(':').map(Number);
-                      if (h < 7 || h >= 23) return null;
-                      return (
-                        <div key={t.id}
-                          className={[styles.chartTask, TYPE_CLS[t.type] ?? styles.chartTaskNormal].join(' ')}
-                          style={{ top: (h-7+m/60)*HOUR_H, height: Math.max(HOUR_H*0.65, 30) }}
-                          title={`${t.time} ${t.title}`}
-                        >
-                          <span className={styles.chartTaskTime}>{t.time}</span>
-                          <span className={styles.chartTaskTitle}>{t.title}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                <div className={styles.chartCols}>
+                  {weekDays.map((d, dayIdx) => {
+                    const ds       = toDateStr(d);
+                    const dayTasks = getTasksForDate(tasks, d);
+                    const timed    = dayTasks.filter(t => t.time);
+                    const allDay   = dayTasks.filter(t => !t.time);
+                    const layout   = computeLayout(timed);
+                    return (
+                      <div key={ds}
+                        className={[styles.chartCol, ds === todStr ? styles.chartColToday : ''].join(' ')}
+                        style={{ height: colH }}
+                      >
+                        {HOURS.map(h => (
+                          <div key={h} className={styles.chartHourLine} style={{ top: (h - 7) * HOUR_H, height: HOUR_H }} />
+                        ))}
+
+                        {/* Разделитель «без времени» */}
+                        {alldaySectH > 0 && (
+                          <div className={styles.alldayDivider} style={{ top: alldayY - 10 }} />
+                        )}
+
+                        {ds === todStr && showNow && (
+                          <div className={styles.nowLine} style={{ top: nowTop }} />
+                        )}
+
+                        {/* Задачи со временем — с раскладкой колонок */}
+                        {timed.map(t => {
+                          const [h, m] = t.time!.split(':').map(Number);
+                          if (h < 7) return null;
+
+                          const height = taskBlockHeight(t);
+
+                          // Полоса: многодневные и ежедневно-повторяющиеся
+                          const isStripe = !!t.endDate || t.repeat === 'daily';
+                          const prevDs   = dayIdx > 0 ? toDateStr(weekDays[dayIdx - 1]) : null;
+                          const nextDs   = dayIdx < 6 ? toDateStr(weekDays[dayIdx + 1]) : null;
+                          const connL    = isStripe && !!prevDs && taskActiveOn(t, prevDs);
+                          const connR    = isStripe && !!nextDs && taskActiveOn(t, nextDs);
+
+                          const { col, totalCols } = isStripe
+                            ? { col: 0, totalCols: 1 }
+                            : (layout.get(t.id) ?? { col: 0, totalCols: 1 });
+                          const pct = 100 / totalCols;
+
+                          const timeLabel = t.endTime ? `${t.time}–${t.endTime}` : t.time!;
+
+                          return (
+                            <div key={t.id}
+                              className={[
+                                styles.chartTask,
+                                TYPE_CLS[t.type] ?? styles.chartTaskNormal,
+                                isStripe ? styles.chartTaskStripe : '',
+                              ].join(' ')}
+                              style={{
+                                top:                  (h - 7 + m / 60) * HOUR_H,
+                                height,
+                                left:   connL ? -1    : `calc(2px + ${col * pct}%)`,
+                                width:  connL && connR ? 'calc(100% + 2px)'
+                                       : connL         ? `calc(${pct}% - 1px)`
+                                       : connR         ? `calc(${pct}% - 3px)`
+                                       :                 `calc(${pct}% - 4px)`,
+                                right:  'auto',
+                                borderTopLeftRadius:    connL ? 0 : 3,
+                                borderBottomLeftRadius: connL ? 0 : 3,
+                                borderTopRightRadius:   connR ? 0 : 3,
+                                borderBottomRightRadius:connR ? 0 : 3,
+                              }}
+                              title={`${timeLabel} ${t.title}`}
+                            >
+                              <span className={styles.chartTaskTime}>{timeLabel}</span>
+                              <span className={styles.chartTaskTitle}>{t.title}</span>
+                            </div>
+                          );
+                        })}
+
+                        {/* Задачи без времени — под 23:59 */}
+                        {allDay.map((t, idx) => (
+                          <div key={t.id}
+                            className={[styles.chartTask, styles.chartTaskAllDay, TYPE_CLS[t.type] ?? styles.chartTaskNormal].join(' ')}
+                            style={{
+                              top:    alldayY + idx * (ALLDAY_TASK_H + ALLDAY_GAP),
+                              height: ALLDAY_TASK_H,
+                              left:   2,
+                              right:  2,
+                            }}
+                            title={t.title}
+                          >
+                            <span className={styles.chartTaskTitle}>{t.title}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </>
       )}
 
@@ -396,12 +562,31 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
     const d = new Date(viewYear, viewMonth, day); d.setHours(0,0,0,0); onSelect(d);
   };
 
-  const renderDots = (count: number) =>
-    Array.from({ length: Math.min(count, 6) }, (_, i) =>
-      i===5 && count>6
-        ? <span key={i} className={styles.dotPlus}>+</span>
-        : <span key={i} className={styles.dot} />
+  const renderTagIcons = (dayTasks: Task[]) => {
+    // Собираем уникальные теги дня (первый тег каждой задачи)
+    const seen = new Set<string>();
+    const tagItems: Array<{ id: string; icon: string | null; color: string }> = [];
+    for (const t of dayTasks) {
+      if (!t.tags?.length) continue;
+      const tag = t.tags[0];
+      if (!seen.has(tag.id)) { seen.add(tag.id); tagItems.push(tag); }
+      if (tagItems.length >= 4) break;
+    }
+    const noTagCount = dayTasks.filter(t => !t.tags?.length).length;
+    const extra = dayTasks.length - tagItems.length - noTagCount;
+    return (
+      <>
+        {tagItems.map(tag => {
+          const Ic = tag.icon ? Icons[tag.icon] : null;
+          return Ic
+            ? <Ic key={tag.id} size={9} strokeWidth={2.5} color={tag.color} />
+            : <span key={tag.id} className={styles.dot} style={{ background: tag.color }} />;
+        })}
+        {noTagCount > 0 && <span className={styles.dot} />}
+        {extra > 0 && <span className={styles.dotPlus}>+{extra}</span>}
+      </>
     );
+  };
 
   return (
     <div className={styles.root}>
@@ -480,7 +665,7 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
                 >
                   <span className={styles.dayNum}>{day}</span>
                   <span className={styles.temp}>{tempMax != null ? (tempMax > 0 ? `+${tempMax}` : tempMax) + '°' : 't°'}</span>
-                  <div className={styles.dots}>{renderDots(dayTasks.length)}</div>
+                  <div className={styles.dots}>{renderTagIcons(dayTasks)}</div>
                 </button>
               );
             })}

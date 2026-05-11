@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MaxLength, MinLength, Matches, IsNumber } from 'class-validator';
+import { IsString, IsOptional, MaxLength, MinLength, Matches, IsNumber, IsBoolean } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -32,4 +32,8 @@ export class UpdateUserDto {
   @IsOptional()
   @IsNumber()
   locationLon?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  showGlobalEvents?: boolean;
 }

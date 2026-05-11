@@ -1,8 +1,9 @@
 import {
   Entity, PrimaryGeneratedColumn, Column,
-  ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn,
+  ManyToOne, ManyToMany, JoinTable, JoinColumn, CreateDateColumn, UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Tag } from '../../tags/entities/tag.entity';
 
 @Entity('tasks')
 export class Task {
@@ -28,6 +29,12 @@ export class Task {
   @Column({ type: 'varchar', length: 5, nullable: true, default: null })
   time: string | null; // HH:MM
 
+  @Column({ type: 'varchar', length: 5, nullable: true, default: null })
+  endTime!: string | null;
+
+  @Column({ type: 'varchar', length: 10, nullable: true, default: null })
+  endDate!: string | null;
+
   @Column({ type: 'varchar', length: 10, default: 'none' })
   repeat: string;
 
@@ -36,6 +43,17 @@ export class Task {
 
   @Column({ type: 'varchar', length: 20, default: 'normal' })
   type: string;
+
+  @Column({ type: 'varchar', length: 64, nullable: true, default: null })
+  icon: string | null;
+
+  @ManyToMany(() => Tag, tag => tag.tasks, { eager: false, cascade: false })
+  @JoinTable({
+    name: 'task_tags',
+    joinColumn:        { name: 'taskId',  referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'tagId',   referencedColumnName: 'id' },
+  })
+  tags!: Tag[];
 
   @CreateDateColumn()
   createdAt: Date;

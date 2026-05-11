@@ -10,6 +10,8 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -75,6 +77,14 @@ export class UsersController {
       file.mimetype,
     );
     return this.usersService.updateAvatar(req.user.id, avatarUrl);
+  }
+
+  // POST /users/me/ping — обновить lastSeenAt (вызывается периодически с фронтенда)
+  @UseGuards(JwtAuthGuard)
+  @Post('me/ping')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async ping(@Request() req) {
+    await this.usersService.updateLastSeen(req.user.id);
   }
 
   // GET /users/:username

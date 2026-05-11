@@ -1,16 +1,22 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import * as LucideIcons from 'lucide-react';
 import { Task, TaskRepeat, TaskType, toDateStr } from '../../lib/tasks';
+import type { Tag } from '../../lib/tags';
 import styles from './TaskFormModal.module.scss';
+
+type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
+const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 // ── Draft preservation (10 min) ───────────────────────────────
 const DRAFT_TTL = 10 * 60 * 1000;
 
 interface Draft {
-  title: string; description: string; time: string;
+  title: string; description: string; time: string; endTime: string;
   repeat: TaskRepeat; hasEnd: boolean; repeatUntil: string;
-  type: TaskType; savedAt: number;
+  type: TaskType; tagId: string | null; multiDay: boolean; endDate: string;
+  savedAt: number;
 }
 
 function draftKey(dateStr: string) { return `wt_draft_${dateStr}`; }
@@ -20,9 +26,7 @@ function loadDraft(dateStr: string): Draft | null {
     const raw = localStorage.getItem(draftKey(dateStr));
     if (!raw) return null;
     const d: Draft = JSON.parse(raw);
-    if (Date.now() - d.savedAt > DRAFT_TTL) {
-      localStorage.removeItem(draftKey(dateStr)); return null;
-    }
+    if (Date.now() - d.savedAt > DRAFT_TTL) { localStorage.removeItem(draftKey(dateStr)); return null; }
     return d;
   } catch { return null; }
 }
@@ -36,51 +40,56 @@ function clearDraft(dateStr: string) {
 }
 
 const REPEAT_LABELS: Record<TaskRepeat, string> = {
-  none:    'Без повтора',
-  daily:   'Каждый день',
-  weekly:  'Каждую неделю',
-  monthly: 'Каждый месяц',
-  yearly:  'Каждый год',
+  none: 'Без повтора', daily: 'Каждый день',
+  weekly: 'Каждую неделю', monthly: 'Каждый месяц', yearly: 'Каждый год',
 };
 
 const TYPE_LABELS: Record<TaskType, string> = {
-  normal:    'Обычная',
-  mandatory: 'Обязательная',
-  event:     'Эвент',
+  normal: 'Обычная', mandatory: 'Обязательная', event: 'Эвент',
 };
 
 interface Props {
-  task?: Task;      // provided → edit mode; absent → create mode
-  date: Date;       // initial date for create; ignored in edit mode
+  task?: Task;
+  date: Date;
   isAdmin: boolean;
+  userTags: Tag[];
   onSave: (data: Omit<Task, 'id' | 'status'>) => void;
   onClose: () => void;
 }
 
-export function TaskFormModal({ task, date, isAdmin, onSave, onClose }: Props) {
-  const isEdit        = !!task;
-  const initialDate   = useMemo(() => toDateStr(date), []); // frozen at mount
-  const draft         = useMemo(() => (!isEdit ? loadDraft(initialDate) : null), []);
+export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose }: Props) {
+  const isEdit      = !!task;
+  const initialDate = useMemo(() => toDateStr(date), []);
+  const draft       = useMemo(() => (!isEdit ? loadDraft(initialDate) : null), []);
 
   const [title,       setTitle]       = useState(task?.title       ?? draft?.title       ?? '');
   const [description, setDesc]        = useState(task?.description ?? draft?.description ?? '');
   const [formDate,    setFormDate]    = useState(task?.date        ?? initialDate);
   const [time,        setTime]        = useState(task?.time        ?? draft?.time        ?? '');
+  const [endTime,     setEndTime]     = useState(task?.endTime     ?? draft?.endTime     ?? '');
+  const [multiDay,    setMultiDay]    = useState(task?.type !== 'mandatory' && !!(task?.endDate  ?? draft?.multiDay));
+  const [endDate,     setEndDate]     = useState(task?.endDate     ?? draft?.endDate     ?? '');
   const [repeat,      setRepeat]      = useState<TaskRepeat>(task?.repeat ?? draft?.repeat ?? 'none');
   const [hasEnd,      setHasEnd]      = useState(task ? !!task.repeatUntil : (draft?.hasEnd ?? false));
   const [repeatUntil, setRepeatUntil] = useState(task?.repeatUntil ?? draft?.repeatUntil ?? '');
   const [type,        setType]        = useState<TaskType>(task?.type ?? draft?.type ?? 'normal');
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(
+    task?.tags?.[0]?.id ?? draft?.tagId ?? null,
+  );
 
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { titleRef.current?.focus(); }, []);
 
-  // Auto-save draft every time fields change (create mode only)
   useEffect(() => {
     if (isEdit) return;
     if (!title.trim()) return;
-    saveDraft(initialDate, { title, description, time, repeat, hasEnd, repeatUntil, type, savedAt: Date.now() });
-  }, [title, description, time, repeat, hasEnd, repeatUntil, type, isEdit, initialDate]);
+    saveDraft(initialDate, {
+      title, description, time, endTime, multiDay, endDate,
+      repeat, hasEnd, repeatUntil, type, tagId: selectedTagId,
+      savedAt: Date.now(),
+    });
+  }, [title, description, time, endTime, multiDay, endDate, repeat, hasEnd, repeatUntil, type, selectedTagId, isEdit, initialDate]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -88,23 +97,32 @@ export function TaskFormModal({ task, date, isAdmin, onSave, onClose }: Props) {
     return () => document.removeEventListener('keydown', h);
   }, [onClose]);
 
+  const toggleTag = (id: string) => {
+    setSelectedTagId(prev => prev === id ? null : id);
+  };
+
   const availableTypes: TaskType[] = isAdmin
     ? ['normal', 'mandatory', 'event']
     : ['normal', 'mandatory'];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
     const trimmed = title.trim();
     if (!trimmed) return;
     if (!isEdit) clearDraft(initialDate);
+    const selectedTag = selectedTagId ? userTags.find(t => t.id === selectedTagId) : undefined;
+    const resolvedEndDate = multiDay && endDate && endDate > formDate ? endDate : undefined;
     onSave({
       title:       trimmed,
       description: description.trim() || undefined,
       date:        formDate,
+      endDate:     resolvedEndDate,
       time:        time || undefined,
-      repeat,
-      repeatUntil: (repeat !== 'none' && hasEnd && repeatUntil) ? repeatUntil : undefined,
+      endTime:     (time && endTime && endTime > time) ? endTime : undefined,
+      repeat:      resolvedEndDate ? 'none' : repeat,  // многодневные не повторяются
+      repeatUntil: (!resolvedEndDate && repeat !== 'none' && hasEnd && repeatUntil) ? repeatUntil : undefined,
       type,
+      tags:        selectedTag ? [selectedTag] : [],
     });
     onClose();
   };
@@ -123,14 +141,8 @@ export function TaskFormModal({ task, date, isAdmin, onSave, onClose }: Props) {
           {/* Title */}
           <div className={styles.field}>
             <label className={styles.label}>Название</label>
-            <input
-              ref={titleRef}
-              className={styles.input}
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="Что нужно сделать?"
-              required
-            />
+            <input ref={titleRef} className={styles.input} value={title}
+              onChange={e => setTitle(e.target.value)} placeholder="Что нужно сделать?" required />
           </div>
 
           {/* Description */}
@@ -138,48 +150,58 @@ export function TaskFormModal({ task, date, isAdmin, onSave, onClose }: Props) {
             <label className={styles.label}>
               Описание <span className={styles.optional}>(необязательно)</span>
             </label>
-            <textarea
-              className={styles.textarea}
-              value={description}
-              onChange={e => setDesc(e.target.value)}
-              placeholder="Подробности..."
-              rows={3}
-            />
+            <textarea className={styles.textarea} value={description}
+              onChange={e => setDesc(e.target.value)} placeholder="Подробности..." rows={3} />
           </div>
 
-          {/* Date + Time */}
-          <div className={styles.row}>
-            <div className={styles.field}>
+          {/* Дата (с возможностью задать диапазон) */}
+          <div className={styles.field}>
+            <div className={styles.labelRow}>
               <label className={styles.label}>Дата</label>
-              <input
-                className={styles.input}
-                type="date"
-                value={formDate}
-                onChange={e => setFormDate(e.target.value)}
-                required
-              />
+              {type !== 'mandatory' && (
+                <button type="button" className={styles.toggleRangeBtn}
+                  onClick={() => { setMultiDay(v => !v); if (multiDay) setEndDate(''); }}>
+                  {multiDay ? '← Один день' : '+ Несколько дней'}
+                </button>
+              )}
             </div>
-            <div className={styles.field}>
-              <label className={styles.label}>
-                Время <span className={styles.optional}>(необязательно)</span>
-              </label>
-              <input
-                className={styles.input}
-                type="time"
-                value={time}
-                onChange={e => setTime(e.target.value)}
-              />
+            {multiDay ? (
+              <div className={styles.rangeRow}>
+                <input className={styles.input} type="date" value={formDate}
+                  onChange={e => setFormDate(e.target.value)} required />
+                <span className={styles.rangeSep}>—</span>
+                <input className={styles.input} type="date" value={endDate}
+                  min={formDate} onChange={e => setEndDate(e.target.value)} />
+              </div>
+            ) : (
+              <input className={styles.input} type="date" value={formDate}
+                onChange={e => setFormDate(e.target.value)} required />
+            )}
+          </div>
+
+          {/* Время (с необязательным конечным временем) */}
+          <div className={styles.field}>
+            <label className={styles.label}>
+              Время <span className={styles.optional}>(необязательно)</span>
+            </label>
+            <div className={styles.rangeRow}>
+              <input className={styles.input} type="time" value={time}
+                placeholder="—" onChange={e => { setTime(e.target.value); if (!e.target.value) setEndTime(''); }} />
+              {time && (
+                <>
+                  <span className={styles.rangeSep}>—</span>
+                  <input className={styles.input} type="time" value={endTime}
+                    placeholder="конец" onChange={e => setEndTime(e.target.value)} />
+                </>
+              )}
             </div>
           </div>
 
           {/* Repeat */}
           <div className={styles.field}>
             <label className={styles.label}>Повтор</label>
-            <select
-              className={styles.select}
-              value={repeat}
-              onChange={e => setRepeat(e.target.value as TaskRepeat)}
-            >
+            <select className={styles.select} value={repeat}
+              onChange={e => setRepeat(e.target.value as TaskRepeat)}>
               {(Object.keys(REPEAT_LABELS) as TaskRepeat[]).map(r => (
                 <option key={r} value={r}>{REPEAT_LABELS[r]}</option>
               ))}
@@ -192,21 +214,12 @@ export function TaskFormModal({ task, date, isAdmin, onSave, onClose }: Props) {
               <label className={styles.label}>Повторять до</label>
               <div className={styles.repeatUntilRow}>
                 <label className={styles.checkLabel}>
-                  <input
-                    type="checkbox"
-                    checked={hasEnd}
-                    onChange={e => setHasEnd(e.target.checked)}
-                  />
+                  <input type="checkbox" checked={hasEnd} onChange={e => setHasEnd(e.target.checked)} />
                   Ограничить по дате
                 </label>
                 {hasEnd && (
-                  <input
-                    className={styles.input}
-                    type="date"
-                    value={repeatUntil}
-                    min={formDate}
-                    onChange={e => setRepeatUntil(e.target.value)}
-                  />
+                  <input className={styles.input} type="date" value={repeatUntil} min={formDate}
+                    onChange={e => setRepeatUntil(e.target.value)} />
                 )}
               </div>
             </div>
@@ -215,16 +228,46 @@ export function TaskFormModal({ task, date, isAdmin, onSave, onClose }: Props) {
           {/* Type */}
           <div className={styles.field}>
             <label className={styles.label}>Тип</label>
-            <select
-              className={styles.select}
-              value={type}
-              onChange={e => setType(e.target.value as TaskType)}
-            >
+            <select className={styles.select} value={type}
+              onChange={e => {
+                const newType = e.target.value as TaskType;
+                setType(newType);
+                if (newType === 'mandatory' && multiDay) {
+                  setMultiDay(false);
+                  setEndDate('');
+                }
+              }}>
               {availableTypes.map(t => (
                 <option key={t} value={t}>{TYPE_LABELS[t]}</option>
               ))}
             </select>
           </div>
+
+          {/* Tags */}
+          {userTags.length > 0 && (
+            <div className={styles.field}>
+              <label className={styles.label}>
+                Теги <span className={styles.optional}>(необязательно)</span>
+              </label>
+              <div className={styles.tagPicker}>
+                {userTags.map(tag => {
+                  const Ic = tag.icon ? Icons[tag.icon] : null;
+                  const active = selectedTagId === tag.id;
+                  return (
+                    <button key={tag.id} type="button"
+                      className={[styles.tagOption, active ? styles.tagOptionActive : ''].join(' ')}
+                      style={active ? { borderColor: tag.color, background: tag.color + '18' } : { borderColor: '#ccc' }}
+                      onClick={() => toggleTag(tag.id)}>
+                      {Ic
+                        ? <Ic size={11} strokeWidth={2} />
+                        : <span className={styles.tagDot} style={{ background: tag.color }} />}
+                      {tag.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className={styles.actions}>

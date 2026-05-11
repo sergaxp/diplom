@@ -1,0 +1,617 @@
+.root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+}
+
+.body {
+  flex: 1;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0 0 32px;
+}
+
+/* ── Статистика ── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.statCard {
+  padding: 20px 24px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.statLabel {
+  font-size: .8125rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* ── Секция пользователей ── */
+.section { }
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.searchInput {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: .9rem;
+  width: 260px;
+  outline: none;
+
+  &:focus { border-color: #555; }
+  &::placeholder { color: #aaa; }
+}
+
+/* ── Таблица ── */
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid #e4e4e4;
+  border-radius: 12px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .9rem;
+}
+
+.th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #888;
+  background: #fafafa;
+  border-bottom: 1px solid #e4e4e4;
+  white-space: nowrap;
+
+  &:first-child { border-radius: 12px 0 0 0; }
+  &:last-child  { border-radius: 0 12px 0 0; }
+}
+
+.row {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background .1s;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: #fafafa; }
+}
+
+.rowInactive { opacity: .55; }
+
+/* ── Ячейки ── */
+.tdUser {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.tdEmail, .tdRole, .tdStatus, .tdDate, .tdActions {
+  padding: 12px 16px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.tdActions { display: flex; gap: 6px; align-items: center; }
+
+/* ── Аватар в таблице ── */
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e8e8e8;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatarImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatarInitial { font-size: .9rem; font-weight: 700; color: #555; }
+
+.userNames {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.username    { font-weight: 600; color: #1a1a1a; font-size: .875rem; }
+.displayName { font-size: .75rem; color: #888; }
+
+/* ── Бейджи ── */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.badgeAdmin  { background: #fef3c7; color: #92400e; }
+.badgeUser   { background: #f0f0f0; color: #555; }
+.badgeActive { background: #dcfce7; color: #166534; }
+.badgeOff    { background: #fee2e2; color: #991b1b; }
+
+/* ── Кнопки действий ── */
+.actionBtn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  font-size: .75rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: #1a1a1a;
+  transition: background .1s;
+
+  &:hover { background: #f5f5f5; }
+}
+
+.actionBtnDanger  { color: #dc2626; border-color: #fca5a5; &:hover { background: #fef2f2; } }
+.actionBtnSuccess { color: #16a34a; border-color: #86efac; &:hover { background: #f0fdf4; } }
+
+.selfLabel { font-size: .75rem; color: #aaa; }
+.loading   { padding: 24px; text-align: center; color: #aaa; }
+
+/* ── Онлайн-статус ── */
+.tdOnline { padding: 12px 16px; vertical-align: middle; white-space: nowrap; }
+
+.onlineDot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.dot_online   { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,.25); }
+.dot_recently { background: #f59e0b; }
+.dot_offline  { background: #d1d5db; }
+
+.onlineLabel { font-size: .8125rem; color: #555; vertical-align: middle; }
+
+/* ── Глобальные события ── */
+.sectionDesc { font-size: .875rem; color: #888; margin: -8px 0 16px; }
+
+.eventForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fafafa;
+  border: 1px solid #e4e4e4;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.eventRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.eventInput {
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: .875rem;
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+  font-family: inherit;
+
+  &:focus { border-color: #555; }
+  &::placeholder { color: #aaa; }
+}
+
+.eventSelect {
+  @extend .eventInput;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
+.eventAddBtn {
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity .15s;
+
+  &:hover:not(:disabled) { opacity: .8; }
+  &:disabled { opacity: .5; cursor: default; }
+}
+
+.iconSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iconLabel {
+  font-size: .8rem;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* ── Icon Picker ── */
+.iconPickerWrap {
+  position: relative;
+}
+
+.iconPickerTrigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: .8125rem;
+  color: #1a1a1a;
+  transition: border-color .1s, background .1s;
+  white-space: nowrap;
+
+  &:hover { background: #f5f5f5; border-color: #aaa; }
+}
+
+.iconPickerName {
+  color: #555;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.iconPickerChevron {
+  color: #aaa;
+  flex-shrink: 0;
+  transition: transform .15s;
+}
+
+.iconPickerChevronOpen {
+  transform: rotate(180deg);
+}
+
+.iconPickerDropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  z-index: 50;
+  width: 312px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .12);
+  overflow: hidden;
+}
+
+/* Строка категорий — фиксированная высота, горизонтальный скролл */
+.iconPickerCats {
+  display: flex;
+  gap: 3px;
+  padding: 7px 8px 5px;
+  overflow-x: auto;
+  border-bottom: 1px solid #ddd;
+  cursor: grab;
+  user-select: none;
+
+  /* тонкий скроллбар чтобы было видно что можно скроллить */
+  scrollbar-width: thin;
+  scrollbar-color: #bbb transparent;
+  &::-webkit-scrollbar { height: 3px; }
+  &::-webkit-scrollbar-thumb { background: #bbb; border-radius: 2px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+}
+
+.iconPickerCat {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: none;
+  background: none;
+  font-size: .73rem;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: background .1s, color .1s;
+  white-space: nowrap;
+
+  &:hover { background: #e0e0e0; color: #1a1a1a; }
+}
+
+.iconPickerCatActive {
+  background: #1a1a1a;
+  color: #fff;
+
+  &:hover { background: #333; color: #fff; }
+}
+
+/* Поиск */
+.iconPickerSearchWrap {
+  position: relative;
+  padding: 5px 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.iconPickerSearch {
+  width: 100%;
+  padding: 5px 28px 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #fff;
+  font-size: .8rem;
+  color: #1a1a1a;
+  outline: none;
+  box-sizing: border-box;
+
+  &:focus { border-color: #888; }
+  &::placeholder { color: #aaa; }
+}
+
+.iconPickerSearchClear {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: .65rem;
+  color: #aaa;
+  padding: 2px 4px;
+  line-height: 1;
+
+  &:hover { color: #555; }
+}
+
+/* Сетка иконок — flexbox, фиксированный размер кнопок, нет растяжения */
+.iconPickerGrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 1px;
+  padding: 6px 8px 8px;
+  height: 210px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #bbb transparent;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: #bbb; border-radius: 2px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+}
+
+.iconPickerEmpty {
+  width: 100%;
+  padding: 24px 0;
+  text-align: center;
+  font-size: .8rem;
+  color: #aaa;
+}
+
+.iconPickerBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 5px;
+  border: none;
+  background: none;
+  color: #444;
+  cursor: pointer;
+  transition: background .1s, color .1s;
+
+  &:hover { background: #e0e0e0; color: #1a1a1a; }
+}
+
+.iconPickerBtnActive {
+  background: #1a1a1a;
+  color: #fff;
+
+  &:hover { background: #333; color: #fff; }
+}
+
+.iconPickerFallback {
+  font-size: .85rem;
+  color: #bbb;
+}
+
+.iconPickerNameEmpty {
+  color: #aaa;
+}
+
+.iconPickerBtnNone {
+  font-size: .9rem;
+  color: #999;
+  border: 1px dashed #ccc;
+
+  &:hover { background: #e8e8e8; color: #555; border-color: #aaa; }
+}
+
+.eventError {
+  font-size: .8125rem;
+  color: #b91c1c;
+  padding: 6px 10px;
+  background: #fef2f2;
+  border-radius: 6px;
+  border: 1px solid #fca5a5;
+}
+
+.eventEmpty {
+  padding: 20px;
+  text-align: center;
+  color: #aaa;
+  font-size: .9rem;
+  border: 1px dashed #e4e4e4;
+  border-radius: 10px;
+}
+
+.eventList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eventItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid #e4e4e4;
+  border-radius: 8px;
+  background: #fff;
+  gap: 12px;
+}
+
+.eventInfo { display: flex; flex-direction: column; gap: 3px; }
+
+.eventTitle { font-size: .9rem; font-weight: 500; color: #1a1a1a; }
+
+.eventMeta { font-size: .75rem; color: #888; }
+
+.eventDeleteBtn {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid #fca5a5;
+  background: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: .875rem;
+  transition: background .1s;
+
+  &:hover { background: #fef2f2; }
+  &:disabled { opacity: .5; cursor: default; }
+}
+
+/* ── Setup форма ── */
+.setupWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.setupCard {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.setupIcon  { font-size: 3rem; margin-bottom: 16px; }
+
+.setupTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 10px;
+}
+
+.setupDesc {
+  font-size: .9rem;
+  color: #666;
+  margin: 0 0 24px;
+  line-height: 1.5;
+
+  code {
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: .85em;
+  }
+}
+
+.setupForm  { display: flex; flex-direction: column; gap: 12px; }
+
+.setupInput {
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: .9375rem;
+  outline: none;
+  text-align: center;
+
+  &:focus { border-color: #555; }
+  &::placeholder { color: #aaa; }
+}
+
+.setupError {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  font-size: .875rem;
+}
+
+.setupBtn {
+  padding: 11px;
+  border-radius: 8px;
+  border: none;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: .9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+
+  &:hover:not(:disabled) { opacity: .8; }
+  &:disabled { opacity: .45; cursor: default; }
+}

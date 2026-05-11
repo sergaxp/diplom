@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { authApi, hasToken, clearAuth } from '../lib/auth';
 import { useAuthStore } from '../store/authStore';
+import { api } from '../lib/api';
+
+const PING_INTERVAL = 2 * 60 * 1000; // 2 минуты
 
 function AuthInitializer() {
   const { setUser, setReady } = useAuthStore();
@@ -13,15 +16,26 @@ function AuthInitializer() {
       setReady();
       return;
     }
-    // Токен есть — загружаем пользователя
     authApi
       .me()
-      .then((user) => setUser(user))
+      .then((user) => {
+        setUser(user);
+        // Сразу фиксируем lastSeenAt
+        api.post('/users/me/ping').catch(() => {});
+      })
       .catch(() => {
-        // Токен невалидный — чистим
         clearAuth();
         setReady();
       });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Периодический пинг пока пользователь на сайте
+  useEffect(() => {
+    if (!hasToken()) return;
+    const id = setInterval(() => {
+      if (hasToken()) api.post('/users/me/ping').catch(() => {});
+    }, PING_INTERVAL);
+    return () => clearInterval(id);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;

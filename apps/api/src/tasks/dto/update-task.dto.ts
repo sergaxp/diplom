@@ -22,6 +22,16 @@ export class UpdateTaskDto {
   time?: string | null;
 
   @IsOptional()
+  @IsString()
+  @Matches(/^\d{2}:\d{2}$/)
+  endTime?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  endDate?: string | null;
+
+  @IsOptional()
   @IsIn(['none', 'daily', 'weekly', 'monthly', 'yearly'])
   repeat?: string;
 
@@ -32,4 +42,8 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsIn(['normal', 'mandatory', 'event'])
   type?: string;
+
+  @IsOptional()
+  @IsString({ each: true })
+  tagIds?: string[];
 }

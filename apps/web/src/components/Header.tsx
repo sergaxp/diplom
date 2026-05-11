@@ -64,6 +64,15 @@ export function Header() {
                   >
                     Мой профиль
                   </Link>
+                  {user.role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      className={[styles.dropdownLink, styles.dropdownLinkAdmin].join(' ')}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Панель администратора
+                    </Link>
+                  )}
                   <Link
                     href="/settings"
                     className={styles.dropdownLink}

@@ -1,9 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Task, toDateStr, getTasksForDate } from '../../lib/tasks';
+import * as LucideIcons from 'lucide-react';
+import { Task, TaskStatus, toDateStr, getTasksForDate, completionKey } from '../../lib/tasks';
+import type { Tag } from '../../lib/tags';
 import { TaskFormModal } from './TaskFormModal';
 import styles from './TaskList.module.scss';
+
+type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
+const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 const DAY_SHORT = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня',
@@ -25,13 +30,15 @@ interface TaskItemProps {
   task: Task;
   dateStr: string;
   dateLabel?: string;
+  isMandatoryDay?: boolean;
+  hidePostpone?: boolean;
   onToggle: (id: string, dateStr: string) => void;
   onDelete: (id: string) => void;
   onEdit:   (task: Task) => void;
   onPostpone: (id: string, days: number) => void;
 }
 
-function TaskItem({ task, dateStr, dateLabel, onToggle, onDelete, onEdit, onPostpone }: TaskItemProps) {
+function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onToggle, onDelete, onEdit, onPostpone }: TaskItemProps) {
   const [menuOpen,     setMenuOpen]     = useState(false);
   const [postponeOpen, setPostponeOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -49,8 +56,45 @@ function TaskItem({ task, dateStr, dateLabel, onToggle, onDelete, onEdit, onPost
 
   const close = () => { setMenuOpen(false); setPostponeOpen(false); };
 
+  if (task.isGlobal) {
+    return (
+      <li className={[styles.task, styles.taskGlobal].join(' ')}>
+        <span className={styles.globalIcon} title="Глобальное событие">
+          {(() => { const Ic = Icons[task.icon ?? '']; return Ic ? <Ic size={15} strokeWidth={1.75} /> : (task.icon || '🌐'); })()}
+        </span>
+        <div className={styles.taskBody}>
+          {task.time && <span className={styles.taskTime}>{task.time}</span>}
+          <div className={styles.taskText}>
+            <span className={styles.taskTitle}>{task.title}</span>
+            {task.description && <span className={styles.taskDesc}>{task.description}</span>}
+          </div>
+          {task.repeat !== 'none' && (
+            <span className={styles.repeatBadge} title={`Повтор: ${task.repeat}`}>
+              {task.repeat === 'daily' && '↻д'}{task.repeat === 'weekly' && '↻н'}
+              {task.repeat === 'monthly' && '↻м'}{task.repeat === 'yearly' && '↻г'}
+            </span>
+          )}
+        </div>
+      </li>
+    );
+  }
+
+  const taskIcon = task.icon ? Icons[task.icon] : null;
+
   return (
-    <li className={[styles.task, styles[`task_${task.status}`]].join(' ')}>
+    <li className={[
+      styles.task,
+      styles[`task_${task.status}`],
+      isMandatoryDay ? styles.taskMandatoryDay : '',
+      (menuOpen || postponeOpen) ? styles.taskMenuOpen : '',
+    ].join(' ')}>
+      {/* Иконка задачи (если есть) */}
+      {taskIcon && (
+        <span className={styles.taskIcon}>
+          {(() => { const Ic = taskIcon; return <Ic size={14} strokeWidth={1.75} />; })()}
+        </span>
+      )}
+
       {/* Checkbox */}
       <button
         className={[
@@ -85,6 +129,14 @@ function TaskItem({ task, dateStr, dateLabel, onToggle, onDelete, onEdit, onPost
         {dateLabel && (
           <span className={styles.taskDateBadge}>{dateLabel}</span>
         )}
+        {task.tags?.slice(0, 2).map(tag => {
+          const Ic = tag.icon ? Icons[tag.icon] : null;
+          return (
+            <span key={tag.id} className={styles.taskTag} style={{ borderColor: tag.color }}>
+              {Ic ? <Ic size={9} strokeWidth={2.5} /> : <span className={styles.taskTagDot} style={{ background: tag.color }} />}
+            </span>
+          );
+        })}
       </div>
 
       {/* Menu */}
@@ -101,41 +153,43 @@ function TaskItem({ task, dateStr, dateLabel, onToggle, onDelete, onEdit, onPost
             </button>
 
             {/* Перенести + submenu */}
-            <div
-              className={styles.postponeItem}
-              onMouseEnter={() => setPostponeOpen(true)}
-              onMouseLeave={() => setPostponeOpen(false)}
-            >
-              <button className={[styles.menuItem, styles.menuItemArrow].join(' ')}>
-                Перенести <span>›</span>
-              </button>
+            {!hidePostpone && (
+              <div
+                className={styles.postponeItem}
+                onMouseEnter={() => setPostponeOpen(true)}
+                onMouseLeave={() => setPostponeOpen(false)}
+              >
+                <button className={[styles.menuItem, styles.menuItemArrow].join(' ')}>
+                  Перенести <span>›</span>
+                </button>
 
-              {postponeOpen && (
-                <div className={styles.submenu}>
-                  {[
-                    { label: 'На день',   days: 1  },
-                    { label: 'На 3 дня',  days: 3  },
-                    { label: 'На неделю', days: 7  },
-                    { label: 'На месяц',  days: 30 },
-                  ].map(({ label, days }) => (
+                {postponeOpen && (
+                  <div className={styles.submenu}>
+                    {task.type !== 'mandatory' && [
+                      { label: 'На день',   days: 1  },
+                      { label: 'На 3 дня',  days: 3  },
+                      { label: 'На неделю', days: 7  },
+                      { label: 'На месяц',  days: 30 },
+                    ].map(({ label, days }) => (
+                      <button
+                        key={days}
+                        className={styles.submenuItem}
+                        onClick={() => { onPostpone(task.id, days); close(); }}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                    {task.type !== 'mandatory' && <div className={styles.submenuDivider} />}
                     <button
-                      key={days}
                       className={styles.submenuItem}
-                      onClick={() => { onPostpone(task.id, days); close(); }}
+                      onClick={() => { onEdit(task); close(); }}
                     >
-                      {label}
+                      Другое...
                     </button>
-                  ))}
-                  <div className={styles.submenuDivider} />
-                  <button
-                    className={styles.submenuItem}
-                    onClick={() => { onEdit(task); close(); }}
-                  >
-                    Другое...
-                  </button>
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className={styles.menuDivider} />
             <button
@@ -157,16 +211,17 @@ interface Props {
   tasks: Task[];
   completions: Set<string>;
   isAdmin: boolean;
-  onToggle:    (id: string, dateStr: string) => void;
-  onDelete:    (id: string) => void;
-  onAdd:       (data: Omit<Task, 'id' | 'status'>) => void;
-  onUpdate:    (id: string, data: Omit<Task, 'id' | 'status'>) => void;
-  onPostpone:  (id: string, days: number) => void;
+  userTags: Tag[];
+  onToggle:   (id: string, dateStr: string) => void;
+  onDelete:   (id: string) => void;
+  onAdd:      (data: Omit<Task, 'id' | 'status'>) => void;
+  onUpdate:   (id: string, data: Omit<Task, 'id' | 'status'>) => void;
+  onPostpone: (id: string, days: number) => void;
   onGoToToday: () => void;
 }
 
 export function TaskList({
-  selectedDate, tasks, completions, isAdmin,
+  selectedDate, tasks, completions, isAdmin, userTags,
   onToggle, onDelete, onAdd, onUpdate, onPostpone, onGoToToday,
 }: Props) {
   const [now,         setNow]         = useState(new Date());
@@ -183,9 +238,14 @@ export function TaskList({
 
   const dayTasks = getTasksForDate(tasks, selectedDate, completions);
 
-  // Future section: only mandatory tasks with a future date
+  // Future section: mandatory tasks ahead, excluding already completed ones
   const futureTasks = tasks
     .filter(t => t.date > selectedStr && t.type === 'mandatory')
+    .map(t => {
+      const status: TaskStatus = completions.has(completionKey(t.id, t.date)) ? 'done' : 'pending';
+      return { ...t, status };
+    })
+    .filter(t => t.status !== 'done')
     .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''))
     .slice(0, 6);
 
@@ -218,6 +278,7 @@ export function TaskList({
                   key={t.id}
                   task={t}
                   dateStr={selectedStr}
+                  isMandatoryDay={t.type === 'mandatory' && t.date === selectedStr}
                   onToggle={onToggle}
                   onDelete={onDelete}
                   onEdit={setEditingTask}
@@ -241,6 +302,7 @@ export function TaskList({
                   task={t}
                   dateStr={t.date}
                   dateLabel={formatRelativeDate(t.date)}
+                  hidePostpone
                   onToggle={onToggle}
                   onDelete={onDelete}
                   onEdit={setEditingTask}
@@ -250,6 +312,7 @@ export function TaskList({
             </ul>
           </div>
         )}
+
       </div>
 
       {/* Create modal */}
@@ -257,6 +320,7 @@ export function TaskList({
         <TaskFormModal
           date={selectedDate}
           isAdmin={isAdmin}
+          userTags={userTags}
           onSave={onAdd}
           onClose={() => setCreateOpen(false)}
         />
@@ -268,6 +332,7 @@ export function TaskList({
           task={editingTask}
           date={selectedDate}
           isAdmin={isAdmin}
+          userTags={userTags}
           onSave={(data) => onUpdate(editingTask.id, data)}
           onClose={() => setEditingTask(null)}
         />

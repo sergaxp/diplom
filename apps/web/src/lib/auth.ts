@@ -10,6 +10,7 @@ export interface User {
   location: string | null;
   locationLat: number | null;
   locationLon: number | null;
+  showGlobalEvents: boolean;
   role: 'user' | 'admin';
   isEmailVerified: boolean;
   createdAt: string;

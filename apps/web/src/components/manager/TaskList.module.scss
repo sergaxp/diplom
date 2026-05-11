@@ -94,13 +94,44 @@
   position: relative;
 }
 
+.taskMenuOpen {
+  z-index: 100;
+}
+
 .task_done {
-  opacity: 0.55;
+  > *:not(.menuWrap) { opacity: 0.55; }
   .taskTitle { text-decoration: line-through; }
 }
 
 .task_missed {
   opacity: 0.45;
+}
+
+.taskGlobal {
+  border-left: 3px solid #7c3aed;
+  background: rgba(124, 58, 237, .04);
+}
+
+.taskMandatoryDay {
+  border-left: 3px solid #dc2626;
+  background: rgba(220, 38, 38, .04);
+}
+
+.globalIcon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-right: 2px;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+}
+
+.taskIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: #666;
+  margin-right: -2px;
 }
 
 // ── Checkbox ──────────────────────────────────────────────────
@@ -186,6 +217,24 @@
   padding: 1px 5px;
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.taskTag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid #ccc;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.taskTagDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
 }
 
 // ── Menu ──────────────────────────────────────────────────────
