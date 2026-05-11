@@ -23,7 +23,9 @@ export class StorageService implements OnModuleInit {
       secretKey: process.env.MINIO_SECRET_KEY ?? 'minioadmin123',
     });
 
-    this.publicUrl = `http://${endpoint}:${port}`;
+    // В prod: MINIO_PUBLIC_URL=https://diplom.warmingtea.su/files (уже включает путь к бакету)
+    // В dev: строим URL из endpoint:port/bucket
+    this.publicUrl = process.env.MINIO_PUBLIC_URL ?? `http://${endpoint}:${port}/${BUCKET}`;
   }
 
   async onModuleInit() {
@@ -63,6 +65,6 @@ export class StorageService implements OnModuleInit {
     await this.client.putObject(BUCKET, filename, buffer, buffer.length, {
       'Content-Type': mimeType,
     });
-    return `${this.publicUrl}/${BUCKET}/${filename}`;
+    return `${this.publicUrl}/${filename}`;
   }
 }
