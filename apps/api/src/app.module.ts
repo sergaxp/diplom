@@ -15,6 +15,8 @@ import { TaskCompletion } from './tasks/entities/task-completion.entity';
 import { GlobalTask } from './tasks/entities/global-task.entity';
 import { Tag } from './tags/entities/tag.entity';
 import { UserAchievement } from './achievements/entities/user-achievement.entity';
+import { HolidayCache } from './holidays/entities/holiday-cache.entity';
+import { HolidaysModule } from './holidays/holidays.module';
 
 @Module({
   imports: [
@@ -31,7 +33,7 @@ import { UserAchievement } from './achievements/entities/user-achievement.entity
       username: process.env.DATABASE_USER ?? 'sergey',
       password: process.env.DATABASE_PASSWORD ?? '',
       database: process.env.DATABASE_NAME ?? 'warmingtea_dev',
-      entities: [User, Task, TaskCompletion, GlobalTask, Tag, UserAchievement],
+      entities: [User, Task, TaskCompletion, GlobalTask, Tag, UserAchievement, HolidayCache],
       synchronize: true, // ⚠️ ТОЛЬКО в DEV! В продакшене — миграции
       logging: process.env.NODE_ENV === 'development',
     }),
@@ -43,6 +45,7 @@ import { UserAchievement } from './achievements/entities/user-achievement.entity
     AdminModule,
     TagsModule,
     AchievementsModule,
+    HolidaysModule,
   ],
   controllers: [AppController],
   providers: [AppService],

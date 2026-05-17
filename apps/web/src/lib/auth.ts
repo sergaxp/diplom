@@ -12,6 +12,7 @@ export interface User {
   locationLat: number | null;
   locationLon: number | null;
   showGlobalEvents: boolean;
+  showHolidays: boolean;
   role: 'user' | 'admin';
   isEmailVerified: boolean;
   createdAt: string;

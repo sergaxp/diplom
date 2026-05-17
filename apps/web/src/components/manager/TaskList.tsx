@@ -7,6 +7,7 @@ import type { Tag } from '../../lib/tags';
 import { TaskFormModal } from './TaskFormModal';
 import { useCurrentWeather, weatherCodeToInfo } from '../../lib/weather';
 import { useAuthStore } from '../../store/authStore';
+import { useHolidays, getHolidayName } from '../../lib/holidays';
 import styles from './TaskList.module.scss';
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
@@ -228,6 +229,12 @@ export function TaskList({
   const location = { lat: user?.locationLat, lon: user?.locationLon, name: user?.location };
   const { data: currentWeather } = useCurrentWeather(location);
 
+  const showHolidays = user?.showHolidays !== false;
+  const { data: holData } = useHolidays(selectedDate.getFullYear(), showHolidays);
+  const holidayEntry = holData?.find(e => e.date === toDateStr(selectedDate));
+  const holidayName  = showHolidays && holidayEntry?.type === 'holiday'
+    ? (holidayEntry.name || getHolidayName(holidayEntry.date)) : null;
+
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
@@ -282,6 +289,10 @@ export function TaskList({
             <span className={styles.sectionLabel}>{dateLabel}</span>
             <button className={styles.addBtn} onClick={() => setCreateOpen(true)} title="Добавить задачу">+</button>
           </div>
+
+          {holidayName && (
+            <div className={styles.holidayBanner}>{holidayName}</div>
+          )}
 
           {dayTasks.length === 0 ? (
             <p className={styles.empty}>Нет задач на этот день</p>

@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as LucideIcons from 'lucide-react';
-import { Task, TaskRepeat, TaskType, SubtaskSection, SubtaskItem, toDateStr } from '../../lib/tasks';
+import { Task, TaskRepeat, TaskType, TaskPriority, RepeatConfig, SubtaskSection, SubtaskItem, toDateStr } from '../../lib/tasks';
+import { DatePickerPopup, getDateButtonLabel } from './DatePickerPopup';
+import { RepeatConfigModal } from './RepeatConfigModal';
 import type { Tag } from '../../lib/tags';
 import { useDayWeather, weatherCodeToInfo } from '../../lib/weather';
 import { useAuthStore } from '../../store/authStore';
@@ -22,9 +24,9 @@ const MONTHS_GEN = [
 const DRAFT_TTL = 10 * 60 * 1000;
 
 interface Draft {
-  title: string; time: string; endTime: string;
+  title: string; description: string; time: string; endTime: string;
   repeat: TaskRepeat; hasEnd: boolean; repeatUntil: string;
-  type: TaskType; tagId: string | null; multiDay: boolean; endDate: string;
+  type: TaskType; priority: TaskPriority; tagId: string | null; multiDay: boolean; endDate: string;
   sections: SubtaskSection[];
   savedAt: number;
 }
@@ -50,12 +52,20 @@ function clearDraft(dateStr: string) {
 }
 
 const REPEAT_LABELS: Record<TaskRepeat, string> = {
-  none: 'Без повтора', daily: 'Каждый день',
+  none: 'Без повтора', daily: 'Каждый день', weekdays: 'Будни (Пн-Пт)',
   weekly: 'Каждую неделю', monthly: 'Каждый месяц', yearly: 'Каждый год',
+  custom: 'Настраиваемый',
 };
 
 const TYPE_LABELS: Record<TaskType, string> = {
   normal: 'Обычная', mandatory: 'Обязательная', event: 'Эвент',
+};
+
+const PRIORITY_LABELS: Record<TaskPriority, string> = {
+  none:   'Без приоритета',
+  low:    'Средне важно',
+  medium: 'Важно',
+  high:   'Очень важно',
 };
 
 // ── WeatherWidget ─────────────────────────────────────────────
@@ -312,6 +322,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   const makeDefaultSections = (): SubtaskSection[] => [{ id: uid(), title: 'Основное', items: [] }];
 
   const [title,         setTitle]         = useState(task?.title       ?? draft?.title       ?? '');
+  const [description,   setDescription]   = useState(task?.description ?? draft?.description ?? '');
   const [formDate,      setFormDate]      = useState(task?.date        ?? initialDate);
   const [time,          setTime]          = useState(task?.time        ?? draft?.time        ?? '');
   const [endTime,       setEndTime]       = useState(task?.endTime     ?? draft?.endTime     ?? '');
@@ -321,7 +332,12 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   const [hasEnd,        setHasEnd]        = useState(task ? !!task.repeatUntil : (draft?.hasEnd ?? false));
   const [repeatUntil,   setRepeatUntil]   = useState(task?.repeatUntil ?? draft?.repeatUntil ?? '');
   const [type,          setType]          = useState<TaskType>(task?.type ?? draft?.type ?? 'normal');
-  const [selectedTagId, setSelectedTagId] = useState<string | null>(task?.tags?.[0]?.id ?? draft?.tagId ?? null);
+  const [priority,      setPriority]      = useState<TaskPriority>(task?.priority ?? draft?.priority ?? 'none');
+  const [repeatConfig,    setRepeatConfig]    = useState<RepeatConfig | null>(task?.repeatConfig ?? null);
+  const [selectedTagId,   setSelectedTagId]   = useState<string | null>(task?.tags?.[0]?.id ?? draft?.tagId ?? null);
+  const [datePickerOpen,  setDatePickerOpen]  = useState(false);
+  const [repeatConfigOpen, setRepeatConfigOpen] = useState(false);
+  const dateBtnRef = useRef<HTMLButtonElement>(null);
   const [sections,      setSections]      = useState<SubtaskSection[]>(() => {
     if (task?.subtasks && task.subtasks.length > 0) return task.subtasks;
     if (draft?.sections && draft.sections.length > 0) return draft.sections;
@@ -333,14 +349,24 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
 
   useEffect(() => { titleRef.current?.focus(); }, []);
 
+  const cap = (v: string) => v ? v.charAt(0).toUpperCase() + v.slice(1) : v;
+
+  const clearForm = () => {
+    setTitle(''); setDescription(''); setTime(''); setEndTime('');
+    setPriority('none'); setRepeat('none'); setHasEnd(false); setRepeatUntil('');
+    setRepeatConfig(null); setSelectedTagId(null);
+    setSections(makeDefaultSections());
+    clearDraft(initialDate);
+  };
+
   useEffect(() => {
     if (isEdit || !title.trim()) return;
     saveDraft(initialDate, {
-      title, time, endTime, multiDay, endDate,
-      repeat, hasEnd, repeatUntil, type, tagId: selectedTagId,
+      title, description, time, endTime, multiDay, endDate,
+      repeat, hasEnd, repeatUntil, type, priority, tagId: selectedTagId,
       sections, savedAt: Date.now(),
     });
-  }, [title, time, endTime, multiDay, endDate, repeat, hasEnd, repeatUntil, type, selectedTagId, sections, isEdit, initialDate]);
+  }, [title, description, time, endTime, multiDay, endDate, repeat, hasEnd, repeatUntil, type, priority, selectedTagId, sections, isEdit, initialDate]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -383,7 +409,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
 
     onSave({
       title:       trimmed,
-      description: undefined,
+      description: description.trim() || undefined,
       date:        formDate,
       endDate:     resolvedEndDate,
       time:        time || undefined,
@@ -391,6 +417,8 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
       repeat,
       repeatUntil: (repeat !== 'none' && hasEnd && repeatUntil) ? repeatUntil : undefined,
       type,
+      priority,
+      repeatConfig: repeatConfig ?? undefined,
       icon:        selectedTag?.icon ?? null,
       tags:        selectedTag ? [selectedTag] : [],
       subtasks:    sections,
@@ -399,10 +427,11 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   };
 
   return (
+    <>
     <div className={styles.overlay} onMouseDown={onClose}>
       <div className={styles.modal} onMouseDown={e => e.stopPropagation()}>
 
-        {/* ── Top: иконка + название + закрыть ────────────── */}
+        {/* ── Top: иконка + название + описание + мета-поля + теги ── */}
         <div className={styles.top}>
           <div className={styles.titleRow}>
             {TagIcon && (
@@ -414,13 +443,94 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               ref={titleRef}
               className={styles.titleInput}
               value={title}
-              onChange={e => setTitle(e.target.value)}
+              onChange={e => setTitle(cap(e.target.value))}
               placeholder="Название задачи"
             />
             <button className={styles.closeBtn} onClick={onClose} type="button" aria-label="Закрыть">✕</button>
           </div>
 
-          {/* Теги — под названием */}
+          {/* Описание — под названием */}
+          <textarea
+            className={styles.descInput}
+            value={description}
+            onChange={e => setDescription(cap(e.target.value))}
+            placeholder="Описание задачи"
+            rows={2}
+          />
+
+          {/* Мета-поля: дата, время, приоритет — под описанием */}
+          <div className={styles.metaRow}>
+
+            {/* Дата — кнопка с попапом */}
+            <div className={styles.datePickerWrap}>
+              <div className={styles.field}>
+                <button
+                  ref={dateBtnRef}
+                  type="button"
+                  className={`${styles.dateBtn} ${datePickerOpen ? styles.dateBtnOpen : ''}`}
+                  onClick={() => setDatePickerOpen(v => !v)}
+                >
+                  {getDateButtonLabel(formDate)}
+                  {multiDay && endDate && (
+                    <span className={styles.dateBtnEnd}>
+                      {' '}— {new Date(endDate + 'T00:00:00').toLocaleDateString('ru', { day: 'numeric', month: 'short' })}
+                    </span>
+                  )}
+                  {repeat !== 'none' && <span className={styles.dateBtnRepeat}>↻</span>}
+                </button>
+              </div>
+              {datePickerOpen && (
+                <DatePickerPopup
+                  triggerRef={dateBtnRef}
+                  date={formDate}
+                  endDate={endDate}
+                  multiDay={multiDay}
+                  repeat={repeat}
+                  repeatUntil={repeatUntil}
+                  hasRepeatUntil={hasEnd}
+                  repeatConfig={repeatConfig}
+                  taskType={type}
+                  onChangeDate={setFormDate}
+                  onChangeEndDate={setEndDate}
+                  onChangeMultiDay={setMultiDay}
+                  onChangeRepeat={setRepeat}
+                  onChangeRepeatUntil={setRepeatUntil}
+                  onChangeHasRepeatUntil={setHasEnd}
+                  onChangeRepeatConfig={setRepeatConfig}
+                  onOpenRepeatConfig={() => setRepeatConfigOpen(true)}
+                  onClose={repeatConfigOpen ? () => {} : () => setDatePickerOpen(false)}
+                />
+              )}
+            </div>
+
+            {/* Время */}
+            <div className={styles.field}>
+              <div className={styles.rangeRow}>
+                <input className={styles.input} type="time" value={time}
+                  onChange={e => { setTime(e.target.value); if (!e.target.value) setEndTime(''); }} />
+                {time && (
+                  <>
+                    <span className={styles.sep}>—</span>
+                    <input className={styles.input} type="time" value={endTime}
+                      onChange={e => setEndTime(e.target.value)} />
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Приоритет */}
+            <div className={styles.field}>
+              <select className={styles.select} value={priority}
+                onChange={e => setPriority(e.target.value as TaskPriority)}>
+                {(Object.keys(PRIORITY_LABELS) as TaskPriority[]).map(p => (
+                  <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
+                ))}
+              </select>
+            </div>
+
+          </div>
+
+          {/* Теги — под мета-полями */}
           {userTags.length > 0 && (
             <div className={styles.tagPicker}>
               {userTags.map(tag => {
@@ -464,79 +574,10 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               </button>
             </div>
 
-            {/* RIGHT — погода + настройки */}
+            {/* RIGHT — погода + повтор + тип */}
             <div className={styles.right}>
 
-              {/* Погода: при редактировании — по дню, с которого открыт календарь;
-                  при создании — по выбранной дате начала задачи */}
               <WeatherWidget date={isEdit ? toDateStr(date) : formDate} />
-
-              {/* Дата */}
-              <div className={styles.field}>
-                <div className={styles.fieldHead}>
-                  <label className={styles.fieldLabel}>Дата</label>
-                  {type !== 'mandatory' && (
-                    <button
-                      type="button"
-                      className={styles.rangeToggle}
-                      onClick={() => { setMultiDay(v => !v); if (multiDay) setEndDate(''); }}
-                    >
-                      {multiDay ? '← Один день' : '+ Несколько дней'}
-                    </button>
-                  )}
-                </div>
-                {multiDay ? (
-                  <div className={styles.rangeRow}>
-                    <input className={styles.input} type="date" value={formDate}
-                      onChange={e => setFormDate(e.target.value)} required />
-                    <span className={styles.sep}>—</span>
-                    <input className={styles.input} type="date" value={endDate}
-                      min={formDate} onChange={e => setEndDate(e.target.value)} />
-                  </div>
-                ) : (
-                  <input className={styles.input} type="date" value={formDate}
-                    onChange={e => setFormDate(e.target.value)} required />
-                )}
-              </div>
-
-              {/* Время */}
-              <div className={styles.field}>
-                <label className={styles.fieldLabel}>Время</label>
-                <div className={styles.rangeRow}>
-                  <input className={styles.input} type="time" value={time}
-                    onChange={e => { setTime(e.target.value); if (!e.target.value) setEndTime(''); }} />
-                  {time && (
-                    <>
-                      <span className={styles.sep}>—</span>
-                      <input className={styles.input} type="time" value={endTime}
-                        onChange={e => setEndTime(e.target.value)} />
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Повтор */}
-              <div className={styles.field}>
-                <label className={styles.fieldLabel}>Повтор</label>
-                <select className={styles.select} value={repeat}
-                  onChange={e => setRepeat(e.target.value as TaskRepeat)}>
-                  {(Object.keys(REPEAT_LABELS) as TaskRepeat[]).map(r => (
-                    <option key={r} value={r}>{REPEAT_LABELS[r]}</option>
-                  ))}
-                </select>
-                {repeat !== 'none' && (
-                  <div className={styles.repeatUntil}>
-                    <label className={styles.checkLabel}>
-                      <input type="checkbox" checked={hasEnd} onChange={e => setHasEnd(e.target.checked)} />
-                      Ограничить по дате
-                    </label>
-                    {hasEnd && (
-                      <input className={styles.input} type="date" value={repeatUntil}
-                        min={formDate} onChange={e => setRepeatUntil(e.target.value)} />
-                    )}
-                  </div>
-                )}
-              </div>
 
               {/* Тип */}
               <div className={styles.field}>
@@ -568,6 +609,15 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
                   Удалить
                 </button>
               )}
+              {!isEdit && (
+                <button
+                  type="button"
+                  className={styles.clearBtn}
+                  onClick={clearForm}
+                >
+                  Очистить
+                </button>
+              )}
             </div>
             <div className={styles.footerRight}>
               <button type="button" className={styles.cancelBtn} onClick={onClose}>Отмена</button>
@@ -580,5 +630,19 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
 
       </div>
     </div>
+
+    {repeatConfigOpen && (
+      <RepeatConfigModal
+        initial={repeatConfig}
+        selectedDate={formDate}
+        onSave={cfg => {
+          setRepeat('custom');
+          setRepeatConfig(cfg);
+          setRepeatConfigOpen(false);
+        }}
+        onClose={() => setRepeatConfigOpen(false)}
+      />
+    )}
+  </>
   );
 }

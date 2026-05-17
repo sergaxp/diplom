@@ -10,13 +10,13 @@
 }
 
 .modal {
-  background: #f0f0f0;
-  border: 1px solid #ccc;
+  background: var(--bg);
+  border: 1px solid var(--border-input);
   border-radius: 8px;
   padding: 1.5rem;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 32px var(--shadow-lg);
 }
 
 // ── Head ──────────────────────────────────────────────────────
@@ -30,12 +30,12 @@
 .title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .dateHint {
   font-size: 0.78rem;
-  color: #999;
+  color: var(--text-4);
   display: block;
   margin-top: 0.1rem;
 }
@@ -44,10 +44,10 @@
   background: none;
   border: none;
   font-size: 0.9rem;
-  color: #aaa;
+  color: var(--text-4);
   cursor: pointer;
   padding: 0.1rem 0.3rem;
-  &:hover { color: #555; }
+  &:hover { color: var(--text-2); }
 }
 
 // ── Form ──────────────────────────────────────────────────────
@@ -66,7 +66,7 @@
 .label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #777;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -75,24 +75,24 @@
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
-  color: #aaa;
+  color: var(--text-4);
 }
 
 .input,
 .select {
   padding: 0.5rem 0.7rem;
-  background: #e8e8e8;
-  border: 1px solid #d0d0d0;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
   border-radius: 5px;
   font-size: 0.9rem;
-  color: #1a1a1a;
+  color: var(--text);
   outline: none;
   font-family: inherit;
   width: 100%;
 
   &:focus {
-    border-color: #888;
-    background: #ebebeb;
+    border-color: var(--border-strong);
+    background: var(--bg-surface);
   }
 }
 
@@ -113,25 +113,25 @@
 .cancelBtn {
   padding: 0.5rem 1.1rem;
   background: none;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
   border-radius: 5px;
   font-size: 0.875rem;
-  color: #666;
+  color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
-  &:hover { background: #e0e0e0; }
+  &:hover { background: var(--bg-hover); }
 }
 
 .submitBtn {
   padding: 0.5rem 1.25rem;
-  background: #1a1a1a;
+  background: var(--text);
   border: none;
   border-radius: 5px;
   font-size: 0.875rem;
-  color: #f0f0f0;
+  color: var(--bg);
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.1s;
-  &:hover:not(:disabled) { background: #333; }
+  transition: opacity 0.1s;
+  &:hover:not(:disabled) { opacity: 0.8; }
   &:disabled { opacity: 0.4; cursor: default; }
 }

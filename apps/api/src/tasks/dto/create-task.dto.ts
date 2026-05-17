@@ -29,8 +29,11 @@ export class CreateTaskDto {
   endDate?: string | null;
 
   @IsOptional()
-  @IsIn(['none', 'daily', 'weekly', 'monthly', 'yearly'])
+  @IsIn(['none', 'daily', 'weekdays', 'weekly', 'monthly', 'yearly', 'custom'])
   repeat?: string;
+
+  @IsOptional()
+  repeatConfig?: object | null;
 
   @IsOptional()
   @IsString()
@@ -39,6 +42,10 @@ export class CreateTaskDto {
   @IsOptional()
   @IsIn(['normal', 'mandatory', 'event'])
   type?: string;
+
+  @IsOptional()
+  @IsIn(['none', 'low', 'medium', 'high'])
+  priority?: string;
 
   @IsOptional()
   @IsString({ each: true })

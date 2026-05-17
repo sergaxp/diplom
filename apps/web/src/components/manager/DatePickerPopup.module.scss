@@ -1,0 +1,290 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 399;
+}
+
+.popup {
+  position: fixed;
+  z-index: 400;
+  width: 280px;
+  background: var(--bg);
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px var(--shadow-lg);
+  overflow: hidden;
+}
+
+.divider { height: 1px; background: var(--border-light); }
+
+// ── 1. Shortcuts ──────────────────────────────────────────────
+.shortcuts { padding: 4px; }
+
+.shortcut {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 7px 10px; border: none; background: none;
+  border-radius: 6px; cursor: pointer; font-family: inherit;
+  transition: background 0.1s;
+  &:hover { background: var(--bg-hover); }
+}
+.shortcutActive { background: var(--bg-active); }
+.scLabel { font-size: 0.875rem; color: var(--text); }
+.scRight { font-size: 0.8rem; color: var(--text-muted); }
+
+// ── 2. Date section ───────────────────────────────────────────
+.dateSection { padding: 8px; }
+
+.dateRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+// Фиксированная высота для всех элементов строки дат
+$pill-h: 32px;
+
+// Кнопка даты (закрытый режим)
+.datePill {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  height: $pill-h;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  background: var(--bg-alt);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: border-color 0.1s, background 0.1s;
+  &:hover { border-color: var(--border-strong); background: var(--bg-surface); }
+}
+.datePillPlaceholder { color: var(--text-4); font-style: italic; }
+
+// Контейнер в режиме редактирования
+.datePillWrap {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  height: $pill-h;
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-input);
+  padding: 0 2px;
+  box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.1);
+}
+
+// Фиксированный размер — только для мультидневного режима
+.datePillFixed {
+  flex: none;
+  width: 110px;
+}
+
+// Независимый input-сегмент (ДД / ММ / ГГГГ)
+.segInput {
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-family: inherit;
+  text-align: center;
+  outline: none;
+  padding: 0 1px;
+  width: 2ch;
+  min-width: 18px;
+  // Растягивается на всю высоту .datePillWrap
+  align-self: stretch;
+
+  &::placeholder { color: var(--text-4); font-size: 0.72rem; }
+  &:focus { background: var(--bg-active); border-radius: 3px; }
+}
+
+.segInputYear {
+  width: 4ch;
+  min-width: 34px;
+}
+
+// Разделитель «.» между сегментами
+.segSep {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  user-select: none;
+  pointer-events: none;
+  padding: 0 1px;
+}
+
+
+// Обёртка двух пилюль в мультидневном режиме
+.datePillPair {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.dateSep { font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; }
+
+.multiAdd {
+  flex-shrink: 0;
+  height: $pill-h;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border: 1px dashed var(--border-input); border-radius: 5px;
+  background: none; font-size: 0.78rem; color: var(--text-muted);
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center;
+  transition: border-color 0.1s, color 0.1s;
+  &:hover { border-color: var(--border-strong); color: var(--text); }
+}
+.multiClear {
+  flex-shrink: 0;
+  height: $pill-h;
+  box-sizing: border-box;
+  background: none; border: none; font-size: 0.65rem;
+  color: var(--text-4); cursor: pointer; padding: 0 5px; border-radius: 3px;
+  display: flex; align-items: center;
+  &:hover { color: #cc3333; background: rgba(204, 51, 51, 0.08); }
+}
+
+// ── Calendar ──────────────────────────────────────────────────
+.calBody { margin-top: 6px; }
+
+.calHead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 2px 2px 4px;
+}
+
+.calTitleBtn {
+  background: none; border: none; font-size: 0.82rem; font-weight: 600;
+  color: var(--text); cursor: pointer; padding: 3px 8px; border-radius: 5px;
+  font-family: inherit; transition: background 0.1s;
+  &:hover { background: var(--bg-hover); }
+}
+
+.calNav {
+  background: none; border: none; font-size: 1rem; color: var(--text-muted);
+  cursor: pointer; padding: 2px 4px; border-radius: 3px; line-height: 1;
+  &:hover { background: var(--bg-hover); color: var(--text); }
+}
+
+$wk: 18px; // ширина колонки номера недели
+
+.calWds {
+  display: grid; grid-template-columns: $wk repeat(7, 1fr); margin-bottom: 2px;
+}
+.calWd {
+  text-align: center; font-size: 0.6rem; font-weight: 600;
+  color: var(--text-4); padding: 1px 0;
+}
+.calWdWeek {
+  font-size: 0.55rem; font-weight: 600; color: var(--text-4);
+  text-align: center; opacity: 0.45; padding: 1px 0;
+}
+.calRow { display: grid; grid-template-columns: $wk repeat(7, 1fr); gap: 1px; }
+.calEmpty { display: block; }
+
+.weekNum {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.55rem; color: var(--text-4); opacity: 0.45;
+  user-select: none;
+}
+
+.calCell {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; aspect-ratio: 1; border: none; background: none; border-radius: 4px;
+  font-size: 0.78rem; color: var(--text); cursor: pointer; font-family: inherit;
+  transition: background 0.1s;
+  &:hover { background: var(--bg-hover); }
+}
+.calSel     { background: var(--text); color: var(--bg); font-weight: 600;
+              &:hover { background: var(--text-2); } }
+.calEnd     { background: var(--bg-active); border: 1px solid var(--border-strong); font-weight: 600; }
+.calBetween { background: var(--bg-hover); border-radius: 0; }
+.calToday   { border: 1.5px solid var(--text-muted); }
+
+.calHoverSel     { background: var(--bg-active); border: 1px dashed var(--border-input); }
+.calHoverBetween { background: var(--bg-hover); opacity: 0.6; border-radius: 0; }
+
+.calCell:disabled {
+  opacity: 0.22;
+  cursor: not-allowed;
+}
+
+.calHolDot {
+  display: block; width: 4px; height: 4px;
+  border-radius: 50%; flex-shrink: 0;
+}
+
+// Подсветка вводимой даты в календаре
+.calPreviewed {
+  outline: 2px solid var(--border-strong);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+// ── 3. Repeat section ─────────────────────────────────────────
+.repeatSection { padding: 4px; }
+.repeatRow { display: flex; align-items: center; gap: 4px; }
+
+.repeatToggle {
+  flex: 1; display: flex; align-items: center; padding: 7px 10px;
+  border: none; background: none; border-radius: 6px; font-size: 0.875rem;
+  color: var(--text-muted); cursor: pointer; font-family: inherit; text-align: left;
+  transition: background 0.1s, color 0.1s;
+  &:hover { background: var(--bg-hover); color: var(--text); }
+}
+.repeatToggleActive { color: var(--text); font-weight: 500; }
+
+.repeatClear {
+  background: none; border: none; font-size: 0.68rem; color: var(--text-4);
+  cursor: pointer; padding: 4px 6px; border-radius: 4px; flex-shrink: 0;
+  &:hover { color: #cc3333; background: rgba(204,51,51,0.08); }
+}
+
+.repeatDropdown { display: flex; flex-direction: column; margin-top: 2px; }
+.repeatDivider  { height: 1px; background: var(--border-light); margin: 2px 0; }
+
+.repeatItem {
+  display: flex; align-items: center; gap: 3px; width: 100%;
+  padding: 7px 10px; border: none; background: none; border-radius: 5px;
+  font-size: 0.875rem; color: var(--text); cursor: pointer; font-family: inherit;
+  text-align: left; transition: background 0.1s;
+  &:hover { background: var(--bg-hover); }
+}
+.repeatItemActive { background: var(--bg-active); }
+.repeatAccent { color: #3b82f6; }
+
+.repeatConfigure {
+  display: block; width: 100%; padding: 7px 10px; border: none; background: none;
+  border-radius: 5px; font-size: 0.875rem; color: #3b82f6; cursor: pointer;
+  font-family: inherit; text-align: left; transition: background 0.1s;
+  &:hover { background: var(--bg-hover); }
+}
+
+.repeatUntilRow {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 4px 10px 6px; border-top: 1px solid var(--border-light); margin-top: 2px;
+}
+.repeatUntilLabel {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.8rem; color: var(--text-muted); cursor: pointer;
+  input[type='checkbox'] { cursor: pointer; accent-color: var(--text); }
+}
+.repeatUntilInput {
+  padding: 4px 8px; background: var(--bg-alt); border: 1px solid var(--border-input);
+  border-radius: 4px; font-size: 0.8rem; color: var(--text); outline: none; font-family: inherit;
+  &:focus { border-color: var(--border-strong); }
+}

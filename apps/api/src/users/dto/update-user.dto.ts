@@ -36,4 +36,8 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   showGlobalEvents?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  showHolidays?: boolean;
 }

@@ -5,11 +5,13 @@ import { Task, TaskRepeat, TaskType, toDateStr } from '../../lib/tasks';
 import styles from './CreateTaskModal.module.scss';
 
 const REPEAT_LABELS: Record<TaskRepeat, string> = {
-  none:    'Без повтора',
-  daily:   'Каждый день',
-  weekly:  'Каждую неделю',
-  monthly: 'Каждый месяц',
-  yearly:  'Каждый год',
+  none:     'Без повтора',
+  daily:    'Каждый день',
+  weekdays: 'Будни (Пн-Пт)',
+  weekly:   'Каждую неделю',
+  monthly:  'Каждый месяц',
+  yearly:   'Каждый год',
+  custom:   'Настраиваемый',
 };
 
 const TYPE_LABELS: Record<TaskType, string> = {
@@ -32,10 +34,8 @@ export function CreateTaskModal({ date, onSave, onClose }: Props) {
 
   const titleRef = useRef<HTMLInputElement>(null);
 
-  // Focus title only on first mount
   useEffect(() => { titleRef.current?.focus(); }, []);
 
-  // ESC to close
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handler);

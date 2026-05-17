@@ -4,9 +4,18 @@ import type { AchievementResult } from './achievements';
 
 export type { Tag };
 
-export type TaskStatus = 'done' | 'missed' | 'pending';
-export type TaskRepeat = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
-export type TaskType   = 'normal' | 'mandatory' | 'event';
+export type TaskStatus   = 'done' | 'missed' | 'pending';
+export type TaskRepeat   = 'none' | 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'yearly' | 'custom';
+export type TaskType     = 'normal' | 'mandatory' | 'event';
+export type TaskPriority = 'none' | 'low' | 'medium' | 'high';
+
+export interface RepeatConfig {
+  every: number;
+  unit: 'day' | 'week' | 'month' | 'year';
+  weekdays?: number[];   // 0=Sun 1=Mon … 6=Sat
+  skipWeekends?: boolean;
+  endAfter?: number;
+}
 
 export interface SubtaskItem {
   id: string;
@@ -32,6 +41,8 @@ export interface Task {
   repeat: TaskRepeat;
   repeatUntil?: string;
   type: TaskType;
+  priority?: TaskPriority;
+  repeatConfig?: RepeatConfig | null;
   isGlobal?: boolean;
   icon?: string | null;
   tags?: Tag[];
@@ -84,6 +95,31 @@ function isRepeatMultiDayActiveOn(task: Task, dateStr: string): boolean {
   return checkDate <= occEnd;
 }
 
+function evaluateCustomRepeat(task: Task, date: Date, taskStart: Date): boolean {
+  const cfg = task.repeatConfig;
+  if (!cfg) return false;
+  const diffMs = date.getTime() - taskStart.getTime();
+  if (diffMs < 0) return false;
+  const diffDays = Math.round(diffMs / 86_400_000);
+  const dow = date.getDay();
+  if (cfg.skipWeekends && (dow === 0 || dow === 6)) return false;
+  if (cfg.weekdays && cfg.weekdays.length > 0 && !cfg.weekdays.includes(dow)) return false;
+  const every = cfg.every ?? 1;
+  switch (cfg.unit) {
+    case 'day':   return diffDays % every === 0;
+    case 'week':  return (Math.floor(diffDays / 7)) % every === 0 && (cfg.weekdays?.includes(dow) ?? taskStart.getDay() === dow);
+    case 'month': {
+      const m = (date.getFullYear() - taskStart.getFullYear()) * 12 + (date.getMonth() - taskStart.getMonth());
+      return m % every === 0 && date.getDate() === taskStart.getDate();
+    }
+    case 'year': {
+      const y = date.getFullYear() - taskStart.getFullYear();
+      return y % every === 0 && date.getMonth() === taskStart.getMonth() && date.getDate() === taskStart.getDate();
+    }
+    default: return false;
+  }
+}
+
 export function getTasksForDate(
   allTasks: Task[],
   date: Date,
@@ -109,10 +145,12 @@ export function getTasksForDate(
       if (task.repeatUntil && dateStr > task.repeatUntil) continue;
       const taskDate = new Date(task.date + 'T00:00:00');
       switch (task.repeat) {
-        case 'daily':   isMatch = true; break;
-        case 'weekly':  isMatch = taskDate.getDay() === date.getDay(); break;
-        case 'monthly': isMatch = taskDate.getDate() === date.getDate(); break;
-        case 'yearly':  isMatch = taskDate.getDate() === date.getDate() && taskDate.getMonth() === date.getMonth(); break;
+        case 'daily':    isMatch = true; break;
+        case 'weekdays': isMatch = date.getDay() >= 1 && date.getDay() <= 5; break;
+        case 'weekly':   isMatch = taskDate.getDay() === date.getDay(); break;
+        case 'monthly':  isMatch = taskDate.getDate() === date.getDate(); break;
+        case 'yearly':   isMatch = taskDate.getDate() === date.getDate() && taskDate.getMonth() === date.getMonth(); break;
+        case 'custom':   isMatch = evaluateCustomRepeat(task, date, taskDate); break;
       }
     }
 
@@ -135,7 +173,9 @@ export function getMockTemp(date: Date): number {
 interface ApiTask {
   id: string; userId: string; title: string; description: string | null;
   date: string; time: string | null; endTime: string | null; endDate: string | null;
-  repeat: string; repeatUntil: string | null; type: string; icon: string | null;
+  repeat: string; repeatUntil: string | null; type: string; priority: string;
+  repeatConfig: object | null;
+  icon: string | null;
   tags?: Tag[];
   subtasks?: object[] | null;
 }
@@ -151,6 +191,8 @@ function fromApi(t: ApiTask): Task {
     repeat: t.repeat as TaskRepeat,
     repeatUntil: t.repeatUntil ?? undefined,
     type: t.type as TaskType,
+    priority: (t.priority ?? 'none') as TaskPriority,
+    repeatConfig: (t.repeatConfig ?? null) as RepeatConfig | null,
     icon: t.icon ?? null,
     tags: t.tags ?? [],
     subtasks: (t.subtasks ?? null) as SubtaskSection[] | null,
@@ -188,25 +230,29 @@ export const tasksApi = {
       repeat:      p.repeat,
       repeatUntil: p.repeatUntil ?? null,
       type:        p.type,
-      icon:        p.icon        ?? null,
-      tagIds:      p.tags?.map(t => t.id) ?? [],
-      subtasks:    p.subtasks    ?? null,
+      priority:     p.priority     ?? 'none',
+      repeatConfig: p.repeatConfig ?? null,
+      icon:         p.icon         ?? null,
+      tagIds:       p.tags?.map(t => t.id) ?? [],
+      subtasks:     p.subtasks     ?? null,
     }).then(r => ({ task: fromApi(r.data), newAchievements: r.data.newAchievements ?? [] })),
 
   update: (id: string, p: Payload): Promise<Task> =>
     api.patch<ApiTask>(`/tasks/${id}`, {
-      title:       p.title,
-      description: p.description ?? null,
-      date:        p.date,
-      time:        p.time        ?? null,
-      endTime:     p.endTime     ?? null,
-      endDate:     p.endDate     ?? null,
-      repeat:      p.repeat,
-      repeatUntil: p.repeatUntil ?? null,
-      type:        p.type,
-      icon:        p.icon        ?? null,
-      tagIds:      p.tags?.map(t => t.id) ?? [],
-      subtasks:    p.subtasks    ?? null,
+      title:        p.title,
+      description:  p.description  ?? null,
+      date:         p.date,
+      time:         p.time         ?? null,
+      endTime:      p.endTime      ?? null,
+      endDate:      p.endDate      ?? null,
+      repeat:       p.repeat,
+      repeatUntil:  p.repeatUntil  ?? null,
+      type:         p.type,
+      priority:     p.priority     ?? 'none',
+      repeatConfig: p.repeatConfig ?? null,
+      icon:         p.icon         ?? null,
+      tagIds:       p.tags?.map(t => t.id) ?? [],
+      subtasks:     p.subtasks     ?? null,
     }).then(r => fromApi(r.data)),
 
   delete: (id: string): Promise<void> =>

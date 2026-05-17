@@ -35,14 +35,20 @@ export class Task {
   @Column({ type: 'varchar', length: 10, nullable: true, default: null })
   endDate!: string | null;
 
-  @Column({ type: 'varchar', length: 10, default: 'none' })
+  @Column({ type: 'varchar', length: 20, default: 'none' })
   repeat: string;
+
+  @Column({ type: 'json', nullable: true, default: null })
+  repeatConfig: object | null;
 
   @Column({ type: 'varchar', length: 10, nullable: true, default: null })
   repeatUntil: string | null;
 
   @Column({ type: 'varchar', length: 20, default: 'normal' })
   type: string;
+
+  @Column({ type: 'varchar', length: 20, default: 'none' })
+  priority: string;
 
   @Column({ type: 'varchar', length: 64, nullable: true, default: null })
   icon: string | null;

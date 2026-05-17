@@ -1,5 +1,5 @@
 .root {
-  border-top: 1px solid #d8d8d8;
+  border-top: 1px solid var(--border);
   flex-shrink: 0;
 }
 
@@ -16,13 +16,13 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #999;
+  color: var(--text-4);
 
-  &:hover { color: #555; }
+  &:hover { color: var(--text-2); }
 }
 
 .chevron {
-  color: #bbb;
+  color: var(--text-4);
   transition: transform .15s;
 }
 .chevronOpen { transform: rotate(180deg); }
@@ -52,7 +52,7 @@
 }
 
 .tagRowEditing {
-  background: #e8e8e8;
+  background: var(--bg-alt);
   padding: 2px 6px;
   margin: 0 -6px;
 }
@@ -73,7 +73,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .tagDot {
@@ -94,16 +94,16 @@
   border: none;
   cursor: pointer;
   font-size: 0.75rem;
-  color: #aaa;
+  color: var(--text-4);
   padding: 3px 5px;
   border-radius: 3px;
   line-height: 1;
-  &:hover { background: #e0e0e0; color: #555; }
+  &:hover { background: var(--bg-hover); color: var(--text-2); }
 }
 
 .tagBtnDanger {
   @extend .tagBtn;
-  &:hover { background: #fef2f2; color: #dc2626; }
+  &:hover { background: rgba(220, 38, 38, 0.1); color: #dc2626; }
 }
 
 /* ── Форма ── */
@@ -111,8 +111,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: #e8e8e8;
-  border: 1px solid #d0d0d0;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
   border-radius: 8px;
   padding: 10px;
 }
@@ -122,23 +122,23 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .nameInput {
   width: 100%;
   padding: 6px 9px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
   border-radius: 5px;
-  background: #fff;
+  background: var(--bg-card);
   font-size: 0.875rem;
-  color: #1a1a1a;
+  color: var(--text);
   outline: none;
   box-sizing: border-box;
   font-family: inherit;
 
-  &:focus { border-color: #888; }
-  &::placeholder { color: #aaa; }
+  &:focus { border-color: var(--border-strong); }
+  &::placeholder { color: var(--text-4); }
 }
 
 .iconRow {
@@ -155,7 +155,7 @@
 
 .colorLabel {
   font-size: 0.775rem;
-  color: #777;
+  color: var(--text-muted);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -199,16 +199,16 @@
 .hexInput {
   width: 88px;
   padding: 5px 8px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
   border-radius: 5px;
-  background: #fff;
+  background: var(--bg-card);
   font-size: 0.825rem;
   font-family: monospace;
-  color: #1a1a1a;
+  color: var(--text);
   outline: none;
 
-  &:focus { border-color: #888; }
-  &::placeholder { color: #bbb; }
+  &:focus { border-color: var(--border-strong); }
+  &::placeholder { color: var(--text-4); }
 }
 
 .formActions {
@@ -220,11 +220,11 @@
 
 .saveBtn {
   padding: 5px 13px;
-  background: #1a1a1a;
+  background: var(--text);
   border: none;
   border-radius: 5px;
   font-size: 0.8rem;
-  color: #fff;
+  color: var(--bg);
   cursor: pointer;
   font-family: inherit;
   transition: opacity .1s;
@@ -236,11 +236,11 @@
 .cancelBtn {
   padding: 5px 11px;
   background: none;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
   border-radius: 5px;
   font-size: 0.8rem;
-  color: #666;
+  color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
-  &:hover { background: #e0e0e0; }
+  &:hover { background: var(--bg-hover); }
 }

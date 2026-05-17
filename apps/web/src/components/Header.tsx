@@ -3,12 +3,15 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 import { clearAuth } from '../lib/auth';
 import styles from './Header.module.scss';
 
 export function Header() {
   const { user, ready } = useAuthStore();
+  const { theme, toggle } = useThemeStore();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -34,8 +37,20 @@ export function Header() {
 
   return (
     <header className={styles.header}>
-      <Link href="/" className={styles.logo}>WT</Link>
+      <Link href="/manager" className={styles.logo}>WT</Link>
       <div className={styles.right}>
+        <button
+          className={`${styles.themeToggle}${theme === 'dark' ? ` ${styles.themeToggleDark}` : ''}`}
+          onClick={toggle}
+          aria-label="Переключить тему"
+        >
+          <Sun size={11} className={styles.themeIconSun} />
+          <span className={styles.themeTrack}>
+            <span className={styles.themeKnob} />
+          </span>
+          <Moon size={11} className={styles.themeIconMoon} />
+        </button>
+
         {ready && (
           user ? (
             <div className={styles.avatarWrap} ref={menuRef}>

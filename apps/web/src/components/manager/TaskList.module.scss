@@ -28,28 +28,28 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  color: #888;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .clockTemp {
   font-size: 1rem;
   font-weight: 600;
-  color: #555;
+  color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
 
 .clockTime {
   font-size: 2.25rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
 
 .clockDay {
   font-size: 1.1rem;
-  color: #777;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -71,24 +71,24 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #999;
+  color: var(--text-4);
 }
 
 .addBtn {
   width: 22px;
   height: 22px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
   border-radius: 4px;
   background: none;
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
-  color: #666;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  &:hover { background: #e0e0e0; }
+  &:hover { background: var(--bg-hover); }
 }
 
 .list {
@@ -100,8 +100,21 @@
 
 .empty {
   font-size: 0.85rem;
-  color: #bbb;
+  color: var(--text-4);
   padding: 0.25rem 0;
+}
+
+// ── Holiday banner ────────────────────────────────────────────
+.holidayBanner {
+  display: flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #16a34a;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
 }
 
 // ── Task ──────────────────────────────────────────────────────
@@ -110,8 +123,8 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.6rem;
-  background: #ebebeb;
-  border: 1px solid #d8d8d8;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 6px;
   position: relative;
 }
@@ -152,7 +165,7 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  color: #666;
+  color: var(--text-muted);
   margin-right: -2px;
 }
 
@@ -160,29 +173,29 @@
 .checkbox {
   width: 20px;
   height: 20px;
-  border: 1.5px solid #bbb;
+  border: 1.5px solid var(--border-strong);
   border-radius: 4px;
-  background: #f4f4f4;
+  background: var(--bg-input);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.65rem;
-  color: #fff;
+  color: var(--bg);
   flex-shrink: 0;
   padding: 0;
   transition: background 0.1s, border-color 0.1s;
-  &:hover { border-color: #888; }
+  &:hover { border-color: var(--text-muted); }
 }
 
 .checkboxDone {
-  background: #1a1a1a;
-  border-color: #1a1a1a;
+  background: var(--text);
+  border-color: var(--text);
 }
 
 .checkboxMissed {
-  background: #999;
-  border-color: #999;
+  background: var(--text-muted);
+  border-color: var(--text-muted);
 }
 
 // ── Task body ─────────────────────────────────────────────────
@@ -200,7 +213,7 @@
 
 .taskTime {
   font-size: 0.75rem;
-  color: #888;
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
@@ -215,7 +228,7 @@
 
 .taskTitle {
   font-size: 0.875rem;
-  color: #1a1a1a;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -223,7 +236,7 @@
 
 .taskDesc {
   font-size: 0.72rem;
-  color: #999;
+  color: var(--text-4);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -231,14 +244,14 @@
 
 .repeatBadge {
   font-size: 0.65rem;
-  color: #aaa;
+  color: var(--text-4);
   flex-shrink: 0;
 }
 
 .taskDateBadge {
   font-size: 0.68rem;
-  color: #fff;
-  background: #888;
+  color: var(--bg);
+  background: var(--text-muted);
   border-radius: 3px;
   padding: 1px 5px;
   flex-shrink: 0;
@@ -252,7 +265,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1.5px solid #ccc;
+  border: 1.5px solid var(--border-input);
   flex-shrink: 0;
   color: inherit;
 }
@@ -274,29 +287,29 @@
   border: none;
   cursor: pointer;
   font-size: 0.9rem;
-  color: #bbb;
+  color: var(--text-4);
   padding: 0 0.25rem;
   letter-spacing: 0.08em;
   line-height: 1;
-  &:hover { color: #555; }
+  &:hover { color: var(--text-2); }
 }
 
 .menu {
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  background: #f0f0f0;
-  border: 1px solid #ccc;
+  background: var(--bg);
+  border: 1px solid var(--border-input);
   border-radius: 5px;
   padding: 0.3rem;
   z-index: 20;
   min-width: 140px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 14px var(--shadow-md);
 }
 
 .menuDivider {
   height: 1px;
-  background: #ddd;
+  background: var(--border-light);
   margin: 0.2rem 0;
 }
 
@@ -308,10 +321,10 @@
   border: none;
   background: none;
   font-size: 0.85rem;
-  color: #1a1a1a;
+  color: var(--text);
   cursor: pointer;
   border-radius: 3px;
-  &:hover { background: #e0e0e0; }
+  &:hover { background: var(--bg-hover); }
 }
 
 .menuItemArrow {
@@ -332,15 +345,15 @@
 
 .submenu {
   position: absolute;
-  right: calc(100% + 2px); // opens LEFT of the main menu — avoids going into calendar panel
+  right: calc(100% + 2px);
   left: auto;
   top: 0;
-  background: #f0f0f0;
-  border: 1px solid #ccc;
+  background: var(--bg);
+  border: 1px solid var(--border-input);
   border-radius: 5px;
   padding: 0.3rem;
   min-width: 140px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 14px var(--shadow-md);
   z-index: 30;
 }
 
@@ -352,14 +365,14 @@
   border: none;
   background: none;
   font-size: 0.82rem;
-  color: #1a1a1a;
+  color: var(--text);
   cursor: pointer;
   border-radius: 3px;
-  &:hover { background: #e0e0e0; }
+  &:hover { background: var(--bg-hover); }
 }
 
 .submenuDivider {
   height: 1px;
-  background: #ddd;
+  background: var(--border-light);
   margin: 0.2rem 0;
 }

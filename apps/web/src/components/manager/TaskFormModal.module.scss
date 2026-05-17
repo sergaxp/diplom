@@ -12,25 +12,25 @@
 
 // ── Modal ─────────────────────────────────────────────────────
 .modal {
-  background: #f0f0f0;
-  border: 1px solid #c8c8c8;
+  background: var(--bg);
+  border: 1px solid var(--border-input);
   border-radius: 10px;
   width: 100%;
   max-width: 900px;
-  max-height: 90dvh;
+  height: 86dvh;        /* фиксированная высота */
   display: flex;
   flex-direction: column;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 18px 50px var(--shadow-lg);
   overflow: hidden;
 }
 
-// ── Top bar: название + теги под ним ─────────────────────────
+// ── Top bar ───────────────────────────────────────────────────
 .top {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem 1.25rem 0.75rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-light);
   flex-shrink: 0;
 }
 
@@ -55,10 +55,74 @@
   outline: none;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
   font-family: inherit;
 
-  &::placeholder { color: #c0c0c0; font-weight: 400; }
+  &::placeholder { color: var(--text-4); font-weight: 400; }
+}
+
+.descInput {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  color: var(--text-2);
+  font-family: inherit;
+  resize: none;
+  line-height: 1.5;
+  padding: 0.4rem 0 0.1rem;
+
+  &::placeholder { color: var(--text-4); }
+}
+
+// ── Meta row (date / time / priority) — под описанием ─────────
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-light);
+  margin-top: 0.4rem;
+}
+
+// ── Date picker wrap & button ─────────────────────────────────
+.datePickerWrap {
+  position: relative;
+}
+
+.dateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.42rem 0.65rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
+  border-radius: 5px;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: border-color 0.1s, background 0.1s;
+
+  &:hover { border-color: var(--border-strong); background: var(--bg-surface); }
+}
+
+.dateBtnOpen {
+  border-color: var(--border-strong);
+  background: var(--bg-surface);
+}
+
+.dateBtnEnd {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.dateBtnRepeat {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-left: 2px;
 }
 
 .closeBtn {
@@ -66,16 +130,16 @@
   background: none;
   border: none;
   font-size: 0.85rem;
-  color: #aaa;
+  color: var(--text-4);
   cursor: pointer;
   padding: 0.25rem 0.4rem;
   border-radius: 4px;
   line-height: 1;
   transition: color 0.1s, background 0.1s;
-  &:hover { color: #555; background: #e0e0e0; }
+  &:hover { color: var(--text-2); background: var(--bg-hover); }
 }
 
-// Теги — отдельная строка под заголовком
+// Теги
 .tagPicker {
   display: flex;
   gap: 4px;
@@ -89,15 +153,15 @@
   gap: 4px;
   padding: 3px 10px 3px 7px;
   border-radius: 20px;
-  border: 1.5px solid #d4d4d4;
+  border: 1.5px solid var(--border);
   background: none;
   font-size: 0.72rem;
   font-weight: 500;
-  color: #666;
+  color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
   transition: border-color 0.12s, background 0.12s;
-  &:hover { border-color: #999; }
+  &:hover { border-color: var(--border-strong); }
 }
 
 .tagPillActive {
@@ -113,7 +177,7 @@
   overflow: hidden;
 }
 
-// ── Body: две колонки (шире правая) ──────────────────────────
+// ── Body ──────────────────────────────────────────────────────
 .body {
   display: grid;
   grid-template-columns: 1fr 320px;
@@ -126,19 +190,19 @@
 .left {
   padding: 1rem 1.25rem;
   overflow-y: auto;
-  border-right: 1px solid #e0e0e0;
+  border-right: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 
   scrollbar-width: thin;
-  scrollbar-color: #d0d0d0 transparent;
+  scrollbar-color: var(--border) transparent;
 }
 
 .addSectionBtn {
   background: none;
   border: none;
-  color: #b8b8b8;
+  color: var(--text-4);
   font-size: 0.8rem;
   cursor: pointer;
   padding: 0.4rem 0;
@@ -146,7 +210,7 @@
   text-align: left;
   margin-top: 0.25rem;
   transition: color 0.1s;
-  &:hover { color: #555; }
+  &:hover { color: var(--text-2); }
 }
 
 // ── Section ───────────────────────────────────────────────────
@@ -164,7 +228,7 @@
 .collapseBtn {
   background: none;
   border: none;
-  color: #b0b0b0;
+  color: var(--text-4);
   font-size: 0.6rem;
   cursor: pointer;
   padding: 0.1rem 0.15rem;
@@ -172,32 +236,32 @@
   flex-shrink: 0;
   line-height: 1;
   transition: color 0.1s;
-  &:hover { color: #444; }
+  &:hover { color: var(--text); }
 }
 
 .sectionTitle {
   flex: 1;
   font-size: 0.7rem;
   font-weight: 700;
-  color: #999;
+  color: var(--text-4);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   cursor: pointer;
   user-select: none;
   transition: color 0.1s;
-  &:hover { color: #444; }
+  &:hover { color: var(--text); }
 }
 
 .sectionTitleInput {
   flex: 1;
   font-size: 0.7rem;
   font-weight: 700;
-  color: #444;
+  color: var(--text-2);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   background: none;
   border: none;
-  border-bottom: 1.5px solid #aaa;
+  border-bottom: 1.5px solid var(--border-strong);
   outline: none;
   font-family: inherit;
   padding: 0;
@@ -206,7 +270,7 @@
 .sectionDeleteBtn {
   background: none;
   border: none;
-  color: #d4d4d4;
+  color: var(--border);
   font-size: 1rem;
   cursor: pointer;
   padding: 0 0.1rem;
@@ -215,7 +279,7 @@
   &:hover { color: #e05050; }
 }
 
-// ── Subtask items ──────────────────────────────────────────────
+// ── Subtask items ─────────────────────────────────────────────
 .subtaskList {
   list-style: none;
   padding: 0;
@@ -235,14 +299,14 @@
 }
 
 .subtaskItemDone {
-  .subtaskItemInput { text-decoration: line-through; color: #b8b8b8; }
+  .subtaskItemInput { text-decoration: line-through; color: var(--text-4); }
 }
 
 .subtaskCheck {
   flex-shrink: 0;
   width: 15px;
   height: 15px;
-  border: 1.5px solid #c4c4c4;
+  border: 1.5px solid var(--border-strong);
   border-radius: 3px;
   background: none;
   cursor: pointer;
@@ -250,14 +314,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #f0f0f0;
+  color: var(--bg);
   transition: background 0.12s, border-color 0.12s;
-  &:hover { border-color: #888; }
+  &:hover { border-color: var(--text-muted); }
 }
 
 .subtaskCheckDone {
-  background: #555;
-  border-color: #555;
+  background: var(--text-2);
+  border-color: var(--text-2);
 }
 
 .subtaskItemInput {
@@ -267,7 +331,7 @@
   border: none;
   outline: none;
   font-size: 0.875rem;
-  color: #2a2a2a;
+  color: var(--text);
   font-family: inherit;
 }
 
@@ -275,7 +339,7 @@
   flex-shrink: 0;
   background: none;
   border: none;
-  color: #ccc;
+  color: var(--border-input);
   font-size: 0.9rem;
   cursor: pointer;
   padding: 0 0.2rem;
@@ -296,7 +360,7 @@
 .addSubtaskPlus {
   flex-shrink: 0;
   font-size: 0.9rem;
-  color: #ccc;
+  color: var(--text-4);
   width: 15px;
   text-align: center;
   line-height: 1;
@@ -308,30 +372,30 @@
   border: none;
   outline: none;
   font-size: 0.875rem;
-  color: #aaa;
+  color: var(--text-4);
   font-family: inherit;
 
-  &::placeholder { color: #ccc; }
-  &:focus { color: #333; }
+  &::placeholder { color: var(--text-4); }
+  &:focus { color: var(--text); }
 }
 
-// ── Right — погода + настройки ────────────────────────────────
+// ── Right — настройки ─────────────────────────────────────────
 .right {
   padding: 1rem 1.25rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  background: #ebebeb;
+  background: var(--bg-surface);
 
   scrollbar-width: thin;
-  scrollbar-color: #d0d0d0 transparent;
+  scrollbar-color: var(--border) transparent;
 }
 
 // ── Виджет погоды ─────────────────────────────────────────────
 .weatherCard {
-  background: #e4e4e4;
-  border: 1px solid #d4d4d4;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.75rem 0.9rem;
   display: flex;
@@ -344,24 +408,24 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .weatherTitle {
   font-size: 0.82rem;
   font-weight: 600;
-  color: #555;
+  color: var(--text-2);
   flex: 1;
 }
 
 .weatherCondition {
   font-size: 0.72rem;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .weatherNote {
   font-size: 0.72rem;
-  color: #aaa;
+  color: var(--text-4);
   margin: 0;
 }
 
@@ -374,13 +438,13 @@
 .weatherTempMax {
   font-size: 1.6rem;
   font-weight: 700;
-  color: #333;
+  color: var(--text);
   line-height: 1;
 }
 
 .weatherTempMin {
   font-size: 1rem;
-  color: #888;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -395,7 +459,7 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.75rem;
-  color: #777;
+  color: var(--text-muted);
 
   > svg { flex-shrink: 0; opacity: 0.7; }
 
@@ -404,11 +468,11 @@
 
 .weatherRowVal {
   font-weight: 600;
-  color: #444;
+  color: var(--text-2);
   text-align: right;
 }
 
-// ── Fields (right panel) ───────────────────────────────────────
+// ── Fields ────────────────────────────────────────────────────
 .field {
   display: flex;
   flex-direction: column;
@@ -418,7 +482,7 @@
 .fieldLabel {
   font-size: 0.68rem;
   font-weight: 700;
-  color: #999;
+  color: var(--text-4);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -432,7 +496,7 @@
 
 .rangeToggle {
   font-size: 0.68rem;
-  color: #888;
+  color: var(--text-muted);
   background: none;
   border: none;
   cursor: pointer;
@@ -440,7 +504,7 @@
   font-family: inherit;
   white-space: nowrap;
   transition: color 0.1s;
-  &:hover { color: #1a1a1a; text-decoration: underline; }
+  &:hover { color: var(--text); text-decoration: underline; }
 }
 
 .rangeRow {
@@ -453,24 +517,24 @@
 
 .sep {
   font-size: 0.85rem;
-  color: #bbb;
+  color: var(--text-4);
   flex-shrink: 0;
 }
 
 .input,
 .select {
   padding: 0.42rem 0.65rem;
-  background: #e8e8e8;
-  border: 1px solid #d0d0d0;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
   border-radius: 5px;
   font-size: 0.85rem;
-  color: #1a1a1a;
+  color: var(--text);
   outline: none;
   font-family: inherit;
   width: 100%;
   transition: border-color 0.1s, background 0.1s;
 
-  &:focus { border-color: #888; background: #efefef; }
+  &:focus { border-color: var(--border-strong); background: var(--bg-hover); }
 }
 
 .repeatUntil {
@@ -485,27 +549,27 @@
   align-items: center;
   gap: 0.45rem;
   font-size: 0.82rem;
-  color: #666;
+  color: var(--text-muted);
   cursor: pointer;
 
   input[type='checkbox'] {
     width: 14px;
     height: 14px;
     cursor: pointer;
-    accent-color: #1a1a1a;
+    accent-color: var(--text);
     flex-shrink: 0;
   }
 }
 
-// ── Footer: удалить слева, действия справа ────────────────────
+// ── Footer ────────────────────────────────────────────────────
 .footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.25rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border-light);
   flex-shrink: 0;
-  background: #f0f0f0;
+  background: var(--bg);
   gap: 0.6rem;
 }
 
@@ -522,7 +586,7 @@
 .deleteBtn {
   padding: 0.45rem 1rem;
   background: none;
-  border: 1px solid #e0a0a0;
+  border: 1px solid rgba(204, 51, 51, 0.4);
   border-radius: 5px;
   font-size: 0.875rem;
   color: #cc3333;
@@ -532,29 +596,43 @@
   &:hover { background: rgba(204, 51, 51, 0.08); border-color: #cc3333; }
 }
 
-.cancelBtn {
-  padding: 0.45rem 1.1rem;
+.clearBtn {
+  padding: 0.45rem 1rem;
   background: none;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
   border-radius: 5px;
   font-size: 0.875rem;
-  color: #666;
+  color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
   transition: background 0.1s;
-  &:hover { background: #e2e2e2; }
+  &:hover { background: var(--bg-hover); }
+}
+
+.cancelBtn {
+  padding: 0.45rem 1.1rem;
+  background: none;
+  border: 1px solid var(--border-input);
+  border-radius: 5px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s;
+  &:hover { background: var(--bg-hover); }
 }
 
 .submitBtn {
   padding: 0.45rem 1.3rem;
-  background: #1a1a1a;
+  background: var(--text);
   border: none;
   border-radius: 5px;
   font-size: 0.875rem;
-  color: #f0f0f0;
+  color: var(--bg);
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.12s;
-  &:hover:not(:disabled) { background: #333; }
+  transition: opacity 0.12s;
+  &:hover:not(:disabled) { opacity: 0.8; }
   &:disabled { opacity: 0.4; cursor: default; }
 }
+

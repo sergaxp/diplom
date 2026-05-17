@@ -72,6 +72,9 @@ export class User {
   @Column({ type: 'boolean', default: true })
   showGlobalEvents: boolean;
 
+  @Column({ type: 'boolean', default: true })
+  showHolidays: boolean;
+
   @Column({ type: 'integer', default: 0 })
   xp: number;
 

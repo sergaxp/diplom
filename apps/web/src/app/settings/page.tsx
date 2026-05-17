@@ -32,6 +32,7 @@ interface FormValues {
   locationLat:      number | null;
   locationLon:      number | null;
   showGlobalEvents: boolean;
+  showHolidays:     boolean;
 }
 
 function fromUser(user: User): FormValues {
@@ -43,6 +44,7 @@ function fromUser(user: User): FormValues {
     locationLat:      user.locationLat      ?? null,
     locationLon:      user.locationLon      ?? null,
     showGlobalEvents: user.showGlobalEvents ?? true,
+    showHolidays:     user.showHolidays     ?? true,
   };
 }
 
@@ -70,7 +72,7 @@ export default function SettingsPage() {
   const locationWrapRef = useRef<HTMLDivElement>(null);
   const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const emptyForm: FormValues = { displayName: '', username: '', bio: '', location: '', locationLat: null, locationLon: null, showGlobalEvents: true };
+  const emptyForm: FormValues = { displayName: '', username: '', bio: '', location: '', locationLat: null, locationLon: null, showGlobalEvents: true, showHolidays: true };
 
   const [form,        setForm]        = useState<FormValues>(emptyForm);
   const [initial,     setInitial]     = useState<FormValues>(emptyForm);
@@ -244,6 +246,8 @@ export default function SettingsPage() {
     }
     if (form.showGlobalEvents !== initial.showGlobalEvents)
       payload.showGlobalEvents = form.showGlobalEvents;
+    if (form.showHolidays !== initial.showHolidays)
+      payload.showHolidays = form.showHolidays;
 
     if (Object.keys(payload).length === 0) {
       setSaved(true); setTimeout(() => setSaved(false), 2000); return;
@@ -398,6 +402,15 @@ export default function SettingsPage() {
                   onChange={e => setForm(f => ({ ...f, showGlobalEvents: e.target.checked }))}
                 />
                 <span className={styles.checkboxLabel}>Показывать глобальные события администратора</span>
+              </label>
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  className={styles.checkbox}
+                  checked={form.showHolidays}
+                  onChange={e => setForm(f => ({ ...f, showHolidays: e.target.checked }))}
+                />
+                <span className={styles.checkboxLabel}>Показывать праздничные дни в календаре</span>
               </label>
             </div>
 

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { Task, toDateStr, getTasksForDate } from '../../lib/tasks';
+import { useHolidays, HolidayMap, getHolidayColor, getHolidayName } from '../../lib/holidays';
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number; color?: string }>;
 const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
@@ -246,9 +247,10 @@ interface MiniMonthProps {
   year: number; month: number;
   tasks: Task[]; selectedDate: Date; onSelect: (d: Date) => void;
   compact?: boolean;
+  holidayMap?: HolidayMap;
 }
 
-function MiniMonth({ year, month, tasks, selectedDate, onSelect, compact }: MiniMonthProps) {
+function MiniMonth({ year, month, tasks, selectedDate, onSelect, compact, holidayMap }: MiniMonthProps) {
   const today  = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
   const cells  = buildCells(year, month);
   const todStr = toDateStr(today);
@@ -267,6 +269,7 @@ function MiniMonth({ year, month, tasks, selectedDate, onSelect, compact }: Mini
           const d = new Date(year, month, day);
           const ds = toDateStr(d);
           const n  = getTasksForDate(tasks, d).length;
+          const hol = holidayMap?.get(ds);
           return (
             <button key={i}
               className={[styles.miniCell,
@@ -275,10 +278,15 @@ function MiniMonth({ year, month, tasks, selectedDate, onSelect, compact }: Mini
                 n > 0         ? styles.miniCellHasTasks : '',
               ].join(' ')}
               onClick={() => onSelect(d)}
-              title={n > 0 ? `${n} задач` : undefined}
+              title={hol ? hol.name || 'Праздник' : (n > 0 ? `${n} задач` : undefined)}
             >
-              {day}
+              <span style={hol && hol.type !== 'workday' ? { color: getHolidayColor(hol.type) } : undefined}>
+                {day}
+              </span>
               {n > 0 && !compact && <span className={styles.miniDot} />}
+              {hol && !compact && (
+                <span className={styles.miniHolDot} style={{ background: getHolidayColor(hol.type) }} />
+              )}
             </button>
           );
         })}
@@ -294,9 +302,9 @@ const TYPE_CLS: Record<string, string> = {
   normal:    styles.chartTaskNormal,
 };
 
-interface ChartProps { selectedDate: Date; tasks: Task[]; onSelect: (d: Date) => void; }
+interface ChartProps { selectedDate: Date; tasks: Task[]; onSelect: (d: Date) => void; holidayMap?: HolidayMap; }
 
-function ChartView({ selectedDate, tasks, onSelect }: ChartProps) {
+function ChartView({ selectedDate, tasks, onSelect, holidayMap }: ChartProps) {
   const [period,      setPeriod]      = useState<ChartPeriod>('week');
   const [chartPicker, setChartPicker] = useState<PickerType | null>(null);
 
@@ -411,7 +419,9 @@ function ChartView({ selectedDate, tasks, onSelect }: ChartProps) {
           <div className={styles.chartHeaders}>
             <div className={styles.chartGutterHead} />
             {weekDays.map(d => {
-              const ds = toDateStr(d);
+              const ds  = toDateStr(d);
+              const hol = holidayMap?.get(ds);
+              const holColor = hol ? getHolidayColor(hol.type) : undefined;
               return (
                 <button key={ds}
                   className={[styles.chartDayHead,
@@ -419,9 +429,14 @@ function ChartView({ selectedDate, tasks, onSelect }: ChartProps) {
                     ds === selStr ? styles.chartDaySelected : '',
                   ].join(' ')}
                   onClick={() => onSelect(d)}
+                  title={hol?.name || undefined}
                 >
-                  <span className={styles.chartDayName}>{DAY_SHORT[d.getDay()]}</span>
-                  <span className={styles.chartDayNum}>{d.getDate()}</span>
+                  <span className={styles.chartDayName} style={holColor ? { color: holColor } : undefined}>
+                    {DAY_SHORT[d.getDay()]}
+                  </span>
+                  <span className={styles.chartDayNum} style={holColor ? { color: holColor } : undefined}>
+                    {d.getDate()}
+                  </span>
                 </button>
               );
             })}
@@ -550,9 +565,9 @@ function ChartView({ selectedDate, tasks, onSelect }: ChartProps) {
         </>
       )}
 
-      {period === 'month'   && <div className={styles.chartSingleMonth}><MiniMonth year={selectedDate.getFullYear()} month={selectedDate.getMonth()} tasks={tasks} selectedDate={selectedDate} onSelect={onSelect} /></div>}
-      {period === 'quarter' && <div className={styles.chartQuarter}>{quarterMonths.map(({ year, month }) => <MiniMonth key={month} year={year} month={month} tasks={tasks} selectedDate={selectedDate} onSelect={onSelect} />)}</div>}
-      {period === 'year'    && <div className={styles.chartYear}>{yearMonths.map(({ year, month }) => <MiniMonth key={month} year={year} month={month} compact tasks={tasks} selectedDate={selectedDate} onSelect={onSelect} />)}</div>}
+      {period === 'month'   && <div className={styles.chartSingleMonth}><MiniMonth year={selectedDate.getFullYear()} month={selectedDate.getMonth()} tasks={tasks} selectedDate={selectedDate} onSelect={onSelect} holidayMap={holidayMap} /></div>}
+      {period === 'quarter' && <div className={styles.chartQuarter}>{quarterMonths.map(({ year, month }) => <MiniMonth key={month} year={year} month={month} tasks={tasks} selectedDate={selectedDate} onSelect={onSelect} holidayMap={holidayMap} />)}</div>}
+      {period === 'year'    && <div className={styles.chartYear}>{yearMonths.map(({ year, month }) => <MiniMonth key={month} year={year} month={month} compact tasks={tasks} selectedDate={selectedDate} onSelect={onSelect} holidayMap={holidayMap} />)}</div>}
     </div>
   );
 }
@@ -574,6 +589,16 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
     lon:  user?.locationLon,
     name: user?.location,
   });
+
+  const showHolidays = user?.showHolidays !== false; // default true
+  const { data: holCur  } = useHolidays(viewYear,     showHolidays);
+  const { data: holNext } = useHolidays(viewYear + 1, showHolidays);
+  const holidayMap = useMemo<HolidayMap>(() => {
+    if (!showHolidays) return new Map();
+    const m: HolidayMap = new Map();
+    for (const e of [...(holCur ?? []), ...(holNext ?? [])]) m.set(e.date, e);
+    return m;
+  }, [showHolidays, holCur, holNext]);
 
   useEffect(() => {
     setViewYear(selectedDate.getFullYear());
@@ -690,21 +715,50 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
       {view === 'grid' ? (
         <div className={styles.gridWrap}>
           <div className={styles.weekdays}>
-            {WEEKDAYS.map(d => <span key={d} className={styles.weekday}>{d}</span>)}
+            {WEEKDAYS.map((d, i) => (
+              <span key={d} className={styles.weekday} style={i >= 5 ? { color: '#ef4444' } : undefined}>{d}</span>
+            ))}
           </div>
           <div className={styles.grid}>
             {cells.map((day, i) => {
               if (!day) return <div key={i} className={styles.empty} />;
-              const dayTasks = getTasksForDate(tasks, new Date(viewYear, viewMonth, day));
-              const ds       = toDateStr(new Date(viewYear, viewMonth, day));
+              const d        = new Date(viewYear, viewMonth, day);
+              const ds       = toDateStr(d);
+              const dow      = d.getDay(); // 0=Sun, 6=Sat
+              const dayTasks = getTasksForDate(tasks, d);
               const tempMax  = weather?.get(ds)?.tempMax;
+              const hol      = holidayMap.get(ds);
+              const isWeekend = dow === 0 || dow === 6;
+              const isWorkday = hol?.type === 'workday';
+              const isOff     = (isWeekend && !isWorkday) || hol?.type === 'holiday';
+              const numColor  = hol?.type === 'holiday'  ? '#ef4444'
+                              : hol?.type === 'shortday' ? '#f59e0b'
+                              : hol?.type === 'workday'  ? '#3b82f6'
+                              : isWeekend                ? '#ef4444'
+                              : undefined;
+              const cellTitle = hol?.type === 'holiday'  ? (hol.name || getHolidayName(ds))
+                              : hol?.type === 'shortday' ? 'Сокращённый день'
+                              : hol?.type === 'workday'  ? 'Рабочая суббота'
+                              : isOff                    ? 'Выходной'
+                              : undefined;
               return (
                 <button key={i}
-                  className={[styles.cell, isSelected(day)?styles.cellSelected:'', isToday(day)?styles.cellToday:''].join(' ')}
+                  className={[
+                    styles.cell,
+                    isOff           ? styles.cellWeekend  : '',
+                    isSelected(day) ? styles.cellSelected : '',
+                    isToday(day)    ? styles.cellToday    : '',
+                  ].join(' ')}
                   onClick={() => handleDayClick(day)}
+                  title={cellTitle}
                 >
-                  <span className={styles.dayNum}>{day}</span>
+                  <span className={styles.dayNum} style={numColor ? { color: numColor } : undefined}>{day}</span>
                   <span className={styles.temp}>{tempMax != null ? (tempMax > 0 ? `+${tempMax}` : tempMax) + '°' : 't°'}</span>
+                  {hol && (
+                    <span className={styles.holBadge} style={{ background: getHolidayColor(hol.type) }}>
+                      {hol.type === 'workday' ? 'Р' : hol.type === 'shortday' ? '½' : '●'}
+                    </span>
+                  )}
                   <div className={styles.dots}>{renderTagIcons(dayTasks)}</div>
                 </button>
               );
@@ -712,7 +766,7 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
           </div>
         </div>
       ) : (
-        <ChartView selectedDate={selectedDate} tasks={tasks} onSelect={onSelect} />
+        <ChartView selectedDate={selectedDate} tasks={tasks} onSelect={onSelect} holidayMap={holidayMap} />
       )}
     </div>
   );

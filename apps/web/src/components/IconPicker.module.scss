@@ -8,45 +8,45 @@
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
   border-radius: 6px;
-  background: #fff;
+  background: var(--bg-card);
   cursor: pointer;
   font-size: .8125rem;
-  color: #1a1a1a;
+  color: var(--text);
   transition: border-color .1s, background .1s;
   white-space: nowrap;
 
-  &:hover { background: #f5f5f5; border-color: #aaa; }
+  &:hover { background: var(--bg-hover); border-color: var(--border-strong); }
 }
 
 .name {
-  color: #555;
+  color: var(--text-2);
   max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.nameEmpty { color: #aaa; }
+.nameEmpty { color: var(--text-4); }
 
-.fallback { font-size: .85rem; color: #bbb; }
+.fallback { font-size: .85rem; color: var(--text-4); }
 
 .chevron {
-  color: #aaa;
+  color: var(--text-4);
   flex-shrink: 0;
   transition: transform .15s;
 }
 .chevronOpen { transform: rotate(180deg); }
 
-/* ── Dropdown — position:fixed, поверх любого контейнера ── */
+/* ── Dropdown ── */
 .dropdown {
   position: fixed;
   z-index: 9999;
   width: 312px;
-  background: #f0f0f0;
-  border: 1px solid #ccc;
+  background: var(--bg);
+  border: 1px solid var(--border-input);
   border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0,0,0,.12);
+  box-shadow: 0 4px 14px var(--shadow-md);
   overflow: hidden;
 }
 
@@ -55,11 +55,11 @@
   gap: 3px;
   padding: 7px 8px 5px;
   overflow-x: auto;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-light);
   scrollbar-width: thin;
-  scrollbar-color: #bbb transparent;
+  scrollbar-color: var(--border-strong) transparent;
   &::-webkit-scrollbar { height: 3px; }
-  &::-webkit-scrollbar-thumb { background: #bbb; border-radius: 2px; }
+  &::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
 }
 
 .cat {
@@ -70,39 +70,39 @@
   background: none;
   font-size: .73rem;
   font-weight: 500;
-  color: #555;
+  color: var(--text-2);
   cursor: pointer;
   white-space: nowrap;
   transition: background .1s, color .1s;
 
-  &:hover { background: #e0e0e0; color: #1a1a1a; }
+  &:hover { background: var(--bg-hover); color: var(--text); }
 }
 
 .catActive {
-  background: #1a1a1a;
-  color: #fff;
-  &:hover { background: #333; color: #fff; }
+  background: var(--text);
+  color: var(--bg);
+  &:hover { background: var(--text-2); color: var(--bg); }
 }
 
 .searchWrap {
   position: relative;
   padding: 5px 8px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .search {
   width: 100%;
   padding: 5px 28px 5px 8px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
   border-radius: 5px;
-  background: #fff;
+  background: var(--bg-card);
   font-size: .8rem;
-  color: #1a1a1a;
+  color: var(--text);
   outline: none;
   box-sizing: border-box;
 
-  &:focus { border-color: #888; }
-  &::placeholder { color: #aaa; }
+  &:focus { border-color: var(--border-strong); }
+  &::placeholder { color: var(--text-4); }
 }
 
 .searchClear {
@@ -114,10 +114,10 @@
   border: none;
   cursor: pointer;
   font-size: .65rem;
-  color: #aaa;
+  color: var(--text-4);
   padding: 2px 4px;
   line-height: 1;
-  &:hover { color: #555; }
+  &:hover { color: var(--text-2); }
 }
 
 .grid {
@@ -129,9 +129,9 @@
   height: 210px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #bbb transparent;
+  scrollbar-color: var(--border-strong) transparent;
   &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-thumb { background: #bbb; border-radius: 2px; }
+  &::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
 }
 
 .empty {
@@ -139,7 +139,7 @@
   padding: 24px 0;
   text-align: center;
   font-size: .8rem;
-  color: #aaa;
+  color: var(--text-4);
 }
 
 .btn {
@@ -152,21 +152,21 @@
   border-radius: 5px;
   border: none;
   background: none;
-  color: #444;
+  color: var(--text-2);
   cursor: pointer;
   transition: background .1s, color .1s;
-  &:hover { background: #e0e0e0; color: #1a1a1a; }
+  &:hover { background: var(--bg-hover); color: var(--text); }
 }
 
 .btnActive {
-  background: #1a1a1a;
-  color: #fff;
-  &:hover { background: #333; color: #fff; }
+  background: var(--text);
+  color: var(--bg);
+  &:hover { background: var(--text-2); color: var(--bg); }
 }
 
 .btnNone {
   font-size: .9rem;
-  color: #999;
-  border: 1px dashed #ccc;
-  &:hover { background: #e8e8e8; color: #555; border-color: #aaa; }
+  color: var(--text-muted);
+  border: 1px dashed var(--border-input);
+  &:hover { background: var(--bg-hover); color: var(--text-2); border-color: var(--border-strong); }
 }

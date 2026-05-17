@@ -51,6 +51,8 @@ export class TasksService {
       repeat:      dto.repeat       ?? 'none',
       repeatUntil: dto.repeatUntil  ?? null,
       type:        dto.type         ?? 'normal',
+      priority:    dto.priority     ?? 'none',
+      repeatConfig: dto.repeatConfig ?? null,
       icon:        dto.icon         ?? null,
       endTime:     dto.endTime      ?? null,
       endDate:     dto.endDate      ?? null,
@@ -80,6 +82,8 @@ export class TasksService {
     if (dto.repeat      !== undefined) task.repeat      = dto.repeat;
     if (dto.repeatUntil !== undefined) task.repeatUntil = dto.repeatUntil ?? null;
     if (dto.type        !== undefined) task.type        = dto.type;
+    if (dto.priority    !== undefined) task.priority    = dto.priority ?? 'none';
+    if (dto.repeatConfig !== undefined) task.repeatConfig = dto.repeatConfig ?? null;
     if (dto.endTime     !== undefined) task.endTime     = dto.endTime  ?? null;
     if (dto.endDate     !== undefined) task.endDate     = dto.endDate  ?? null;
 
