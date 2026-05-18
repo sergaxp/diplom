@@ -5,7 +5,7 @@ import * as LucideIcons from 'lucide-react';
 import { Task, TaskStatus, toDateStr, getTasksForDate, completionKey } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { TaskFormModal } from './TaskFormModal';
-import { useCurrentWeather, weatherCodeToInfo } from '../../lib/weather';
+import { useCurrentWeather, useDayWeather, weatherCodeToInfo } from '../../lib/weather';
 import { useAuthStore } from '../../store/authStore';
 import { useHolidays, getHolidayName } from '../../lib/holidays';
 import styles from './TaskList.module.scss';
@@ -228,6 +228,7 @@ export function TaskList({
   const user     = useAuthStore(s => s.user);
   const location = { lat: user?.locationLat, lon: user?.locationLon, name: user?.location };
   const { data: currentWeather } = useCurrentWeather(location);
+  const { data: dayWeatherData } = useDayWeather(toDateStr(selectedDate), location);
 
   const showHolidays = user?.showHolidays !== false;
   const { data: holData } = useHolidays(selectedDate.getFullYear(), showHolidays);
@@ -235,15 +236,23 @@ export function TaskList({
   const holidayName  = showHolidays && holidayEntry?.type === 'holiday'
     ? (holidayEntry.name || getHolidayName(holidayEntry.date)) : null;
 
+  const selectedStr = toDateStr(selectedDate);
+
+  const condHolidayMap = holData && showHolidays
+    ? new Map(holData.map(e => [e.date, e]))
+    : null;
+  const condWeatherMap = dayWeatherData
+    ? new Map([[selectedStr, { tempMax: dayWeatherData.tempMax, tempMin: dayWeatherData.tempMin, weatherCode: dayWeatherData.weatherCode }]])
+    : null;
+
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  const selectedStr = toDateStr(selectedDate);
   const isToday     = selectedStr === toDateStr(new Date());
 
-  const dayTasks = getTasksForDate(tasks, selectedDate, completions);
+  const dayTasks = getTasksForDate(tasks, selectedDate, completions, condHolidayMap, condWeatherMap);
 
   // Future section: mandatory tasks ahead, excluding already completed ones
   const futureTasks = tasks

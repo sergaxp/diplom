@@ -1,7 +1,9 @@
+// ── Overlay & Modal ───────────────────────────────────────────
+
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.5);
   z-index: 500;
   display: flex;
   align-items: center;
@@ -12,18 +14,25 @@
 .modal {
   background: var(--bg);
   border: 1px solid var(--border-input);
-  border-radius: 12px;
+  border-radius: 14px;
   width: 100%;
-  max-width: 380px;
-  box-shadow: 0 16px 48px var(--shadow-lg);
+  max-width: 440px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px var(--shadow-lg);
+  overflow: hidden;
 }
+
+// ── Header ────────────────────────────────────────────────────
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.25rem 0.75rem;
+  padding: 1rem 1.25rem 0.875rem;
   border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
 }
 
 .title {
@@ -38,33 +47,113 @@
   font-size: 0.85rem;
   color: var(--text-4);
   cursor: pointer;
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+  line-height: 1;
   &:hover { color: var(--text-2); background: var(--bg-hover); }
 }
 
+// ── Body ──────────────────────────────────────────────────────
+
 .body {
-  padding: 1rem 1.25rem;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1.25rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+// ── Sections ─────────────────────────────────────────────────
+
+.section {
+  padding: 0.875rem 0;
+  border-bottom: 1px solid var(--border-light);
+
+  &:last-child { border-bottom: none; }
 }
 
-.label {
-  font-size: 0.72rem;
+.sectionLabel {
+  font-size: 0.68rem;
   font-weight: 700;
   color: var(--text-4);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.75rem;
 }
 
-// ── Every N units ─────────────────────────────────────────────
+// ── Mode Tabs ─────────────────────────────────────────────────
+
+.modeTabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 0.875rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.modeTab {
+  flex: 1;
+  padding: 0.42rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+  &:hover { color: var(--text-2); }
+}
+
+.modeTabActive {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.modeTabDisabled {
+  opacity: 0.35;
+  cursor: not-allowed !important;
+  &:hover { color: var(--text-muted); }
+}
+
+.modeTabBadge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 5px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.warnBanner {
+  margin-bottom: 0.875rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.78rem;
+  color: var(--text-2);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 7px;
+  line-height: 1.45;
+}
+
+// ── Interval Block ────────────────────────────────────────────
+
+.intervalBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .everyRow {
   display: flex;
   align-items: center;
@@ -72,19 +161,24 @@
   flex-wrap: wrap;
 }
 
+.everyPrefix {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .everyInput {
-  width: 64px;
-  padding: 0.42rem 0.6rem;
+  width: 60px;
+  padding: 0.4rem 0.5rem;
   background: var(--bg-alt);
   border: 1px solid var(--border-input);
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 0.9rem;
   color: var(--text);
   outline: none;
   font-family: inherit;
   text-align: center;
   flex-shrink: 0;
-
   &:focus { border-color: var(--border-strong); }
 }
 
@@ -95,9 +189,9 @@
 }
 
 .unitBtn {
-  padding: 0.38rem 0.7rem;
+  padding: 0.38rem 0.65rem;
   border: 1px solid var(--border-input);
-  border-radius: 5px;
+  border-radius: 6px;
   background: none;
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -111,10 +205,9 @@
   border-color: var(--text);
   background: var(--text);
   color: var(--bg);
-  &:hover { background: var(--text-2); border-color: var(--text-2); }
+  &:hover { opacity: 0.85; }
 }
 
-// ── Weekday buttons ───────────────────────────────────────────
 .wdRow {
   display: flex;
   gap: 4px;
@@ -122,17 +215,17 @@
 }
 
 .wdBtn {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border: 1px solid var(--border-input);
-  border-radius: 6px;
+  border-radius: 8px;
   background: none;
   font-size: 0.78rem;
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 0.1s, background 0.1s, color 0.1s;
+  transition: all 0.1s;
   &:hover { border-color: var(--border-strong); background: var(--bg-hover); color: var(--text); }
 }
 
@@ -143,7 +236,6 @@
   font-weight: 600;
 }
 
-// ── Skip weekends ─────────────────────────────────────────────
 .checkRow {
   display: flex;
   align-items: center;
@@ -151,48 +243,469 @@
   font-size: 0.875rem;
   color: var(--text);
   cursor: pointer;
+  user-select: none;
 
   input[type='checkbox'] {
     cursor: pointer;
     accent-color: var(--text);
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
   }
 }
 
-// ── End condition ─────────────────────────────────────────────
-.endOpts {
+// ── Cyclic Block ──────────────────────────────────────────────
+
+.cyclicBlock {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cyclicHint {
+  font-size: 0.78rem;
+  color: var(--text-4);
+  line-height: 1.5;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-alt);
+  border-radius: 7px;
+  border: 1px solid var(--border-light);
+}
+
+.cyclicRows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cyclicRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cyclicIndex {
+  font-size: 0.7rem;
+  color: var(--text-4);
+  width: 14px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.cyclicField {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
+  border-radius: 7px;
+  padding: 0.3rem 0.6rem;
+  flex: 1;
+}
+
+.cyclicInput {
+  width: 46px;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: var(--text);
+  font-family: inherit;
+  text-align: center;
+  font-weight: 600;
+}
+
+.cyclicFieldLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.cyclicArrow {
+  font-size: 0.8rem;
+  color: var(--text-4);
+  flex-shrink: 0;
+}
+
+.cyclicRemoveBtn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: none;
+  color: var(--text-4);
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+  &:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-2); }
+  &:disabled { opacity: 0.3; cursor: default; }
+}
+
+.cyclicAddBtn {
+  align-self: flex-start;
+  padding: 0.35rem 0.75rem;
+  border: 1px dashed var(--border-input);
+  border-radius: 6px;
+  background: none;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.1s, color 0.1s, background 0.1s;
+  &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-alt); }
+}
+
+.cyclicPreview {
+  font-size: 0.75rem;
+  color: var(--text-4);
+  padding: 0.4rem 0.6rem;
+  background: var(--bg-alt);
+  border-radius: 6px;
+  border-left: 3px solid var(--border-strong);
+  line-height: 1.4;
+}
+
+// ── Dependency Block ──────────────────────────────────────────
+
+.depBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.depHint {
+  font-size: 0.78rem;
+  color: var(--text-4);
+  line-height: 1.5;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-alt);
+  border-radius: 7px;
+  border: 1px solid var(--border-light);
+
+  b { color: var(--text-2); font-weight: 600; }
+}
+
+.depRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
-.endOpt {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.875rem;
-  color: var(--text);
-  cursor: pointer;
-
-  input[type='radio'] {
-    cursor: pointer;
-    accent-color: var(--text);
-  }
-}
-
-.endAfterRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.endAfterLabel {
+.depLabel {
   font-size: 0.875rem;
   color: var(--text-muted);
 }
 
-.dateInput {
-  padding: 0.42rem 0.65rem;
+.depInput {
+  width: 64px;
+  padding: 0.4rem 0.5rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+  text-align: center;
+  &:focus { border-color: var(--border-strong); }
+}
+
+// ── Months / Seasonal ─────────────────────────────────────────
+
+.monthsGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.monthChip {
+  padding: 0.35rem 0.4rem;
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  background: none;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.1s;
+  &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-hover); }
+}
+
+.monthChipActive {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  font-weight: 600;
+}
+
+.seasonRow {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 0.4rem;
+}
+
+.seasonBtn {
+  padding: 0.3rem 0.65rem;
+  border: 1px dashed var(--border-input);
+  border-radius: 6px;
+  background: none;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.1s;
+  &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-alt); border-style: solid; }
+}
+
+.seasonClearBtn {
+  padding: 0.3rem 0.65rem;
+  border: 1px dashed var(--border-input);
+  border-radius: 6px;
+  background: none;
+  font-size: 0.75rem;
+  color: var(--text-4);
+  cursor: pointer;
+  font-family: inherit;
+  margin-left: auto;
+  &:hover { color: #ef4444; border-color: #ef4444; }
+}
+
+.condNote {
+  font-size: 0.72rem;
+  color: var(--text-4);
+  padding: 0.35rem 0.6rem;
+  background: var(--bg-alt);
+  border-radius: 6px;
+  margin-top: 0.4rem;
+}
+
+// ── Scope (perDay/whole) ──────────────────────────────────────
+
+.scopeBlock {
+  padding: 0.55rem 0.75rem;
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 7px;
+  margin-bottom: 0.875rem;
+}
+
+.scopeLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-4);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.4rem;
+}
+
+.scopeOpts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.scopeOpt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+
+  input[type='radio'] {
+    cursor: pointer;
+    accent-color: #3b82f6;
+    flex-shrink: 0;
+  }
+}
+
+// ── Adaptive (in-development placeholder) ─────────────────────
+
+.adaptiveBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.adaptiveBadgeRow {
+  display: flex;
+}
+
+.adaptiveBadge {
+  padding: 3px 9px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border-radius: 5px;
+}
+
+// ── disabled state for save button ────────────────────────────
+
+.saveBtn {
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    &:hover { opacity: 0.4; }
+  }
+}
+
+// ── Conditions Block ──────────────────────────────────────────
+
+.condBlock {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border-light);
+
+  &:last-child { border-bottom: none; }
+}
+
+.condToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+
+  input[type='checkbox'] {
+    cursor: pointer;
+    accent-color: var(--text);
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+}
+
+.condToggleLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.condOptions {
+  margin-top: 0.6rem;
+  margin-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.condSubLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-4);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.radioRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+
+  input[type='radio'] {
+    cursor: pointer;
+    accent-color: var(--text);
+    flex-shrink: 0;
+  }
+}
+
+.weatherNote {
+  font-size: 0.75rem;
+  color: var(--text-4);
+  line-height: 1.5;
+  padding: 0.4rem 0.6rem;
+  background: rgba(59, 130, 246, 0.06);
+  border-radius: 6px;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  margin-bottom: 0.25rem;
+}
+
+.weatherSkipRow {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.weatherChip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--border-input);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.1s, background 0.1s;
+
+  input[type='checkbox'] {
+    cursor: pointer;
+    accent-color: #3b82f6;
+    flex-shrink: 0;
+  }
+
+  &:has(input:checked) {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.08);
+  }
+}
+
+.tempRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0.25rem;
+}
+
+.tempLabel {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.tempInput {
+  width: 60px;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+  text-align: center;
+  &:focus { border-color: var(--border-strong); }
+  &::placeholder { color: var(--text-4); }
+}
+
+// ── End Condition ─────────────────────────────────────────────
+
+.endOpts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.endAfterInput {
+  width: 60px;
+  padding: 0.25rem 0.4rem;
   background: var(--bg-alt);
   border: 1px solid var(--border-input);
   border-radius: 5px;
@@ -200,29 +713,46 @@
   color: var(--text);
   outline: none;
   font-family: inherit;
-  margin-top: 4px;
+  text-align: center;
+  margin: 0 3px;
+  &:focus { border-color: var(--border-strong); }
+  &:disabled { opacity: 0.4; }
+}
 
+.dateInput {
+  padding: 0.3rem 0.55rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
+  border-radius: 5px;
+  font-size: 0.82rem;
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+  margin-left: 6px;
   &:focus { border-color: var(--border-strong); }
 }
 
 // ── Footer ────────────────────────────────────────────────────
+
 .footer {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
   border-top: 1px solid var(--border-light);
+  flex-shrink: 0;
 }
 
 .cancelBtn {
   padding: 0.45rem 1rem;
   background: none;
   border: 1px solid var(--border-input);
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 0.875rem;
   color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
+  transition: background 0.1s;
   &:hover { background: var(--bg-hover); }
 }
 
@@ -230,11 +760,12 @@
   padding: 0.45rem 1.25rem;
   background: var(--text);
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 0.875rem;
   color: var(--bg);
   cursor: pointer;
   font-family: inherit;
+  font-weight: 500;
   transition: opacity 0.1s;
   &:hover { opacity: 0.8; }
 }

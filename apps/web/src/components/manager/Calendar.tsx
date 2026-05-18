@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as LucideIcons from 'lucide-react';
-import { Task, toDateStr, getTasksForDate } from '../../lib/tasks';
+import { Task, toDateStr, getTasksForDate, getMultiDayOccurrence } from '../../lib/tasks';
 import { useHolidays, HolidayMap, getHolidayColor, getHolidayName } from '../../lib/holidays';
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number; color?: string }>;
@@ -50,38 +50,9 @@ function taskBlockHeight(t: Task): number {
 
 /** Активна ли повторяющаяся многодневная задача на dateStr */
 function isRepeatMultiDayActiveOn(t: Task, dateStr: string): boolean {
-  if (!t.endDate || t.repeat === 'none') return false;
   if (t.repeatUntil && dateStr > t.repeatUntil) return false;
-
-  const checkDate = new Date(dateStr    + 'T00:00:00');
-  const origStart = new Date(t.date     + 'T00:00:00');
-  const origEnd   = new Date(t.endDate  + 'T00:00:00');
-
-  if (checkDate < origStart) return false;
-
-  const durationDays = Math.round((origEnd.getTime() - origStart.getTime()) / 86_400_000);
-
-  if (t.repeat === 'daily') return true;
-
-  let occStart: Date;
-  if (t.repeat === 'weekly') {
-    const dayDiff = (checkDate.getDay() - origStart.getDay() + 7) % 7;
-    occStart = new Date(checkDate);
-    occStart.setDate(occStart.getDate() - dayDiff);
-  } else if (t.repeat === 'monthly') {
-    occStart = new Date(checkDate.getFullYear(), checkDate.getMonth(), origStart.getDate());
-    if (occStart > checkDate) occStart.setMonth(occStart.getMonth() - 1);
-  } else if (t.repeat === 'yearly') {
-    occStart = new Date(checkDate.getFullYear(), origStart.getMonth(), origStart.getDate());
-    if (occStart > checkDate) occStart.setFullYear(occStart.getFullYear() - 1);
-  } else {
-    return false;
-  }
-
-  if (occStart < origStart) return false;
-  const occEnd = new Date(occStart);
-  occEnd.setDate(occEnd.getDate() + durationDays);
-  return checkDate <= occEnd;
+  const occ = getMultiDayOccurrence(t, dateStr);
+  return occ != null && occ.startStr > t.date;
 }
 
 /** Активна ли задача на данной дате (учитывает endDate и repeat) */
@@ -268,7 +239,7 @@ function MiniMonth({ year, month, tasks, selectedDate, onSelect, compact, holida
           if (!day) return <div key={i} />;
           const d = new Date(year, month, day);
           const ds = toDateStr(d);
-          const n  = getTasksForDate(tasks, d).length;
+          const n  = getTasksForDate(tasks, d, new Set(), holidayMap).length;
           const hol = holidayMap?.get(ds);
           return (
             <button key={i}
@@ -443,7 +414,7 @@ function ChartView({ selectedDate, tasks, onSelect, holidayMap }: ChartProps) {
           </div>
           {(() => {
             const maxAllDay = Math.max(0, ...weekDays.map(d =>
-              getTasksForDate(tasks, d).filter(t => !t.time).length,
+              getTasksForDate(tasks, d, new Set(), holidayMap).filter(t => !t.time).length,
             ));
             const alldaySectH = maxAllDay > 0
               ? 14 + maxAllDay * (ALLDAY_TASK_H + ALLDAY_GAP) + 8
@@ -468,7 +439,7 @@ function ChartView({ selectedDate, tasks, onSelect, holidayMap }: ChartProps) {
                 <div className={styles.chartCols}>
                   {weekDays.map((d, dayIdx) => {
                     const ds       = toDateStr(d);
-                    const dayTasks = getTasksForDate(tasks, d);
+                    const dayTasks = getTasksForDate(tasks, d, new Set(), holidayMap);
                     const timed    = dayTasks.filter(t => t.time);
                     const allDay   = dayTasks.filter(t => !t.time);
                     const layout   = computeLayout(timed);
@@ -725,7 +696,7 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
               const d        = new Date(viewYear, viewMonth, day);
               const ds       = toDateStr(d);
               const dow      = d.getDay(); // 0=Sun, 6=Sat
-              const dayTasks = getTasksForDate(tasks, d);
+              const dayTasks = getTasksForDate(tasks, d, new Set(), holidayMap, weather);
               const tempMax  = weather?.get(ds)?.tempMax;
               const hol      = holidayMap.get(ds);
               const isWeekend = dow === 0 || dow === 6;

@@ -5,6 +5,8 @@ export interface DayWeather {
   date: string;
   tempMax: number;
   tempMin: number;
+  weatherCode?: number;
+  precipSum?: number;
 }
 
 export interface DetailedDayWeather {
@@ -94,7 +96,7 @@ async function fetchWeatherForMonth(
 
   const commonParams = {
     latitude: String(lat), longitude: String(lon),
-    daily: 'temperature_2m_max,temperature_2m_min', timezone: tz,
+    daily: 'temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum', timezone: tz,
   };
 
   let fetchUrl: string;
@@ -128,6 +130,10 @@ async function fetchWeatherForMonth(
         date,
         tempMax: Math.round(json.daily.temperature_2m_max[i]),
         tempMin: Math.round(json.daily.temperature_2m_min[i]),
+        weatherCode: json.daily.weathercode?.[i] ?? undefined,
+        precipSum: json.daily.precipitation_sum?.[i] != null
+          ? Math.round(json.daily.precipitation_sum[i] * 10) / 10
+          : undefined,
       });
     }
   });

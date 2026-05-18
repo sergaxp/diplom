@@ -635,9 +635,14 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
       <RepeatConfigModal
         initial={repeatConfig}
         selectedDate={formDate}
-        onSave={cfg => {
+        multiDay={multiDay}
+        onSave={(cfg, until) => {
           setRepeat('custom');
           setRepeatConfig(cfg);
+          if (until !== undefined) {
+            setHasEnd(!!until);
+            if (until) setRepeatUntil(until);
+          }
           setRepeatConfigOpen(false);
         }}
         onClose={() => setRepeatConfigOpen(false)}

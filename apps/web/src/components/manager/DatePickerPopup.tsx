@@ -427,7 +427,14 @@ export function DatePickerPopup({
     if (repeat==='yearly') return multiDay
       ? `↻ С кажд. ${rptDay} ${MONTH_GEN[rptMon]}`
       : `↻ Каждое ${rptDay} ${MONTH_GEN[rptMon]}`;
-    if (repeat==='custom'&&repeatConfig) { const u={day:'дн',week:'нед',month:'мес',year:'лет'}[repeatConfig.unit]; return `↻ Каждые ${repeatConfig.every} ${u}`; }
+    if (repeat==='custom'&&repeatConfig) {
+      if (repeatConfig.dependencyDays != null) return `↻ Через ${repeatConfig.dependencyDays} дн. после выполн.`;
+      if (repeatConfig.cyclicPattern?.length) return `↻ Цикл ${repeatConfig.cyclicPattern.reduce((s,p)=>s+p.active+p.rest,0)} дней`;
+      const u = {day:'дн',week:'нед',month:'мес',year:'лет'}[repeatConfig.unit ?? 'day'];
+      const base = `↻ Каждые ${repeatConfig.every ?? 1} ${u}`;
+      if (repeatConfig.months?.length && repeatConfig.months.length < 12) return `${base}, сезонно`;
+      return base;
+    }
     return '↻ Повтор';
   })();
 
