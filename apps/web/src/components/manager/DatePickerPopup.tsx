@@ -574,7 +574,14 @@ export function DatePickerPopup({
                 {renderDateEl('start')}
                 {taskType !== 'mandatory' && (
                   <button type="button" className={styles.multiAdd}
-                    onClick={() => { onChangeMultiDay(true); setCalTarget(null); }}>+ до</button>
+                    onClick={() => {
+                      onChangeMultiDay(true);
+                      // Если конечная дата пустая или раньше/равна начальной — ставим следующий день
+                      if (!endDate || endDate <= date) {
+                        onChangeEndDate(toStr(addDays(fromStr(date), 1)));
+                      }
+                      setCalTarget(null);
+                    }}>+ до</button>
                 )}
               </>
             )}
@@ -609,6 +616,12 @@ export function DatePickerPopup({
                       const s = toStr(cell);
                       const hol = holidayMap.get(s);
                       const holColor = hol ? getHolidayColor(hol.type) : undefined;
+                      const cellDow       = cell.getDay();
+                      const cellIsWeekend = cellDow === 0 || cellDow === 6;
+                      const cellIsWorkday = hol?.type === 'workday';
+                      const cellNumColor  = holColor && !cellIsWorkday ? holColor
+                                          : cellIsWeekend && !cellIsWorkday ? '#ef4444'
+                                          : undefined;
                       const isHoverSel     = multiDay && hoverDate===s && hoverRange!==null;
                       const isHoverBetween = multiDay && hoverRange!==null && s>hoverRange.from && s<hoverRange.to;
                       const isDisabled     = calTarget === 'end' && !!date && s < date;
@@ -631,7 +644,7 @@ export function DatePickerPopup({
                           onMouseLeave={() => multiDay && setHoverDate(null)}
                           title={hol?.name||undefined}
                         >
-                          <span style={holColor&&hol?.type!=='workday'?{color:holColor}:undefined}>
+                          <span style={cellNumColor ? { color: cellNumColor } : undefined}>
                             {cell.getDate()}
                           </span>
                           {hol && <span className={styles.calHolDot} style={{background:holColor}}/>}
@@ -680,10 +693,15 @@ export function DatePickerPopup({
                   onChange={e => { onChangeHasRepeatUntil(e.target.checked); if (!e.target.checked) onChangeRepeatUntil(''); }}/>
                 Повторять до
               </label>
-              {hasRepeatUntil && (
-                <input className={styles.repeatUntilInput} type="date" value={repeatUntil} min={date}
-                  onChange={e => onChangeRepeatUntil(e.target.value)}/>
-              )}
+              {hasRepeatUntil && (() => {
+                // Минимум: день после даты начала (single) или после даты конца (multi-day)
+                const baseStr = multiDay && endDate ? endDate : date;
+                const minUntil = toStr(addDays(fromStr(baseStr), 1));
+                return (
+                  <input className={styles.repeatUntilInput} type="date" value={repeatUntil} min={minUntil}
+                    onChange={e => onChangeRepeatUntil(e.target.value)}/>
+                );
+              })()}
             </div>
           )}
         </div>

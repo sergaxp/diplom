@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as LucideIcons from 'lucide-react';
-import { Task, TaskStatus, toDateStr, getTasksForDate, completionKey } from '../../lib/tasks';
+import { Task, TaskPriority, TaskStatus, toDateStr, getTasksForDate, completionKey } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { TaskFormModal } from './TaskFormModal';
 import { useCurrentWeather, useDayWeather, weatherCodeToInfo } from '../../lib/weather';
+import { useWeatherShownLock } from '../../lib/weatherLock';
 import { useAuthStore } from '../../store/authStore';
 import { useHolidays, getHolidayName } from '../../lib/holidays';
 import styles from './TaskList.module.scss';
@@ -14,6 +15,15 @@ type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
 const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 const DAY_SHORT = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+
+const PRIORITY_WEIGHT: Record<TaskPriority, number> = { high: 3, medium: 2, low: 1, none: 0 };
+
+function priorityClass(p?: TaskPriority): string {
+  if (p === 'high')   return styles.taskPriorityHigh;
+  if (p === 'medium') return styles.taskPriorityMedium;
+  if (p === 'low')    return styles.taskPriorityLow;
+  return '';
+}
 const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня',
                     'июля','августа','сентября','октября','ноября','декабря'];
 
@@ -88,6 +98,7 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
     <li className={[
       styles.task,
       styles[`task_${task.status}`],
+      !isMandatoryDay ? priorityClass(task.priority) : '',
       isMandatoryDay ? styles.taskMandatoryDay : '',
       (menuOpen || postponeOpen) ? styles.taskMenuOpen : '',
     ].join(' ')}>
@@ -128,6 +139,11 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
             {task.repeat === 'weekly'  && '↻н'}
             {task.repeat === 'monthly' && '↻м'}
             {task.repeat === 'yearly'  && '↻г'}
+          </span>
+        )}
+        {task.weatherWarning && (
+          <span className={styles.weatherWarnBadge} title={task.weatherWarning}>
+            ⚠ погода
           </span>
         )}
         {dateLabel && (
@@ -209,21 +225,23 @@ interface Props {
   completions: Set<string>;
   isAdmin: boolean;
   userTags: Tag[];
-  onToggle:   (id: string, dateStr: string) => void;
-  onDelete:   (id: string) => void;
-  onAdd:      (data: Omit<Task, 'id' | 'status'>) => void;
-  onUpdate:   (id: string, data: Omit<Task, 'id' | 'status'>) => void;
-  onPostpone: (id: string, days: number) => void;
+  onToggle:    (id: string, dateStr: string) => void;
+  onDelete:    (id: string) => void;
+  onAdd:       (data: Omit<Task, 'id' | 'status'>) => void;
+  onUpdate:    (id: string, data: Omit<Task, 'id' | 'status'>) => void;
+  onPostpone:  (id: string, days: number) => void;
   onGoToToday: () => void;
+  onCreateTag?: (name: string, color: string, icon?: string | null) => Promise<Tag>;
 }
 
 export function TaskList({
   selectedDate, tasks, completions, isAdmin, userTags,
-  onToggle, onDelete, onAdd, onUpdate, onPostpone, onGoToToday,
+  onToggle, onDelete, onAdd, onUpdate, onPostpone, onGoToToday, onCreateTag,
 }: Props) {
-  const [now,         setNow]         = useState(new Date());
-  const [createOpen,  setCreateOpen]  = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [now,           setNow]           = useState(new Date());
+  const [createOpen,    setCreateOpen]    = useState(false);
+  const [editingTask,   setEditingTask]   = useState<Task | null>(null);
+  const [sortByPriority, setSortByPriority] = useState(false);
 
   const user     = useAuthStore(s => s.user);
   const location = { lat: user?.locationLat, lon: user?.locationLon, name: user?.location };
@@ -252,7 +270,30 @@ export function TaskList({
 
   const isToday     = selectedStr === toDateStr(new Date());
 
-  const dayTasks = getTasksForDate(tasks, selectedDate, completions, condHolidayMap, condWeatherMap);
+  const weatherShownLock = useWeatherShownLock();
+  const todayStr = toDateStr(new Date());
+
+  const dayTasks = getTasksForDate(
+    tasks, selectedDate, completions, condHolidayMap, condWeatherMap,
+    { todayStr, weatherShownLock },
+  );
+
+  const hasPriorityTasks = dayTasks.some(t => t.priority && t.priority !== 'none');
+
+  const sortedDayTasks = useMemo(() => {
+    if (!sortByPriority) return dayTasks;
+    return [...dayTasks].sort((a, b) => {
+      const pa = PRIORITY_WEIGHT[a.priority ?? 'none'];
+      const pb = PRIORITY_WEIGHT[b.priority ?? 'none'];
+      if (pa !== pb) return pb - pa; // higher priority first
+      // within same priority level: timed tasks first, then by time, then untimed
+      const ta = a.time ?? '';
+      const tb = b.time ?? '';
+      if (ta && !tb) return -1;
+      if (!ta && tb) return 1;
+      return ta.localeCompare(tb);
+    });
+  }, [dayTasks, sortByPriority]);
 
   // Future section: mandatory tasks ahead, excluding already completed ones
   const futureTasks = tasks
@@ -299,15 +340,29 @@ export function TaskList({
             <button className={styles.addBtn} onClick={() => setCreateOpen(true)} title="Добавить задачу">+</button>
           </div>
 
+          {hasPriorityTasks && (
+            <button
+              className={[styles.sortBtn, sortByPriority ? styles.sortBtnActive : ''].join(' ')}
+              onClick={() => setSortByPriority(v => !v)}
+            >
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+                <line x1="1" y1="3" x2="11" y2="3"/>
+                <line x1="1" y1="6" x2="8"  y2="6"/>
+                <line x1="1" y1="9" x2="5"  y2="9"/>
+              </svg>
+              {sortByPriority ? 'По приоритету' : 'По времени'}
+            </button>
+          )}
+
           {holidayName && (
             <div className={styles.holidayBanner}>{holidayName}</div>
           )}
 
-          {dayTasks.length === 0 ? (
+          {sortedDayTasks.length === 0 ? (
             <p className={styles.empty}>Нет задач на этот день</p>
           ) : (
             <ul className={styles.list}>
-              {dayTasks.map(t => (
+              {sortedDayTasks.map(t => (
                 <TaskItem
                   key={t.id}
                   task={t}
@@ -357,6 +412,7 @@ export function TaskList({
           userTags={userTags}
           onSave={onAdd}
           onClose={() => setCreateOpen(false)}
+          onCreateTag={onCreateTag}
         />
       )}
 
@@ -370,6 +426,12 @@ export function TaskList({
           onSave={(data) => onUpdate(editingTask.id, data)}
           onClose={() => setEditingTask(null)}
           onDelete={() => { onDelete(editingTask.id); setEditingTask(null); }}
+          onCreateTag={onCreateTag}
+          onSectionsLiveUpdate={(sections) => {
+            const { id, status, ...rest } = editingTask;
+            void id; void status;
+            onUpdate(editingTask.id, { ...rest, subtasks: sections });
+          }}
         />
       )}
     </>

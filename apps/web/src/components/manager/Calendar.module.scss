@@ -1,8 +1,10 @@
 .root {
   height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg-alt);
+  overflow: hidden;
 }
 
 // ── Head ─────────────────────────────────────────────────────
@@ -216,10 +218,17 @@
   border-color: var(--border-strong);
 }
 
+.navCenter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 10.8rem;
+}
+
 .navSep {
   color: var(--text-4);
   font-size: 0.9rem;
-  padding: 0 0.1rem;
+  flex-shrink: 0;
 }
 
 .picker {
@@ -375,8 +384,10 @@
 // Views
 .chartSingleMonth {
   flex: 1;
-  overflow-y: auto;
-  padding: 0.5rem;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .chartQuarter {
@@ -459,17 +470,28 @@
 }
 
 .chartGutterHead {
-  width: 48px;
+  width: 56px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 4px;
+}
+
+.weekNumLabel {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  text-align: right;
+  line-height: 1.2;
+  padding-right: 2px;
 }
 
 .chartDayHead {
   flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.1rem;
-  padding: 0.35rem 0;
+  justify-content: center;
+  padding: 0.5rem 0;
   background: none;
   border: none;
   cursor: pointer;
@@ -478,37 +500,30 @@
   &:hover { background: var(--bg-hover); }
 }
 
-.chartDayToday .chartDayNum {
-  background: var(--text);
-  color: var(--bg);
-  border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chartDaySelected {
-  background: var(--bg-hover);
-}
-
-.chartDayName {
-  font-size: 0.65rem;
-  color: var(--text-4);
+.chartDayLabel {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.chartDayNum {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text);
-  width: 22px;
-  height: 22px;
-  display: flex;
+.chartTodayPill {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: #ea580c;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.chartDaySelected {
+  background: var(--bg-hover);
 }
 
 // Scrollable body
@@ -520,7 +535,7 @@
 }
 
 .chartGutter {
-  width: 48px;
+  width: 56px;
   flex-shrink: 0;
 }
 
@@ -528,11 +543,11 @@
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
-  padding: 2px 6px 0 0;
-  font-size: 0.62rem;
-  color: var(--text-4);
+  padding: 2px 8px 0 0;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-muted);
   box-sizing: border-box;
-  border-top: 1px solid var(--border-light);
 }
 
 .chartCols {
@@ -582,21 +597,18 @@
   }
 }
 
-// Gutter label for all-day section
+// Gutter label for all-day section (sits at top of body)
 .alldayGutterLabel {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 4px 6px 0 0;
-  font-size: 0.55rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-4);
+  padding: 0 6px 0 0;
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: var(--text-muted);
   text-align: right;
-  line-height: 1.3;
+  line-height: 1.2;
   box-sizing: border-box;
-  border-top: 1px dashed var(--border);
 }
 
 // Divider line above all-day section in each column
@@ -612,30 +624,47 @@
 // Task blocks
 .chartTask {
   position: absolute;
-  border-radius: 3px;
-  padding: 2px 5px;
+  border-radius: 4px;
+  padding: 4px 8px;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
   z-index: 2;
   box-sizing: border-box;
+  cursor: pointer;
+}
+
+.chartTaskBody {
+  font-size: 0.72rem;
+  line-height: 1.25;
+  display: block;
+  word-break: break-word;
+}
+
+.chartTaskTime {
+  font-weight: 600;
+}
+
+.chartTaskTitle {
+  font-weight: 400;
 }
 
 .chartTaskAllDay {
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
+  padding: 3px 8px;
 }
 
 .chartTaskStripe {
   z-index: 3;
 }
 
-.chartTaskNormal    { background: var(--bg-active); color: var(--text); }
-.chartTaskMandatory { background: var(--text-muted); color: var(--bg); }
-.chartTaskEvent     { background: var(--text-2);    color: var(--bg); }
+.chartTaskNormal    { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+.chartTaskMandatory { background: #c2410c;        color: #fff; }
+.chartTaskEvent     { background: #1e3a8a;        color: #fff; }
+
+.chartTaskRepeat {
+  font-size: 0.65rem;
+  opacity: 0.85;
+  margin-right: 2px;
+  font-weight: 600;
+}
 
 .chartTaskTime {
   font-size: 0.6rem;
@@ -652,4 +681,414 @@
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+// ── Month grid view (chart month / quarter) ───────────────────
+.monthGridView {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.monthGridHead {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg-alt);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.monthGridWd {
+  text-align: center;
+  padding: 0.4rem 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-4);
+}
+
+.monthGridWeeks {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.monthGridRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  flex: 1;
+  min-height: 80px;
+  border-bottom: 1px solid var(--border-light);
+  &:last-child { border-bottom: none; }
+}
+
+.monthGridCell {
+  border-right: 1px solid var(--border-light);
+  padding: 4px 5px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 80px;
+  transition: background 0.1s;
+  &:last-child { border-right: none; }
+  &:hover { background: var(--bg-hover); }
+}
+
+.monthGridCellEmpty {
+  border-right: 1px solid var(--border-light);
+  min-height: 80px;
+  background: var(--bg-surface);
+  opacity: 0.35;
+  &:last-child { border-right: none; }
+}
+
+.monthGridCellToday { background: var(--bg-active); }
+.monthGridCellSel   { outline: 2px solid var(--border-strong); outline-offset: -2px; border-radius: 2px; }
+.monthGridCellOff   { background: rgba(0,0,0,0.015); }
+
+.monthGridDayNum {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1;
+  align-self: flex-start;
+}
+.monthGridDayNumOff { color: #ef4444; }
+
+.monthGridTasks {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.monthGridTask {
+  font-size: 0.7rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  line-height: 1.5;
+}
+
+.monthGridTaskTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.monthGridRepeat {
+  font-size: 0.62rem;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+.monthGridMore {
+  font-size: 0.65rem;
+  color: var(--text-4);
+  padding: 0 2px;
+  line-height: 1.4;
+}
+
+// ── Quarter layout ────────────────────────────────────────────
+.chartQuarterCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-light);
+  overflow: hidden;
+  &:last-child { border-right: none; }
+}
+
+.chartQuarterTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+// ── Spanning month view ───────────────────────────────────────
+.spanMonth {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.spanMonthTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  padding: 6px 8px 4px;
+  border-top: 1px solid var(--border-light);
+}
+
+.spanMonthHead {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  background: var(--bg-alt);
+  z-index: 2;
+}
+
+.spanMonthWd {
+  text-align: center;
+  padding: 4px 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-4);
+}
+
+.spanWeek {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--border-light);
+  &:last-child { border-bottom: none; }
+}
+
+.spanCell {
+  border-right: 1px solid var(--border-light);
+  padding: 3px 4px 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.1s;
+  &:last-child { border-right: none; }
+  &:hover { background: var(--bg-hover); }
+}
+
+.spanCellOut { opacity: 0.35; }
+.spanCellToday { background: var(--bg-active); }
+.spanCellSel { outline: 2px solid var(--border-strong); outline-offset: -2px; }
+
+.spanDayNum {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-bottom: 1px;
+}
+
+.spanOverflow {
+  font-size: 0.62rem;
+  color: var(--text-4);
+  margin-top: auto;
+  padding-bottom: 2px;
+  line-height: 1;
+}
+
+.spanBar {
+  position: absolute;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 5px;
+  font-size: 0.68rem;
+  overflow: hidden;
+  white-space: nowrap;
+  cursor: pointer;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+.spanBarRepeat {
+  font-size: 0.6rem;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.spanBarTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+// ── Quarter stacked ───────────────────────────────────────────
+.chartQuarterStack {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+// ── Year row view ─────────────────────────────────────────────
+.yearView {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.yearHeader {
+  display: grid;
+  grid-template-columns: 56px repeat(37, 1fr);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg-alt);
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.yearHeaderWd {
+  text-align: center;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 6px 0;
+  border-right: 1px solid var(--border-light);
+  &:last-child { border-right: none; }
+}
+
+.yearHeaderWdOff {
+  color: #ef4444;
+}
+
+.yearHeaderDay {
+  text-align: center;
+  font-size: 0.62rem;
+  color: var(--text-4);
+  font-weight: 500;
+  padding: 4px 0;
+  border-right: 1px solid var(--border-light);
+  &:last-child { border-right: none; }
+}
+
+.yearRow {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  border-bottom: 1px solid var(--border-light);
+  &:last-child { border-bottom: none; }
+}
+
+.yearLabelCell {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 6px 8px 0 0;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.yearRowArea {
+  position: relative;
+  overflow: hidden;
+}
+
+.yearDayCell {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  padding: 4px 2px 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border-light);
+  box-sizing: border-box;
+  transition: background 0.1s;
+  &:hover { background: var(--bg-hover); }
+}
+
+.yearDayNum {
+  line-height: 1;
+}
+
+.yearDayCellEmpty {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-right: 1px solid var(--border-light);
+  box-sizing: border-box;
+  cursor: default;
+}
+
+.yearDayCellToday  { background: var(--bg-active); }
+.yearDayCellSel    { outline: 2px solid var(--border-strong); outline-offset: -2px; }
+
+.yearOverflow {
+  font-size: 0.55rem;
+  color: var(--text-4);
+  line-height: 1;
+}
+
+.yearBar {
+  position: absolute;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  font-size: 0.62rem;
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.yearBarRepeat {
+  font-size: 0.55rem;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.yearBarTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+// Wrap for year chart
+.chartYearWrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }

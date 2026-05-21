@@ -17,6 +17,7 @@ import { Tag } from './tags/entities/tag.entity';
 import { UserAchievement } from './achievements/entities/user-achievement.entity';
 import { HolidayCache } from './holidays/entities/holiday-cache.entity';
 import { HolidaysModule } from './holidays/holidays.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { HolidaysModule } from './holidays/holidays.module';
     TagsModule,
     AchievementsModule,
     HolidaysModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,0 +1,282 @@
+// ── Modal overlay ─────────────────────────────────────────────
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.card {
+  width: 100%;
+  max-width: 540px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  border-radius: 16px 16px 0 0;
+  background: var(--bg);
+
+  @media (min-width: 769px) {
+    align-self: center;
+    border-radius: 14px;
+    margin: 1rem;
+  }
+}
+
+.form {
+  background: var(--bg-card);
+  border-radius: 0;
+  padding: 1rem 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  @media (min-width: 769px) {
+    border-radius: 14px;
+    border: 1px solid var(--border-input);
+    box-shadow: 0 4px 16px var(--shadow-md);
+  }
+}
+
+.titleInput {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  font-family: inherit;
+
+  &::placeholder { color: var(--text-4); font-weight: 400; }
+}
+
+.descInput {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  color: var(--text-2);
+  font-family: inherit;
+  resize: none;
+  line-height: 1.4;
+
+  &::placeholder { color: var(--text-4); }
+}
+
+// ── Attachment grid (bigger previews) ─────────────────────────
+.attachGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.attachItem {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg-alt);
+}
+
+.attachUploading { opacity: 0.6; }
+
+.attachMedia {
+  display: block;
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  background: var(--bg-alt);
+  position: relative;
+}
+
+.attachFile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 110px;
+  color: var(--text-muted);
+  background: var(--bg-alt);
+  font-size: 1.5rem;
+}
+
+.attachName {
+  font-size: 0.72rem;
+  color: var(--text-2);
+  padding: 5px 7px;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-card);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachRm {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  border: none;
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  &:hover { background: #cc3333; }
+}
+
+.playBadge {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+// ── Field rows (inline time picker, etc.) ─────────────────────
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fieldClear {
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  color: var(--text-4);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  &:hover { color: #cc3333; background: rgba(204,51,51,0.08); }
+}
+
+// ── Chips ─────────────────────────────────────────────────────
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 0.1rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
+  border-radius: 5px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.1s, background 0.1s, color 0.1s;
+  &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-surface); }
+}
+
+.chipActive {
+  border-color: var(--border-strong);
+  color: var(--text);
+  background: var(--bg-active);
+}
+
+// ── Tag dropdown (replicates main task picker) ────────────────
+.tagWrap {
+  position: relative;
+}
+
+.tagDropdown {
+  position: fixed;
+  z-index: 10100;
+  min-width: 180px;
+  background: var(--bg);
+  border: 1px solid var(--border-input);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px var(--shadow-lg);
+  padding: 4px;
+}
+
+.tagDropItem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 6px 9px;
+  border: none;
+  background: none;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  &:hover { background: var(--bg-hover); }
+}
+
+.tagDropItemActive { background: var(--bg-active); }
+
+.tagDropDot {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+}
+
+.tagDropDotNone {
+  width: 9px; height: 9px; border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  flex-shrink: 0;
+}
+
+.tagDropCheck {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+// ── Actions ───────────────────────────────────────────────────
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 0.35rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.cancelBtn {
+  padding: 6px 14px;
+  background: none;
+  border: 1px solid var(--border-input);
+  border-radius: 5px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  &:hover { background: var(--bg-hover); }
+}
+
+.submitBtn {
+  padding: 6px 16px;
+  background: #dc2626;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  transition: opacity 0.12s;
+  &:hover:not(:disabled) { opacity: 0.85; }
+  &:disabled { opacity: 0.4; cursor: default; }
+}

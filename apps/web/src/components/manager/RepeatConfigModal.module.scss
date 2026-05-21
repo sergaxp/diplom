@@ -146,6 +146,12 @@
   line-height: 1.45;
 }
 
+.minEveryHint {
+  font-size: 0.72rem;
+  color: var(--text-4);
+  font-style: italic;
+}
+
 // ── Interval Block ────────────────────────────────────────────
 
 .intervalBlock {
@@ -730,6 +736,100 @@
   font-family: inherit;
   margin-left: 6px;
   &:focus { border-color: var(--border-strong); }
+}
+
+// ── Мини-календарь для выбора даты завершения ─────────────────
+
+.miniCal {
+  margin-top: 0.4rem;
+  margin-left: 1.5rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
+  border-radius: 8px;
+  padding: 0.5rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.miniCalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.1rem 0;
+}
+
+.miniCalTitle {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.miniCalNav {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 0.4rem;
+  border-radius: 4px;
+  font-family: inherit;
+  &:hover { background: var(--bg-hover); color: var(--text); }
+}
+
+.miniCalWds {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.miniCalWd {
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-4);
+  padding: 2px 0;
+  text-transform: uppercase;
+}
+
+.miniCalGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.miniCalEmpty {
+  // empty cell
+}
+
+.miniCalCell {
+  background: none;
+  border: 1px solid transparent;
+  padding: 5px 0;
+  font-size: 0.78rem;
+  cursor: pointer;
+  border-radius: 5px;
+  color: var(--text);
+  font-family: inherit;
+  text-align: center;
+  transition: background 0.1s, border-color 0.1s;
+
+  &:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--border-input);
+  }
+  &:disabled {
+    color: var(--text-4);
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+.miniCalCellSelected {
+  background: var(--text) !important;
+  color: var(--bg) !important;
+  font-weight: 600;
+  border-color: var(--text) !important;
 }
 
 // ── Footer ────────────────────────────────────────────────────

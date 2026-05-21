@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Header } from '../../components/Header';
 import { ManagerCalendar } from '../../components/manager/Calendar';
+import { MobileDayStrip } from '../../components/manager/MobileDayStrip';
 import { TaskList } from '../../components/manager/TaskList';
 import { Task, tasksApi, completionKey, toDateStr } from '../../lib/tasks';
-import { tagsApi } from '../../lib/tags';
+import { Tag, tagsApi } from '../../lib/tags';
 import { useAuthStore } from '../../store/authStore';
 import { useAchievementStore } from '../../store/achievementStore';
 import styles from './page.module.scss';
@@ -21,6 +22,7 @@ export default function ManagerPage() {
   const [selectedDate, setSelectedDate] = useState(() => {
     const d = new Date(); d.setHours(0, 0, 0, 0); return d;
   });
+  const [mobileExpanded, setMobileExpanded] = useState(false);
 
   useEffect(() => {
     if (ready && !user) router.replace('/auth');
@@ -80,7 +82,11 @@ export default function ManagerPage() {
 
   // ── Delete ────────────────────────────────────────────────────
   const deleteMut = useMutation({
-    mutationFn: tasksApi.delete,
+    mutationFn: async (id: string) => {
+      // Skip server call for optimistic-only tasks that haven't been persisted yet
+      if (id.startsWith('opt_')) return;
+      return tasksApi.delete(id);
+    },
     onMutate: async (id) => {
       const prev = await cancelAndSnap(['tasks']);
       qc.setQueryData<Task[]>(['tasks'], old => (old ?? []).filter(t => t.id !== id));
@@ -92,8 +98,11 @@ export default function ManagerPage() {
 
   // ── Update ────────────────────────────────────────────────────
   const updateMut = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Omit<Task, 'id' | 'status'> }) =>
-      tasksApi.update(id, data),
+    mutationFn: async ({ id, data }: { id: string; data: Omit<Task, 'id' | 'status'> }) => {
+      // Skip server call for optimistic-only tasks
+      if (id.startsWith('opt_')) return undefined as unknown as Task;
+      return tasksApi.update(id, data);
+    },
     onMutate: async ({ id, data }) => {
       const prev = await cancelAndSnap(['tasks']);
       qc.setQueryData<Task[]>(['tasks'], old =>
@@ -137,6 +146,25 @@ export default function ManagerPage() {
     enabled: !!user,
     staleTime: 60_000,
   });
+
+  const createTagMut = useMutation({
+    mutationFn: (data: { name: string; color: string; icon?: string | null }) => tagsApi.create(data),
+    onMutate: async (newData) => {
+      await qc.cancelQueries({ queryKey: ['tags'] });
+      const prev = qc.getQueryData<Tag[]>(['tags']) ?? [];
+      // Optimistic: add a placeholder so other open modals see the tag
+      const optimistic: Tag = { id: `__opt_${Date.now()}`, name: newData.name, color: newData.color, icon: newData.icon ?? null };
+      qc.setQueryData(['tags'], [...prev, optimistic]);
+      return { prev };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['tags'], ctx.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['tags'] }),
+  });
+
+  const handleCreateTag = (name: string, color: string, icon?: string | null) =>
+    createTagMut.mutateAsync({ name, color, icon });
 
   // ── Handlers ──────────────────────────────────────────────────
   const handleToggle   = (taskId: string, dateStr: string) =>
@@ -182,6 +210,19 @@ export default function ManagerPage() {
   return (
     <div className={styles.root}>
       <Header />
+
+      {/* Mobile-only top strip (visible only when viewport ≤ 768px) */}
+      <div className={styles.mobileTop}>
+        <MobileDayStrip
+          selectedDate={selectedDate}
+          onSelect={setSelectedDate}
+          tasks={allTasks}
+          expanded={mobileExpanded}
+          onToggleExpand={() => setMobileExpanded(v => !v)}
+          onGoToToday={goToToday}
+        />
+      </div>
+
       <div className={styles.body}>
         <div className={styles.left}>
           <TaskList
@@ -190,6 +231,7 @@ export default function ManagerPage() {
             completions={completions}
             isAdmin={user.role === 'admin'}
             userTags={userTags}
+            onCreateTag={handleCreateTag}
             onToggle={handleToggle}
             onDelete={handleDelete}
             onAdd={handleAdd}

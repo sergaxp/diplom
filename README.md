@@ -28,3 +28,10 @@ Password: minioadmin123
 Остановка Docker-контейнеров:
 cd docker
 docker compose -f docker-compose.dev.yml down
+
+
+Запуск тестов
+cd /home/serga/diplom/apps/web
+pnpm test           # одноразовый прогон
+pnpm test:watch     # ре-ран на изменениях
+pnpm test:ui        # web-UI с подробностями

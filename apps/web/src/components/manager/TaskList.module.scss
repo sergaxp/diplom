@@ -91,6 +91,30 @@
   &:hover { background: var(--bg-hover); }
 }
 
+.sortBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 7px;
+  border: 1px solid var(--border-input);
+  border-radius: 4px;
+  background: none;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  align-self: flex-end;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-hover); }
+}
+
+.sortBtnActive {
+  border-color: var(--border-strong);
+  color: var(--text);
+  background: var(--bg-active);
+}
+
 .list {
   list-style: none;
   display: flex;
@@ -150,6 +174,21 @@
 .taskMandatoryDay {
   border-left: 3px solid #dc2626;
   background: rgba(220, 38, 38, .04);
+}
+
+.taskPriorityHigh {
+  border-left: 3px solid #ef4444;
+  background: rgba(239, 68, 68, .04);
+}
+
+.taskPriorityMedium {
+  border-left: 3px solid #f97316;
+  background: rgba(249, 115, 22, .04);
+}
+
+.taskPriorityLow {
+  border-left: 3px solid #eab308;
+  background: rgba(234, 179, 8, .04);
 }
 
 .globalIcon {
@@ -246,6 +285,19 @@
   font-size: 0.65rem;
   color: var(--text-4);
   flex-shrink: 0;
+}
+
+.weatherWarnBadge {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  cursor: help;
+  white-space: nowrap;
 }
 
 .taskDateBadge {
@@ -375,4 +427,15 @@
   height: 1px;
   background: var(--border-light);
   margin: 0.2rem 0;
+}
+
+// ─── Mobile ──────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .root {
+    padding: 1rem 0.85rem 1.5rem;
+    gap: 1rem;
+  }
+  // Big clock at top is already provided by MobileDayStrip — hide the one in TaskList on mobile
+  .clockRow { display: none; }
+  .clockTime { font-size: 1.85rem; }
 }

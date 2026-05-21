@@ -5,6 +5,13 @@ import * as LucideIcons from 'lucide-react';
 import { Task, TaskRepeat, TaskType, TaskPriority, RepeatConfig, SubtaskSection, SubtaskItem, toDateStr } from '../../lib/tasks';
 import { DatePickerPopup, getDateButtonLabel } from './DatePickerPopup';
 import { RepeatConfigModal } from './RepeatConfigModal';
+import { TimePickerField } from './TimePickerField';
+import { TagManager } from './TagManager';
+import { SubtaskCreatePopup } from './SubtaskCreatePopup';
+import { SubtaskLinkForm } from './SubtaskLinkForm';
+import { SubtaskViewModal } from './SubtaskViewModal';
+import { MediaViewModal } from './MediaViewModal';
+import { storageApi } from '../../lib/storage';
 import type { Tag } from '../../lib/tags';
 import { useDayWeather, weatherCodeToInfo } from '../../lib/weather';
 import { useAuthStore } from '../../store/authStore';
@@ -58,14 +65,24 @@ const REPEAT_LABELS: Record<TaskRepeat, string> = {
 };
 
 const TYPE_LABELS: Record<TaskType, string> = {
-  normal: 'Обычная', mandatory: 'Обязательная', event: 'Эвент',
+  normal: 'Обычная', mandatory: 'Дедлайн', event: 'Эвент',
 };
+
+const DEFAULT_TAG_COLOR = '#4F46E5';
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
   none:   'Без приоритета',
   low:    'Средне важно',
   medium: 'Важно',
   high:   'Очень важно',
+};
+
+const PRIORITY_COLORS: Record<TaskPriority, string | undefined> = {
+  none: undefined, low: '#eab308', medium: '#f97316', high: '#ef4444',
+};
+
+const TYPE_COLORS: Record<string, string | undefined> = {
+  normal: undefined, mandatory: '#ef4444', event: '#8b5cf6',
 };
 
 // ── WeatherWidget ─────────────────────────────────────────────
@@ -169,22 +186,6 @@ function WeatherWidget({ date }: { date: string }) {
             <span className={styles.weatherRowVal}>{weather.windSpeedMax} км/ч</span>
           </div>
         )}
-        {SunIcon && weather.uvIndex > 0 && (
-          <div className={styles.weatherRow}>
-            <SunIcon size={12} strokeWidth={1.75} />
-            <span>УФ-индекс</span>
-            <span className={styles.weatherRowVal}>{weather.uvIndex}</span>
-          </div>
-        )}
-        {DropIcon && (
-          <div className={styles.weatherRow}>
-            <DropIcon size={12} strokeWidth={1.75} />
-            <span>Локация</span>
-            <span className={styles.weatherRowVal} style={{ maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {user?.location ?? 'Челябинск'}
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -195,21 +196,43 @@ interface SectionProps {
   section: SubtaskSection;
   collapsed: boolean;
   canDelete: boolean;
+  userTags: Tag[];
+  parentDate: string;
   onToggleCollapse: () => void;
   onChange: (s: SubtaskSection) => void;
   onDelete: () => void;
 }
 
-function SubtaskSectionComp({ section, collapsed, canDelete, onToggleCollapse, onChange, onDelete }: SectionProps) {
+const ATTACH_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/ogg,application/zip,application/x-7z-compressed,application/x-rar-compressed,application/pdf';
+
+type FormState = null | 'subtask-new' | 'subtask-edit' | 'link';
+
+function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDate, onToggleCollapse, onChange, onDelete }: SectionProps) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleVal,     setTitleVal]     = useState(section.title);
-  const [addVal,       setAddVal]       = useState('');
+  const [formState,    setFormState]    = useState<FormState>(null);
+  const [editingItem,  setEditingItem]  = useState<SubtaskItem | null>(null);
+  const [viewItem,     setViewItem]     = useState<SubtaskItem | null>(null);
+  const [mediaItem,    setMediaItem]    = useState<SubtaskItem | null>(null);
+  const [confirmId,    setConfirmId]    = useState<string | null>(null);
+  const [uploading,    setUploading]    = useState(0);
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const addInputRef   = useRef<HTMLInputElement>(null);
+  const attachRef     = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editingTitle) titleInputRef.current?.select();
   }, [editingTitle]);
+
+  // Close inline confirm-delete on outside click
+  useEffect(() => {
+    if (!confirmId) return;
+    const h = (e: MouseEvent) => {
+      const tgt = e.target as Element;
+      if (!tgt.closest(`[data-confirm-id="${confirmId}"]`)) setConfirmId(null);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [confirmId]);
 
   const commitTitle = () => {
     setEditingTitle(false);
@@ -218,22 +241,80 @@ function SubtaskSectionComp({ section, collapsed, canDelete, onToggleCollapse, o
     onChange({ ...section, title: t });
   };
 
+  const replaceItems = (mut: (items: SubtaskItem[]) => SubtaskItem[]) =>
+    onChange({ ...section, items: mut(section.items) });
+
   const toggleItem = (itemId: string) =>
-    onChange({ ...section, items: section.items.map(it => it.id === itemId ? { ...it, done: !it.done } : it) });
+    replaceItems(items => items.map(it => it.id === itemId ? { ...it, done: !it.done } : it));
 
-  const renameItem = (itemId: string, title: string) =>
-    onChange({ ...section, items: section.items.map(it => it.id === itemId ? { ...it, title } : it) });
+  // Delete a section item — also removes its files from MinIO
+  const deleteItem = async (item: SubtaskItem) => {
+    replaceItems(items => items.filter(it => it.id !== item.id));
+    setConfirmId(null);
 
-  const deleteItem = (itemId: string) =>
-    onChange({ ...section, items: section.items.filter(it => it.id !== itemId) });
-
-  const addItem = () => {
-    const t = addVal.trim();
-    if (!t) return;
-    const newItem: SubtaskItem = { id: uid(), title: t, done: false };
-    onChange({ ...section, items: [...section.items, newItem] });
-    setAddVal('');
+    const keys: string[] = [];
+    if (item.attachment?.key) keys.push(item.attachment.key);
+    if (item.attachments) for (const a of item.attachments) if (a.key) keys.push(a.key);
+    for (const k of keys) { try { await storageApi.remove(k); } catch { /* ignore */ } }
   };
+
+  const upsertItem = (item: SubtaskItem) => {
+    // For edits: detect attachments that were removed and delete them from MinIO too
+    const prev = section.items.find(it => it.id === item.id);
+    if (prev?.attachments) {
+      const newKeys = new Set((item.attachments ?? []).map(a => a.key).filter(Boolean) as string[]);
+      for (const a of prev.attachments) {
+        if (a.key && !newKeys.has(a.key)) { try { storageApi.remove(a.key); } catch { /* ignore */ } }
+      }
+    }
+    replaceItems(items => {
+      const existing = items.findIndex(it => it.id === item.id);
+      if (existing >= 0) { const copy = [...items]; copy[existing] = item; return copy; }
+      return [...items, item];
+    });
+    setFormState(null);
+    setEditingItem(null);
+    // If we were editing an item that's currently shown in view modal, keep it open with new data
+    if (viewItem && viewItem.id === item.id) setViewItem(item);
+  };
+
+  const handleAttachFiles = async (files: FileList | null) => {
+    if (!files) return;
+    setUploading(c => c + files.length);
+    const created: SubtaskItem[] = [];
+    for (const f of Array.from(files)) {
+      try {
+        const up = await storageApi.upload(f);
+        created.push({
+          id: uid(), kind: 'attachment', title: up.name, done: false,
+          attachment: { name: up.name, url: up.url, type: up.type, size: up.size, key: up.key },
+        });
+      } catch (e) {
+        console.error('upload failed', e);
+      } finally {
+        setUploading(c => c - 1);
+      }
+    }
+    if (created.length) replaceItems(items => [...items, ...created]);
+  };
+
+  // Inline delete button row with confirm
+  const renderDelete = (it: SubtaskItem) => (
+    <span className={styles.deleteWrap} data-confirm-id={it.id}>
+      {confirmId === it.id && (
+        <button
+          type="button"
+          className={styles.confirmDeleteBtn}
+          onClick={(e) => { e.stopPropagation(); deleteItem(it); }}
+        >Удалить</button>
+      )}
+      <button
+        type="button"
+        className={styles.subtaskDeleteBtn}
+        onClick={(e) => { e.stopPropagation(); setConfirmId(prev => prev === it.id ? null : it.id); }}
+      >×</button>
+    </span>
+  );
 
   return (
     <div className={styles.section}>
@@ -263,41 +344,277 @@ function SubtaskSectionComp({ section, collapsed, canDelete, onToggleCollapse, o
         )}
       </div>
 
-      {!collapsed && (
-        <ul className={styles.subtaskList}>
-          {section.items.map(item => (
-            <li key={item.id} className={[styles.subtaskItem, item.done ? styles.subtaskItemDone : ''].join(' ')}>
-              <button
-                type="button"
-                className={[styles.subtaskCheck, item.done ? styles.subtaskCheckDone : ''].join(' ')}
-                onClick={() => toggleItem(item.id)}
-              >
-                {item.done && '✓'}
+      {!collapsed && (() => {
+        // Split items: subtasks (rendered as rows above), media (telegram-style grid below)
+        const subtasks = section.items.filter(it => (it.kind ?? 'subtask') === 'subtask');
+        const media    = section.items.filter(it => it.kind === 'attachment' || it.kind === 'link');
+
+        return (
+        <>
+          <ul className={styles.subtaskList}>
+            {subtasks.map(item => {
+              const tag = item.tagId ? userTags.find(t => t.id === item.tagId) : undefined;
+              return (
+                <li
+                  key={item.id}
+                  className={[styles.cardSubtask, item.done ? styles.cardSubtaskDone : ''].join(' ')}
+                >
+                  <button
+                    type="button"
+                    className={[styles.cardCheck, item.done ? styles.cardCheckDone : ''].join(' ')}
+                    onClick={(e) => { e.stopPropagation(); toggleItem(item.id); }}
+                  >
+                    {item.done && '✓'}
+                  </button>
+                  <div className={styles.cardMain} onClick={() => setViewItem(item)} role="button" tabIndex={0}>
+                    <div className={styles.cardTitle}>{item.title}</div>
+                    {item.description && (
+                      <div className={styles.cardDesc}>{item.description}</div>
+                    )}
+                    <div className={styles.cardBadges}>
+                      {item.time && (
+                        <span className={styles.cardBadge}>
+                          <LucideIcons.Clock size={10} strokeWidth={2}/> {item.time}
+                        </span>
+                      )}
+                      {tag && (() => {
+                        const TagIc = tag.icon ? (LucideIcons as unknown as Record<string, LucideIcon>)[tag.icon] : null;
+                        return (
+                          <span className={styles.cardBadge} style={{ borderColor: tag.color, color: tag.color }}>
+                            {TagIc ? <TagIc size={10} strokeWidth={2}/>
+                                   : <span className={styles.tagBadgeDot} style={{ background: tag.color }}/>}
+                            {tag.name}
+                          </span>
+                        );
+                      })()}
+                      {item.attachments && item.attachments.length > 0 && (
+                        <span className={styles.cardBadge}>
+                          <LucideIcons.Paperclip size={10} strokeWidth={2}/> {item.attachments.length}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {renderDelete(item)}
+                </li>
+              );
+            })}
+
+            {uploading > 0 && (
+              <li className={styles.uploadingRow}>Загрузка {uploading} файл(ов)…</li>
+            )}
+          </ul>
+
+          {media.length > 0 && (
+            <div className={styles.mediaList}>
+              {media.map(item => {
+                const isConfirming = confirmId === item.id;
+                const cornerDelete = (
+                  <div
+                    className={styles.tileDelete}
+                    data-confirm-id={item.id}
+                  >
+                    {isConfirming && (
+                      <button
+                        type="button"
+                        className={styles.tileConfirmBtn}
+                        onClick={(e) => { e.stopPropagation(); deleteItem(item); }}
+                      >Удалить</button>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.tileX}
+                      onClick={(e) => { e.stopPropagation(); setConfirmId(prev => prev === item.id ? null : item.id); }}
+                      title="Удалить"
+                    >×</button>
+                  </div>
+                );
+
+                // ─── Attachment ───────────────────────────────────
+                if (item.kind === 'attachment' && item.attachment) {
+                  const a = item.attachment;
+                  const isImg = a.type.startsWith('image/');
+                  const isVid = a.type.startsWith('video/');
+
+                  // Image / video — media block
+                  if (isImg || isVid) {
+                    return (
+                      <div key={item.id} className={styles.tgMedia}>
+                        <button
+                          type="button"
+                          className={styles.tgMediaBtn}
+                          onClick={() => setMediaItem(item)}
+                          title={a.name}
+                        >
+                          {isImg
+                            ? <img src={a.url} alt={a.name} className={styles.tgMediaImg}/>
+                            : <video src={a.url} muted className={styles.tgMediaImg}/>}
+                          {isVid && (
+                            <span className={styles.tgMediaPlay}>
+                              <LucideIcons.Play size={28} strokeWidth={2}/>
+                            </span>
+                          )}
+                        </button>
+                        {cornerDelete}
+                      </div>
+                    );
+                  }
+
+                  // Generic file — horizontal card (PDF/zip/etc.)
+                  const sizeKb = a.size != null ? (a.size / 1024).toFixed(1) + ' КБ' : '';
+                  return (
+                    <div key={item.id} className={styles.tgFile}>
+                      <button
+                        type="button"
+                        className={styles.tgFileBody}
+                        onClick={() => setMediaItem(item)}
+                        title={a.name}
+                      >
+                        <span className={styles.tgFileIcon}>
+                          <LucideIcons.FileText size={22} strokeWidth={1.5}/>
+                        </span>
+                        <span className={styles.tgFileText}>
+                          <span className={styles.tgFileName}>{a.name}</span>
+                          {sizeKb && <span className={styles.tgFileMeta}>{sizeKb}</span>}
+                        </span>
+                      </button>
+                      {cornerDelete}
+                    </div>
+                  );
+                }
+
+                // ─── Link ─────────────────────────────────────────
+                if (item.kind === 'link' && item.url) {
+                  const isVid = item.linkType === 'video';
+                  const host  = (() => { try { return new URL(item.url).hostname.replace(/^www\./, ''); } catch { return ''; } })();
+
+                  // Link with rich preview (YouTube etc.)
+                  if (item.thumbnailUrl) {
+                    return (
+                      <div key={item.id} className={styles.tgLink}>
+                        <button
+                          type="button"
+                          className={styles.tgLinkBody}
+                          onClick={() => setMediaItem(item)}
+                          title={item.url}
+                        >
+                          <span className={styles.tgLinkUrl}>{item.url}</span>
+                          <span className={styles.tgLinkCard}>
+                            {host && <span className={styles.tgLinkSource}>{host}</span>}
+                            {item.title && item.title !== item.url && (
+                              <span className={styles.tgLinkTitle}>{item.title}</span>
+                            )}
+                            <span
+                              className={styles.tgLinkThumb}
+                              style={{ backgroundImage: `url(${item.thumbnailUrl})` }}
+                            >
+                              {isVid && (
+                                <span className={styles.tgMediaPlay}>
+                                  <LucideIcons.Play size={32} strokeWidth={2}/>
+                                </span>
+                              )}
+                            </span>
+                          </span>
+                        </button>
+                        {cornerDelete}
+                      </div>
+                    );
+                  }
+
+                  // Plain link — compact card with icon
+                  return (
+                    <div key={item.id} className={styles.tgFile}>
+                      <button
+                        type="button"
+                        className={styles.tgFileBody}
+                        onClick={() => setMediaItem(item)}
+                        title={item.url}
+                      >
+                        <span className={styles.tgFileIcon}>
+                          <LucideIcons.Link size={22} strokeWidth={1.5}/>
+                        </span>
+                        <span className={styles.tgFileText}>
+                          <span className={styles.tgFileName}>{item.title || item.url}</span>
+                          {host && <span className={styles.tgFileMeta}>{host}</span>}
+                        </span>
+                      </button>
+                      {cornerDelete}
+                    </div>
+                  );
+                }
+
+                return null;
+              })}
+            </div>
+          )}
+
+          {/* 3 action buttons (hidden while a form is open) */}
+          {formState === null && (
+            <div className={styles.addActions}>
+              <button type="button" className={styles.addActionBtn} onClick={() => setFormState('subtask-new')}>
+                <LucideIcons.Plus size={14} strokeWidth={2}/> Подзадача
+              </button>
+              <button type="button" className={styles.addActionBtn} onClick={() => attachRef.current?.click()}>
+                <LucideIcons.Paperclip size={13} strokeWidth={2}/> Вложение
+              </button>
+              <button type="button" className={styles.addActionBtn} onClick={() => setFormState('link')}>
+                <LucideIcons.Link size={13} strokeWidth={2}/> Ссылка
               </button>
               <input
-                className={styles.subtaskItemInput}
-                value={item.title}
-                onChange={e => renameItem(item.id, e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addInputRef.current?.focus(); } }}
+                ref={attachRef}
+                type="file"
+                multiple
+                accept={ATTACH_ACCEPT}
+                style={{ display: 'none' }}
+                onChange={e => { handleAttachFiles(e.target.files); e.target.value = ''; }}
               />
-              <button type="button" className={styles.subtaskDeleteBtn} onClick={() => deleteItem(item.id)}>×</button>
-            </li>
-          ))}
-          <li className={styles.addSubtask}>
-            <span className={styles.addSubtaskPlus}>+</span>
-            <input
-              ref={addInputRef}
-              className={styles.addSubtaskInput}
-              placeholder="Добавить подзадачу..."
-              value={addVal}
-              onChange={e => setAddVal(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') { e.preventDefault(); addItem(); }
-                if (e.key === 'Escape') setAddVal('');
-              }}
+            </div>
+          )}
+
+          {(formState === 'subtask-new' || formState === 'subtask-edit') && (
+            <SubtaskCreatePopup
+              initial={formState === 'subtask-edit' ? (editingItem ?? undefined) : undefined}
+              userTags={userTags}
+              parentDate={parentDate}
+              onSave={upsertItem}
+              onCancel={() => { setFormState(null); setEditingItem(null); }}
             />
-          </li>
-        </ul>
+          )}
+
+          {formState === 'link' && (
+            <SubtaskLinkForm
+              onSave={upsertItem}
+              onCancel={() => setFormState(null)}
+            />
+          )}
+        </>
+        );
+      })()}
+
+      {viewItem && (
+        <SubtaskViewModal
+          item={viewItem}
+          userTags={userTags}
+          onClose={() => setViewItem(null)}
+          onToggle={() => {
+            const next = { ...viewItem, done: !viewItem.done };
+            replaceItems(items => items.map(it => it.id === viewItem.id ? next : it));
+            setViewItem(next);
+          }}
+          onEdit={() => { setEditingItem(viewItem); setFormState('subtask-edit'); setViewItem(null); }}
+          onDelete={() => { deleteItem(viewItem); setViewItem(null); }}
+          onUpdate={(next) => {
+            replaceItems(items => items.map(it => it.id === next.id ? next : it));
+            setViewItem(next);
+          }}
+        />
+      )}
+
+      {mediaItem && (
+        <MediaViewModal
+          item={mediaItem}
+          onClose={() => setMediaItem(null)}
+          onDelete={() => { deleteItem(mediaItem); setMediaItem(null); }}
+        />
       )}
     </div>
   );
@@ -312,9 +629,13 @@ interface Props {
   onSave: (data: Omit<Task, 'id' | 'status'>) => void;
   onClose: () => void;
   onDelete?: () => void;
+  onCreateTag?: (name: string, color: string, icon?: string | null) => Promise<Tag>;
+  /** When set (edit mode), section changes (add/delete subtask, add attachment, etc.)
+   *  immediately persist to the server, independent of the form's Save button. */
+  onSectionsLiveUpdate?: (sections: SubtaskSection[]) => void;
 }
 
-export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, onDelete }: Props) {
+export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, onDelete, onCreateTag, onSectionsLiveUpdate }: Props) {
   const isEdit      = !!task;
   const initialDate = useMemo(() => toDateStr(date), [date]);
   const draft       = useMemo(() => (!isEdit ? loadDraft(initialDate) : null), [isEdit, initialDate]);
@@ -337,7 +658,23 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   const [selectedTagId,   setSelectedTagId]   = useState<string | null>(task?.tags?.[0]?.id ?? draft?.tagId ?? null);
   const [datePickerOpen,  setDatePickerOpen]  = useState(false);
   const [repeatConfigOpen, setRepeatConfigOpen] = useState(false);
-  const dateBtnRef = useRef<HTMLButtonElement>(null);
+  const [tagDropOpen,      setTagDropOpen]      = useState(false);
+  const [tagDropPos,       setTagDropPos]       = useState<{top:number;left:number}|null>(null);
+  const [creatingTag,      setCreatingTag]      = useState(false);
+  const [localTag,         setLocalTag]         = useState<Tag|null>(null);
+  const [priorityDropOpen, setPriorityDropOpen] = useState(false);
+  const [priorityDropPos,  setPriorityDropPos]  = useState<{top:number;left:number}|null>(null);
+  const [typeDropOpen,     setTypeDropOpen]     = useState(false);
+  const [typeDropPos,      setTypeDropPos]      = useState<{top:number;left:number}|null>(null);
+  const dateBtnRef      = useRef<HTMLButtonElement>(null);
+  const tagBtnRef       = useRef<HTMLButtonElement>(null);
+  const tagDropRef      = useRef<HTMLDivElement>(null);
+  const priorityBtnRef  = useRef<HTMLButtonElement>(null);
+  const priorityDropRef = useRef<HTMLDivElement>(null);
+  const typeBtnRef      = useRef<HTMLButtonElement>(null);
+  const typeDropRef     = useRef<HTMLDivElement>(null);
+  const pendingCreateRef = useRef<Promise<Tag> | null>(null);
+  const pendingTempId    = useRef<string>('');
   const [sections,      setSections]      = useState<SubtaskSection[]>(() => {
     if (task?.subtasks && task.subtasks.length > 0) return task.subtasks;
     if (draft?.sections && draft.sections.length > 0) return draft.sections;
@@ -355,6 +692,9 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     setTitle(''); setDescription(''); setTime(''); setEndTime('');
     setPriority('none'); setRepeat('none'); setHasEnd(false); setRepeatUntil('');
     setRepeatConfig(null); setSelectedTagId(null);
+    setFormDate(initialDate);
+    setMultiDay(false);
+    setEndDate('');
     setSections(makeDefaultSections());
     clearDraft(initialDate);
   };
@@ -374,19 +714,134 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     return () => document.removeEventListener('keydown', h);
   }, [onClose]);
 
-  const selectedTag = selectedTagId ? userTags.find(t => t.id === selectedTagId) : undefined;
+  const allTags = localTag && !userTags.find(t => t.id === localTag.id)
+    ? [...userTags, localTag] : userTags;
+  const selectedTag = selectedTagId ? allTags.find(t => t.id === selectedTagId) : undefined;
   const TagIcon     = selectedTag?.icon ? Icons[selectedTag.icon] : null;
 
   const toggleTag = (id: string) => setSelectedTagId(prev => prev === id ? null : id);
 
+  const clampDrop = (r: DOMRect, dropW = 220, dropH = 240): { top: number; left: number } => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const left = Math.min(r.left, vw - dropW - 8);
+    const top  = r.bottom + 4 + dropH > vh ? r.top - dropH - 4 : r.bottom + 4;
+    return { top, left: Math.max(8, left) };
+  };
+
+  const openTagDrop = () => {
+    if (tagDropOpen) { setTagDropOpen(false); return; }
+    if (tagBtnRef.current) {
+      setTagDropPos(clampDrop(tagBtnRef.current.getBoundingClientRect()));
+    }
+    setTagDropOpen(true);
+    setCreatingTag(false);
+  };
+
+  // Optimistic tag creation: shows tag immediately, syncs with server in background
+  const handleCreateNewTag = (data: { name: string; icon: string | null; color: string }) => {
+    if (!onCreateTag) return;
+    const nameTrimmed = data.name.trim();
+    if (!nameTrimmed) return;
+    if (allTags.some(t => t.name.toLowerCase() === nameTrimmed.toLowerCase())) return;
+
+    const tempId = `__temp_${Date.now()}`;
+    const tempTag: Tag = { id: tempId, name: nameTrimmed, color: data.color, icon: data.icon };
+    setLocalTag(tempTag);
+    setSelectedTagId(tempId);
+    pendingTempId.current = tempId;
+    setCreatingTag(false);
+    setTagDropOpen(false);
+
+    const promise = onCreateTag(nameTrimmed, data.color, data.icon)
+      .then(realTag => {
+        setLocalTag(realTag);
+        setSelectedTagId(prev => prev === tempId ? realTag.id : prev);
+        pendingCreateRef.current = null;
+        return realTag;
+      })
+      .catch(() => {
+        setLocalTag(null);
+        setSelectedTagId(prev => prev === tempId ? null : prev);
+        pendingCreateRef.current = null;
+      }) as Promise<Tag>;
+
+    pendingCreateRef.current = promise;
+  };
+
+  useEffect(() => {
+    if (!tagDropOpen) return;
+    const handler = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (!tagBtnRef.current?.contains(t) && !tagDropRef.current?.contains(t)) {
+        setTagDropOpen(false); setCreatingTag(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [tagDropOpen]);
+
+  const openDrop = (
+    btnRef: React.RefObject<HTMLButtonElement | null>,
+    setOpen: (v: boolean) => void,
+    setPos: (p: {top:number;left:number}) => void,
+    isOpen: boolean,
+    dropW = 180,
+    dropH = 160,
+  ) => {
+    if (isOpen) { setOpen(false); return; }
+    if (btnRef.current) {
+      setPos(clampDrop(btnRef.current.getBoundingClientRect(), dropW, dropH));
+    }
+    setOpen(true);
+  };
+
+  useEffect(() => {
+    if (!priorityDropOpen) return;
+    const h = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (!priorityBtnRef.current?.contains(t) && !priorityDropRef.current?.contains(t))
+        setPriorityDropOpen(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [priorityDropOpen]);
+
+  useEffect(() => {
+    if (!typeDropOpen) return;
+    const h = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (!typeBtnRef.current?.contains(t) && !typeDropRef.current?.contains(t))
+        setTypeDropOpen(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [typeDropOpen]);
+
+  const liveUpdate = (next: SubtaskSection[]) => {
+    if (isEdit && onSectionsLiveUpdate) onSectionsLiveUpdate(next);
+  };
+
   const updateSection = (idx: number, s: SubtaskSection) =>
-    setSections(prev => prev.map((sec, i) => i === idx ? s : sec));
+    setSections(prev => {
+      const next = prev.map((sec, i) => i === idx ? s : sec);
+      liveUpdate(next);
+      return next;
+    });
 
   const deleteSection = (idx: number) =>
-    setSections(prev => prev.filter((_, i) => i !== idx));
+    setSections(prev => {
+      const next = prev.filter((_, i) => i !== idx);
+      liveUpdate(next);
+      return next;
+    });
 
   const addSection = () =>
-    setSections(prev => [...prev, { id: uid(), title: 'Новый раздел', items: [] }]);
+    setSections(prev => {
+      const next = [...prev, { id: uid(), title: 'Новый раздел', items: [] }];
+      liveUpdate(next);
+      return next;
+    });
 
   const toggleCollapse = (id: string) =>
     setCollapsed(prev => {
@@ -399,10 +854,14 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     ? ['normal', 'mandatory', 'event']
     : ['normal', 'mandatory'];
 
-  const handleSubmit = (e: React.SyntheticEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     const trimmed = title.trim();
     if (!trimmed) return;
+    // If a temp tag is selected and still pending, wait for the real ID
+    if (pendingCreateRef.current && selectedTagId?.startsWith('__temp_')) {
+      try { await pendingCreateRef.current; } catch { /* proceed without tag */ }
+    }
     if (!isEdit) clearDraft(initialDate);
 
     const resolvedEndDate = multiDay && endDate && endDate > formDate ? endDate : undefined;
@@ -504,53 +963,55 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
             </div>
 
             {/* Время */}
-            <div className={styles.field}>
-              <div className={styles.rangeRow}>
-                <input className={styles.input} type="time" value={time}
-                  onChange={e => { setTime(e.target.value); if (!e.target.value) setEndTime(''); }} />
-                {time && (
-                  <>
-                    <span className={styles.sep}>—</span>
-                    <input className={styles.input} type="time" value={endTime}
-                      onChange={e => setEndTime(e.target.value)} />
-                  </>
-                )}
-              </div>
-            </div>
+            <TimePickerField
+              value={time}
+              endValue={endTime}
+              taskDate={formDate}
+              onChange={setTime}
+              onChangeEnd={setEndTime}
+            />
 
             {/* Приоритет */}
-            <div className={styles.field}>
-              <select className={styles.select} value={priority}
-                onChange={e => setPriority(e.target.value as TaskPriority)}>
-                {(Object.keys(PRIORITY_LABELS) as TaskPriority[]).map(p => (
-                  <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
-                ))}
-              </select>
-            </div>
+            <button
+              ref={priorityBtnRef}
+              type="button"
+              className={[styles.metaBtn, priority !== 'none' ? styles.metaBtnColored : ''].join(' ')}
+              style={PRIORITY_COLORS[priority] ? { color: PRIORITY_COLORS[priority], borderColor: PRIORITY_COLORS[priority] + '55' } : {}}
+              onClick={() => openDrop(priorityBtnRef, setPriorityDropOpen, setPriorityDropPos, priorityDropOpen)}
+            >
+              {PRIORITY_COLORS[priority] && <span className={styles.metaBtnDot} style={{ background: PRIORITY_COLORS[priority] }} />}
+              {PRIORITY_LABELS[priority]}
+            </button>
+
+            {/* Тег — кнопка с дропдауном */}
+            <button
+              ref={tagBtnRef}
+              type="button"
+              className={[styles.tagBtn, selectedTag ? styles.tagBtnActive : ''].join(' ')}
+              style={selectedTag ? { borderColor: selectedTag.color, color: selectedTag.color } : {}}
+              onClick={openTagDrop}
+            >
+              {selectedTag ? (
+                <>
+                  <span className={styles.tagBtnDot} style={{ background: selectedTag.color }} />
+                  {selectedTag.name}
+                </>
+              ) : '# Тег'}
+            </button>
+
+            {/* Тип задачи */}
+            <button
+              ref={typeBtnRef}
+              type="button"
+              className={[styles.metaBtn, type !== 'normal' ? styles.metaBtnColored : ''].join(' ')}
+              style={TYPE_COLORS[type] ? { color: TYPE_COLORS[type], borderColor: TYPE_COLORS[type] + '55' } : {}}
+              onClick={() => openDrop(typeBtnRef, setTypeDropOpen, setTypeDropPos, typeDropOpen)}
+            >
+              {TYPE_COLORS[type] && <span className={styles.metaBtnDot} style={{ background: TYPE_COLORS[type] }} />}
+              {TYPE_LABELS[type]}
+            </button>
 
           </div>
-
-          {/* Теги — под мета-полями */}
-          {userTags.length > 0 && (
-            <div className={styles.tagPicker}>
-              {userTags.map(tag => {
-                const Ic     = tag.icon ? Icons[tag.icon] : null;
-                const active = selectedTagId === tag.id;
-                return (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    className={[styles.tagPill, active ? styles.tagPillActive : ''].join(' ')}
-                    style={active ? { borderColor: tag.color, background: tag.color + '20', color: tag.color } : {}}
-                    onClick={() => toggleTag(tag.id)}
-                  >
-                    {Ic && <Ic size={10} strokeWidth={2} />}
-                    {tag.name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
         </div>
 
         <form onSubmit={handleSubmit} className={styles.formWrap}>
@@ -564,6 +1025,8 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
                   section={sec}
                   collapsed={collapsed.has(sec.id)}
                   canDelete={sections.length > 1}
+                  userTags={allTags}
+                  parentDate={formDate}
                   onToggleCollapse={() => toggleCollapse(sec.id)}
                   onChange={s => updateSection(idx, s)}
                   onDelete={() => deleteSection(idx)}
@@ -574,26 +1037,9 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               </button>
             </div>
 
-            {/* RIGHT — погода + повтор + тип */}
+            {/* RIGHT — погода */}
             <div className={styles.right}>
-
               <WeatherWidget date={isEdit ? toDateStr(date) : formDate} />
-
-              {/* Тип */}
-              <div className={styles.field}>
-                <label className={styles.fieldLabel}>Тип</label>
-                <select className={styles.select} value={type}
-                  onChange={e => {
-                    const newType = e.target.value as TaskType;
-                    setType(newType);
-                    if (newType === 'mandatory' && multiDay) { setMultiDay(false); setEndDate(''); }
-                  }}>
-                  {availableTypes.map(t => (
-                    <option key={t} value={t}>{TYPE_LABELS[t]}</option>
-                  ))}
-                </select>
-              </div>
-
             </div>
           </div>
 
@@ -631,10 +1077,123 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
       </div>
     </div>
 
+    {priorityDropOpen && priorityDropPos && (
+      <div
+        ref={priorityDropRef}
+        className={styles.metaDropdown}
+        style={{ top: priorityDropPos.top, left: priorityDropPos.left }}
+        onMouseDown={e => e.stopPropagation()}
+      >
+        {(Object.keys(PRIORITY_LABELS) as TaskPriority[]).map(p => (
+          <button
+            key={p}
+            type="button"
+            className={[styles.metaDropItem, priority === p ? styles.metaDropItemActive : ''].join(' ')}
+            onClick={() => { setPriority(p); setPriorityDropOpen(false); }}
+          >
+            {PRIORITY_COLORS[p]
+              ? <span className={styles.metaDropDot} style={{ background: PRIORITY_COLORS[p] }} />
+              : <span className={styles.metaDropDotNone} />}
+            {PRIORITY_LABELS[p]}
+            {priority === p && <span className={styles.metaDropCheck}>✓</span>}
+          </button>
+        ))}
+      </div>
+    )}
+
+    {typeDropOpen && typeDropPos && (
+      <div
+        ref={typeDropRef}
+        className={styles.metaDropdown}
+        style={{ top: typeDropPos.top, left: typeDropPos.left }}
+        onMouseDown={e => e.stopPropagation()}
+      >
+        {availableTypes.map(t => (
+          <button
+            key={t}
+            type="button"
+            className={[styles.metaDropItem, type === t ? styles.metaDropItemActive : ''].join(' ')}
+            onClick={() => {
+              setType(t);
+              if (t === 'mandatory' && multiDay) { setMultiDay(false); setEndDate(''); }
+              setTypeDropOpen(false);
+            }}
+          >
+            {TYPE_COLORS[t]
+              ? <span className={styles.metaDropDot} style={{ background: TYPE_COLORS[t] }} />
+              : <span className={styles.metaDropDotNone} />}
+            {TYPE_LABELS[t]}
+            {type === t && <span className={styles.metaDropCheck}>✓</span>}
+          </button>
+        ))}
+      </div>
+    )}
+
+    {tagDropOpen && tagDropPos && (
+      <div
+        ref={tagDropRef}
+        className={styles.tagDropdown}
+        style={{ top: tagDropPos.top, left: tagDropPos.left }}
+        onMouseDown={e => e.stopPropagation()}
+      >
+        {/* Без тега */}
+        <button
+          type="button"
+          className={[styles.tagDropItem, !selectedTagId ? styles.tagDropItemActive : ''].join(' ')}
+          onClick={() => { setSelectedTagId(null); setTagDropOpen(false); }}
+        >
+          <span className={styles.tagDropDotNone} />
+          <span className={styles.tagDropName}>Без тега</span>
+          {!selectedTagId && <span className={styles.tagDropCheck}>✓</span>}
+        </button>
+
+        {allTags.map(tag => {
+          const Ic     = tag.icon ? Icons[tag.icon] : null;
+          const active = selectedTagId === tag.id;
+          return (
+            <button
+              key={tag.id}
+              type="button"
+              className={[styles.tagDropItem, active ? styles.tagDropItemActive : ''].join(' ')}
+              onClick={() => { toggleTag(tag.id); setTagDropOpen(false); }}
+            >
+              <span className={styles.tagDropDot} style={{ background: tag.color }} />
+              {Ic && <Ic size={11} strokeWidth={2} />}
+              <span className={styles.tagDropName}>{tag.name}</span>
+              {active && <span className={styles.tagDropCheck}>✓</span>}
+            </button>
+          );
+        })}
+
+        <div className={styles.tagDropDivider} />
+
+        {!creatingTag ? (
+          <button
+            type="button"
+            className={styles.tagDropCreate}
+            onClick={() => setCreatingTag(true)}
+          >
+            + Создать тег
+          </button>
+        ) : (
+          <div className={styles.tagCreateWrap}>
+            <TagManager
+              alwaysOpen
+              tags={[]}
+              onCreate={handleCreateNewTag}
+              onDelete={() => {}}
+              onUpdate={() => {}}
+            />
+          </div>
+        )}
+      </div>
+    )}
+
     {repeatConfigOpen && (
       <RepeatConfigModal
         initial={repeatConfig}
         selectedDate={formDate}
+        taskEndDate={multiDay ? endDate : undefined}
         multiDay={multiDay}
         onSave={(cfg, until) => {
           setRepeat('custom');

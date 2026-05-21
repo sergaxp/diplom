@@ -40,13 +40,148 @@ function cycleTotalDays(pattern: CyclicSegment[]): number {
 interface Props {
   initial?: RepeatConfig | null;
   selectedDate: string;
+  /** Конечная дата задачи (для multiDay) — нужна для расчёта min значений */
+  taskEndDate?: string;
   multiDay?: boolean;
   onSave: (cfg: RepeatConfig, repeatUntil?: string) => void;
   onClose: () => void;
 }
 
-export function RepeatConfigModal({ initial, selectedDate, multiDay = false, onSave, onClose }: Props) {
+/** Прибавить N дней к YYYY-MM-DD и вернуть YYYY-MM-DD */
+function addDaysStr(dateStr: string, n: number): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const RU_MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const RU_WD_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+function toIso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** 6×7 сетка дней месяца, понедельник первым; null для «пустых» ячеек */
+function buildMonthGrid(year: number, month: number): (Date | null)[] {
+  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Mon=0
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: (Date | null)[] = [];
+  for (let i = 0; i < firstDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
+  while (cells.length < 42) cells.push(null);
+  return cells;
+}
+
+interface MiniCalProps {
+  value: string;
+  minDate: string;
+  onChange: (iso: string) => void;
+}
+
+function MiniCalendar({ value, minDate, onChange }: MiniCalProps) {
+  const seed = value || minDate;
+  const seedDate = new Date(seed + 'T00:00:00');
+  const minD     = new Date(minDate + 'T00:00:00');
+
+  const [viewYear,  setViewYear]  = useState(seedDate.getFullYear());
+  const [viewMonth, setViewMonth] = useState(seedDate.getMonth());
+
+  const cells = buildMonthGrid(viewYear, viewMonth);
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
+    else setViewMonth(m => m - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
+    else setViewMonth(m => m + 1);
+  };
+
+  return (
+    <div className={styles.miniCal}>
+      <div className={styles.miniCalHead}>
+        <button type="button" className={styles.miniCalNav} onClick={prevMonth}>‹</button>
+        <span className={styles.miniCalTitle}>{RU_MONTHS[viewMonth]} {viewYear}</span>
+        <button type="button" className={styles.miniCalNav} onClick={nextMonth}>›</button>
+      </div>
+      <div className={styles.miniCalWds}>
+        {RU_WD_SHORT.map(w => <span key={w} className={styles.miniCalWd}>{w}</span>)}
+      </div>
+      <div className={styles.miniCalGrid}>
+        {cells.map((d, i) => {
+          if (!d) return <span key={i} className={styles.miniCalEmpty} />;
+          const iso = toIso(d);
+          const isDisabled = d < minD;
+          const isSelected = iso === value;
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={isDisabled}
+              className={`${styles.miniCalCell} ${isSelected ? styles.miniCalCellSelected : ''}`}
+              onClick={() => onChange(iso)}
+            >
+              {d.getDate()}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Минимально допустимый «каждые N» для multi-day задачи: «buffer ≥ 1 day»,
+ * т.е. следующее вхождение начинается СТРОГО после окончания текущего
+ * (back-to-back). Buffer = K - durationDays для day; для остальных единиц —
+ * наименьшее N такое, что start + N*unit > end.
+ *
+ * Для 0-длительности (start == end) даёт 1 во всех единицах — позволяет
+ * выставить «Каждый день / неделю / месяц / год».
+ */
+function calcMinEvery(unit: 'day' | 'week' | 'month' | 'year', startStr: string, endStr: string): number {
+  const start = new Date(startStr + 'T00:00:00');
+  const end   = new Date(endStr   + 'T00:00:00');
+  const durMs = end.getTime() - start.getTime();
+  const durDays = Math.max(0, Math.round(durMs / 86_400_000));
+
+  switch (unit) {
+    case 'day':  return Math.max(1, durDays + 1);                     // back-to-back
+    case 'week': return Math.max(1, Math.ceil((durDays + 1) / 7));     // ближайшая неделя без перекрытия
+    case 'month': {
+      let n = 1;
+      while (true) {
+        const next = new Date(start);
+        next.setMonth(next.getMonth() + n);
+        if (next > end) break;
+        n++;
+        if (n > 120) break;
+      }
+      return n;
+    }
+    case 'year': {
+      let n = 1;
+      while (true) {
+        const next = new Date(start);
+        next.setFullYear(next.getFullYear() + n);
+        if (next > end) break;
+        n++;
+        if (n > 100) break;
+      }
+      return n;
+    }
+  }
+}
+
+export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay = false, onSave, onClose }: Props) {
   const startDow = new Date(selectedDate + 'T00:00:00').getDay();
+
+  /** Минимально допустимое «до даты» (день после даты конца / даты начала) */
+  const baseEndForUntil = multiDay && taskEndDate ? taskEndDate : selectedDate;
+  const minRepeatUntil = addDaysStr(baseEndForUntil, 1);
+
+  /** Минимально допустимое «каждые N» для произвольной единицы при multiDay */
+  const minEveryFor = (u: 'day' | 'week' | 'month' | 'year') =>
+    multiDay && taskEndDate ? calcMinEvery(u, selectedDate, taskEndDate) : 1;
 
   // ── Расписание ─────────────────────────────────────────────
   const [mode, setMode] = useState<Mode>('interval');
@@ -54,6 +189,7 @@ export function RepeatConfigModal({ initial, selectedDate, multiDay = false, onS
   // Интервальный режим
   const [every,        setEvery]        = useState(1);
   const [unit,         setUnit]         = useState<NonNullable<RepeatConfig['unit']>>('day');
+  const currentMinEvery = minEveryFor(unit);
   const [weekdays,     setWeekdays]     = useState<number[]>([startDow]);
   const [skipWeekends, setSkipWeekends] = useState(false);
 
@@ -93,8 +229,15 @@ export function RepeatConfigModal({ initial, selectedDate, multiDay = false, onS
 
   // ── Если включён multiDay — заблокировать cyclic / dependency ──
   useEffect(() => {
-    if (multiDay && mode !== 'interval') setMode('interval');
+    if (multiDay && mode !== 'interval' && mode !== 'adaptive') setMode('interval');
   }, [multiDay, mode]);
+
+  // ── При multiDay подтягиваем every до безопасного минимума ──
+  useEffect(() => {
+    if (multiDay && mode === 'interval' && every < currentMinEvery) {
+      setEvery(currentMinEvery);
+    }
+  }, [multiDay, mode, unit, currentMinEvery, every]);
 
   // ── Инициализация из initial ───────────────────────────────
   useEffect(() => {
@@ -194,8 +337,8 @@ export function RepeatConfigModal({ initial, selectedDate, multiDay = false, onS
     } else {
       cfg.every = every;
       cfg.unit  = unit;
-      if (unit === 'week' && weekdays.length > 0) cfg.weekdays = weekdays;
-      if (skipWeekends && unit !== 'week') cfg.skipWeekends = true;
+      if (unit === 'week' && weekdays.length > 0 && !multiDay) cfg.weekdays = weekdays;
+      if (skipWeekends && unit !== 'week' && !multiDay) cfg.skipWeekends = true;
     }
 
     if (endMode === 'after' && endAfter > 0) cfg.endAfter = endAfter;
@@ -314,10 +457,11 @@ export function RepeatConfigModal({ initial, selectedDate, multiDay = false, onS
                   <input
                     className={styles.everyInput}
                     type="number"
-                    min={1}
+                    min={currentMinEvery}
                     max={365}
                     value={every}
-                    onChange={e => setEvery(Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={e => setEvery(Math.max(currentMinEvery, parseInt(e.target.value) || currentMinEvery))}
+                    title={multiDay && currentMinEvery > 1 ? `Минимум ${currentMinEvery} — чтобы вхождения не накладывались на длительность задачи` : ''}
                   />
                   <div className={styles.unitBtns}>
                     {UNIT_OPTS.map(u => (
@@ -325,15 +469,25 @@ export function RepeatConfigModal({ initial, selectedDate, multiDay = false, onS
                         key={u.v}
                         type="button"
                         className={`${styles.unitBtn} ${unit === u.v ? styles.unitBtnActive : ''}`}
-                        onClick={() => setUnit(u.v)}
+                        onClick={() => {
+                          setUnit(u.v);
+                          // При смене единицы подтягиваем every до её минимума
+                          const m = minEveryFor(u.v);
+                          if (every < m) setEvery(m);
+                        }}
                       >
                         {unitLabel(u.v, every)}
                       </button>
                     ))}
                   </div>
                 </div>
+                {multiDay && currentMinEvery > 1 && (
+                  <div className={styles.minEveryHint}>
+                    Минимум для многодневной задачи — {currentMinEvery} {unitLabel(unit, currentMinEvery)}
+                  </div>
+                )}
 
-                {unit === 'week' && (
+                {unit === 'week' && !multiDay && (
                   <div className={styles.wdRow}>
                     {WEEKDAYS.map(({ v, s }) => (
                       <button
@@ -675,16 +829,14 @@ export function RepeatConfigModal({ initial, selectedDate, multiDay = false, onS
               <label className={styles.radioRow}>
                 <input type="radio" name="endMode" checked={endMode === 'date'} onChange={() => setEndMode('date')} />
                 До даты
-                {endMode === 'date' && (
-                  <input
-                    className={styles.dateInput}
-                    type="date"
-                    value={endDate}
-                    min={selectedDate}
-                    onChange={e => setEndDate(e.target.value)}
-                  />
-                )}
               </label>
+              {endMode === 'date' && (
+                <MiniCalendar
+                  value={endDate}
+                  minDate={minRepeatUntil}
+                  onChange={setEndDate}
+                />
+              )}
             </div>
           </div>
 

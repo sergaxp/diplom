@@ -99,3 +99,20 @@
   from { transform: scaleX(1); }
   to   { transform: scaleX(0); }
 }
+
+// ─── Mobile: show from the top of the screen ──────────────────
+@media (max-width: 768px) {
+  .toast {
+    bottom: auto;
+    right: 0.75rem;
+    left: 0.75rem;
+    top: 0.75rem;
+    width: auto;
+    animation: slideInTop 0.3s ease;
+  }
+}
+
+@keyframes slideInTop {
+  from { transform: translateY(-120%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}

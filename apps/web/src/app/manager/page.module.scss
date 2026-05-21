@@ -27,6 +27,12 @@
   background: var(--bg-alt);
 }
 
+// ── Mobile day strip (hidden on desktop) ──────────────────────
+.mobileTop {
+  display: none;
+  flex-shrink: 0;
+}
+
 .loading {
   flex: 1;
   display: flex;
@@ -36,26 +42,38 @@
   color: var(--text-muted);
 }
 
-// ── Mobile ────────────────────────────────────────────────────
+// ─── MOBILE ───────────────────────────────────────────────────
 @media (max-width: 768px) {
+  .root {
+    height: 100dvh;
+    min-height: unset;
+    overflow: hidden;
+  }
+
   .body {
     flex-direction: column;
     height: auto;
-    overflow: visible;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 
+  // Hide the desktop calendar panel on mobile
+  .right {
+    display: none;
+  }
+
+  // Task list fills remaining height and scrolls internally
   .left {
-    flex: none;
+    flex: 1;
+    min-height: 0;
     border-right: none;
     border-top: 1px solid var(--border);
-    order: 2;
-    min-height: 300px;
+    overflow-y: auto;
   }
 
-  .right {
-    flex: none;
-    order: 1;
-    height: 340px;
-    overflow-y: auto;
+  .mobileTop {
+    display: block;
+    flex-shrink: 0;
   }
 }
