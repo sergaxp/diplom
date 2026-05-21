@@ -33,7 +33,7 @@ function taskDotColors(tasks: Task[]): string[] {
   return sorted.slice(0, 9).map(t => {
     if (t.type === 'mandatory') return '#dc2626';
     if (t.priority === 'high')   return '#ef4444';
-    if (t.priority === 'medium') return '#f97316';
+    if (t.priority === 'medium') return '#3b82f6';
     if (t.priority === 'low')    return '#eab308';
     if (t.tags?.[0]?.color)      return t.tags[0].color;
     return 'var(--text-muted)';

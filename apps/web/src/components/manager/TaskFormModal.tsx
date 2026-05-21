@@ -78,7 +78,7 @@ const PRIORITY_LABELS: Record<TaskPriority, string> = {
 };
 
 const PRIORITY_COLORS: Record<TaskPriority, string | undefined> = {
-  none: undefined, low: '#eab308', medium: '#f97316', high: '#ef4444',
+  none: undefined, low: '#eab308', medium: '#3b82f6', high: '#ef4444',
 };
 
 const TYPE_COLORS: Record<string, string | undefined> = {
@@ -889,6 +889,11 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     <>
     <div className={styles.overlay} onMouseDown={onClose}>
       <div className={styles.modal} onMouseDown={e => e.stopPropagation()}>
+
+        {/* Mobile-only: weather at the very top */}
+        <div className={styles.weatherTopMobile}>
+          <WeatherWidget date={isEdit ? toDateStr(date) : formDate} />
+        </div>
 
         {/* ── Top: иконка + название + описание + мета-поля + теги ── */}
         <div className={styles.top}>

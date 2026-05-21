@@ -182,8 +182,8 @@
 }
 
 .taskPriorityMedium {
-  border-left: 3px solid #f97316;
-  background: rgba(249, 115, 22, .04);
+  border-left: 3px solid #3b82f6;
+  background: rgba(59, 130, 246, .04);
 }
 
 .taskPriorityLow {
@@ -290,9 +290,9 @@
 .weatherWarnBadge {
   font-size: 0.62rem;
   font-weight: 600;
-  color: #d97706;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--text-muted);
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
   border-radius: 4px;
   padding: 1px 5px;
   flex-shrink: 0;

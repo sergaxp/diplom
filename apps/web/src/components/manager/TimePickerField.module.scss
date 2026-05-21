@@ -223,3 +223,27 @@ $pill-h: 32px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+// ─── Mobile ────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .wrap { max-width: 100%; }
+  .row  { flex-wrap: wrap; }
+
+  .timeGroup {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .groupTimePill {
+    min-width: 0;
+    padding: 0 7px;
+  }
+
+  .dropdown {
+    width: calc(100vw - 16px) !important;
+    left: 8px !important;
+    box-sizing: border-box;
+  }
+
+  .dropItemRel { display: none; }
+}

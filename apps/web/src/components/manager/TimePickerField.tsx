@@ -115,8 +115,14 @@ export function TimePickerField({ value, endValue, taskDate, hideEnd, onChange, 
       setHrVal(''); setMinVal('');
     }
     if (wrapRef.current) {
-      const r = wrapRef.current.getBoundingClientRect();
-      setDropPos({ top: r.bottom + 4, left: r.left });
+      const r   = wrapRef.current.getBoundingClientRect();
+      const vw  = window.innerWidth;
+      const vh  = window.innerHeight;
+      const dropW = Math.min(200, vw - 16);
+      const left  = Math.min(r.left, vw - dropW - 8);
+      const dropH = ITEM_H * 5 + 16;
+      const top   = r.bottom + 4 + dropH > vh ? r.top - dropH - 4 : r.bottom + 4;
+      setDropPos({ top, left: Math.max(8, left) });
     }
     setEditing(which);
     setTimeout(() => { hrRef.current?.focus(); hrRef.current?.select(); }, 0);
@@ -319,11 +325,12 @@ export function TimePickerField({ value, endValue, taskDate, hideEnd, onChange, 
     const slots = buildSlots(editing);
     const curVal = editing === 'start' ? value : endValue;
 
+    const dropW = typeof window !== 'undefined' ? Math.min(200, window.innerWidth - 16) : 165;
     return (
       <ul
         ref={listRef}
         className={styles.dropdown}
-        style={{ top: dropPos.top, left: dropPos.left }}
+        style={{ top: dropPos.top, left: dropPos.left, width: dropW }}
         onMouseDown={e => e.preventDefault()}
       >
         {slots.map(slot => {

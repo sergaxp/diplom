@@ -35,3 +35,46 @@ cd /home/serga/diplom/apps/web
 pnpm test           # одноразовый прогон
 pnpm test:watch     # ре-ран на изменениях
 pnpm test:ui        # web-UI с подробностями
+
+Деплой на хостинг
+Твой проект использует docker-compose.prod.yml. Вот полный процесс обновления:
+
+Требования на сервере
+Docker + Docker Compose
+Nginx (reverse-proxy, уже настроен на diplom.warmingtea.su)
+Файл .env в корне проекта с переменными:
+
+POSTGRES_PASSWORD=...
+JWT_SECRET=...
+REFRESH_TOKEN_SECRET=...
+MINIO_ACCESS_KEY=...
+MINIO_SECRET_KEY=...
+ADMIN_SECRET=...
+Первый деплой
+
+# 1. Склонировать репо на сервер
+git clone <url> /srv/warmingtea
+cd /srv/warmingtea
+
+# 2. Создать .env
+cp .env.example .env   # или заполнить вручную
+
+# 3. Поднять всё
+docker compose -f docker-compose.prod.yml up -d --build
+Обновление (после push новых изменений)
+
+cd /srv/warmingtea
+
+# 1. Получить обновления
+git pull
+
+# 2. Пересобрать и перезапустить только изменившиеся сервисы
+docker compose -f docker-compose.prod.yml up -d --build web api
+
+# 3. Проверить статус
+docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml logs web --tail 50
+Если нужен полный rebuild (без кэша)
+
+docker compose -f docker-compose.prod.yml build --no-cache web api
+docker compose -f docker-compose.prod.yml up -d
