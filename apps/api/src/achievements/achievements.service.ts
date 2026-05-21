@@ -6,7 +6,15 @@ import { User } from '../users/entities/user.entity';
 import { Task } from '../tasks/entities/task.entity';
 import { TaskCompletion } from '../tasks/entities/task-completion.entity';
 import { Tag } from '../tags/entities/tag.entity';
-import { ACHIEVEMENTS, ACHIEVEMENT_MAP, AchievementDef } from './achievements.definitions';
+import { ACHIEVEMENTS, ACHIEVEMENT_MAP, AchievementDef, RANK_COINS } from './achievements.definitions';
+import { NotificationsService } from '../notifications/notifications.service';
+
+const RANK_COLOR: Record<1 | 2 | 3 | 4, string> = {
+  1: '#9ca3af',
+  2: '#3b82f6',
+  3: '#a855f7',
+  4: '#f59e0b',
+};
 export type { AchievementDef };
 
 // ── Trigger types ─────────────────────────────────────────────
@@ -35,6 +43,7 @@ export class AchievementsService {
     private readonly completionRepo: Repository<TaskCompletion>,
     @InjectRepository(Tag)
     private readonly tagRepo: Repository<Tag>,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ── Публичный список достижений пользователя ──────────────
@@ -62,6 +71,15 @@ export class AchievementsService {
       if (should) {
         await this.achRepo.save(this.achRepo.create({ userId, defId: def.id }));
         await this.userRepo.increment({ id: userId }, 'xp', def.xp);
+        await this.userRepo.increment({ id: userId }, 'coins', RANK_COINS[def.rank]);
+        await this.notifications.create({
+          userId,
+          kind:  'achievement',
+          title: `Достижение: ${def.title}`,
+          body:  `${def.description} · +${def.xp} XP · +${RANK_COINS[def.rank]} монет`,
+          icon:  def.icon,
+          color: RANK_COLOR[def.rank],
+        });
         newlyUnlocked.push(def);
         unlockedIds.add(def.id);
       }

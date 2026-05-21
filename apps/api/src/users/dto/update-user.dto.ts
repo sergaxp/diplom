@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MaxLength, MinLength, Matches, IsNumber, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, MaxLength, MinLength, Matches, IsNumber, IsBoolean, IsObject } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -40,4 +40,21 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   showHolidays?: boolean;
+
+  /** ID экипированной рамки из магазина, или null для снятия */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  selectedFrame?: string | null;
+
+  /** Ключ выбранного шрифта ('alegreya'/'manrope'), или null для системного */
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  selectedFont?: string | null;
+
+  /** Ссылки на соцсети: { provider: url }. Передайте {} чтобы стереть все. */
+  @IsOptional()
+  @IsObject()
+  socialLinks?: Record<string, string> | null;
 }

@@ -14,7 +14,7 @@ import { UserRole } from '../users/entities/user.entity';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  // POST /admin/promote — создание первого или любого администратора
+  // POST /admin/promote – создание первого или любого администратора
   // Требует секретный ключ из .env (не требует JWT)
   @Post('promote')
   async promote(
@@ -45,7 +45,7 @@ export class AdminController {
     return this.adminService.getUsers(search);
   }
 
-  // PATCH /admin/users/:id — смена роли или активности
+  // PATCH /admin/users/:id – смена роли или активности
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Patch('users/:id')
   updateUser(

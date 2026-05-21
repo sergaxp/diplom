@@ -7,6 +7,8 @@ import { Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { clearAuth } from '../lib/auth';
+import { AvatarFramed } from './AvatarFramed';
+import { NotificationBell } from './NotificationBell';
 import styles from './Header.module.scss';
 
 export function Header() {
@@ -33,8 +35,6 @@ export function Header() {
     router.push('/');
   };
 
-  const initial = user?.displayName?.[0] ?? user?.username?.[0] ?? '?';
-
   return (
     <header className={styles.header}>
       <Link href="/manager" className={styles.logo}>WT</Link>
@@ -51,6 +51,8 @@ export function Header() {
           <Moon size={11} className={styles.themeIconMoon} />
         </button>
 
+        {ready && user && <NotificationBell />}
+
         {ready && (
           user ? (
             <div className={styles.avatarWrap} ref={menuRef}>
@@ -59,11 +61,13 @@ export function Header() {
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-label="Меню пользователя"
               >
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.username} className={styles.avatarImg} />
-                ) : (
-                  <span className={styles.avatarInitial}>{initial.toUpperCase()}</span>
-                )}
+                <AvatarFramed
+                  avatarUrl={user.avatarUrl}
+                  displayName={user.displayName}
+                  username={user.username}
+                  frameId={user.selectedFrame}
+                  size={32}
+                />
               </button>
 
               {menuOpen && (
@@ -71,6 +75,9 @@ export function Header() {
                   <div className={styles.dropdownUser}>
                     <span className={styles.dropdownUsername}>@{user.username}</span>
                     <span className={styles.dropdownEmail}>{user.email}</span>
+                    <span className={styles.dropdownCoins} title="Монеты">
+                      <span className={styles.coinDot} /> {user.coins ?? 0} монет
+                    </span>
                   </div>
                   <div className={styles.dropdownDivider} />
                   <Link
@@ -86,6 +93,13 @@ export function Header() {
                     onClick={() => setMenuOpen(false)}
                   >
                     Менеджер
+                  </Link>
+                  <Link
+                    href="/shop"
+                    className={styles.dropdownLink}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Магазин
                   </Link>
                   {user.role === 'admin' && (
                     <Link

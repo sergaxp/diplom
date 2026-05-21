@@ -36,45 +36,50 @@ pnpm test           # одноразовый прогон
 pnpm test:watch     # ре-ран на изменениях
 pnpm test:ui        # web-UI с подробностями
 
-Деплой на хостинг
-Твой проект использует docker-compose.prod.yml. Вот полный процесс обновления:
 
-Требования на сервере
-Docker + Docker Compose
-Nginx (reverse-proxy, уже настроен на diplom.warmingtea.su)
-Файл .env в корне проекта с переменными:
+Обновление сайта (без боли)
+Когда ты что-то изменил в коде, запушил на GitHub – вот как обновить сервер:
 
-POSTGRES_PASSWORD=...
-JWT_SECRET=...
-REFRESH_TOKEN_SECRET=...
-MINIO_ACCESS_KEY=...
-MINIO_SECRET_KEY=...
-ADMIN_SECRET=...
-Первый деплой
 
-# 1. Склонировать репо на сервер
-git clone <url> /srv/warmingtea
-cd /srv/warmingtea
+# 1. Зайди на сервер
+ssh root@<IP_сервера>
 
-# 2. Создать .env
-cp .env.example .env   # или заполнить вручную
+# 2. Перейди в папку проекта
+cd /opt/warmingtea
 
-# 3. Поднять всё
-docker compose -f docker-compose.prod.yml up -d --build
-Обновление (после push новых изменений)
+# 3. Стяни изменения
+git pull origin main
 
-cd /srv/warmingtea
+# 4. Пересобери и перезапусти изменённые контейнеры
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 
-# 1. Получить обновления
-git pull
+# Docker сам определит что изменилось и пересоберёт только нужные контейнеры
+# Простой (downtime) минимальный – секунды
+Быстрое обновление без пересборки (если изменилось только что-то не требующее rebuild):
 
-# 2. Пересобрать и перезапустить только изменившиеся сервисы
-docker compose -f docker-compose.prod.yml up -d --build web api
 
-# 3. Проверить статус
+docker compose -f docker-compose.prod.yml restart api
+# или
+docker compose -f docker-compose.prod.yml restart web
+
+
+Полезные команды
+
+# Посмотреть статус всех контейнеров
 docker compose -f docker-compose.prod.yml ps
-docker compose -f docker-compose.prod.yml logs web --tail 50
-Если нужен полный rebuild (без кэша)
 
-docker compose -f docker-compose.prod.yml build --no-cache web api
-docker compose -f docker-compose.prod.yml up -d
+# Логи в реальном времени
+docker compose -f docker-compose.prod.yml logs -f api
+docker compose -f docker-compose.prod.yml logs -f web
+
+# Остановить всё
+docker compose -f docker-compose.prod.yml down
+
+# Перезапустить один контейнер
+docker compose -f docker-compose.prod.yml restart api
+
+# Освободить место (старые образы)
+docker image prune -f
+
+# Проверить место на диске
+df -h

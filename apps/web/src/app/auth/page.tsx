@@ -73,7 +73,7 @@ export default function AuthPage() {
   const ready   = useAuthStore((s) => s.ready);
   const user    = useAuthStore((s) => s.user);
 
-  // Если уже залогинен — редирект на главную
+  // Если уже залогинен – редирект на главную
   useEffect(() => {
     if (ready && user) router.replace('/');
   }, [ready, user, router]);
@@ -131,7 +131,7 @@ export default function AuthPage() {
           <p className={styles.cardSubtitle}>
             {tab === 'login'
               ? 'Войди в своё личное пространство'
-              : 'Один аккаунт — весь функционал сайта'}
+              : 'Один аккаунт – весь функционал сайта'}
           </p>
         </div>
 

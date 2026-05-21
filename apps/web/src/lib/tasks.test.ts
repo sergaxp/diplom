@@ -358,8 +358,8 @@ describe('getMultiDayOccurrence', () => {
 
   describe('Fix 5: monthly/yearly preserve calendar start & end dates', () => {
     it('monthly: occurrence preserves day-of-month for both ends', () => {
-      // Короткая задача через границу месяца: 28.01 — 03.02 (6 дней), monthly.
-      // 2-е вхождение должно быть 28.02 — 03.03 (день-в-день календарно).
+      // Короткая задача через границу месяца: 28.01 – 03.02 (6 дней), monthly.
+      // 2-е вхождение должно быть 28.02 – 03.03 (день-в-день календарно).
       const task = makeTask({ date: '2026-01-28', endDate: '2026-02-03', repeat: 'monthly' });
       expect(getMultiDayOccurrence(task, '2026-03-02')).toEqual({
         startStr: '2026-02-28', endStr: '2026-03-03',
@@ -367,7 +367,7 @@ describe('getMultiDayOccurrence', () => {
     });
 
     it('yearly: occurrence preserves month-day pair for both ends', () => {
-      // 28.12.2026 — 03.01.2027 yearly. 2-е вхождение: 28.12.2027 — 03.01.2028.
+      // 28.12.2026 – 03.01.2027 yearly. 2-е вхождение: 28.12.2027 – 03.01.2028.
       const task = makeTask({ date: '2026-12-28', endDate: '2027-01-03', repeat: 'yearly' });
       expect(getMultiDayOccurrence(task, '2028-01-02')).toEqual({
         startStr: '2027-12-28', endStr: '2028-01-03',
@@ -379,7 +379,7 @@ describe('getMultiDayOccurrence', () => {
         date: '2026-01-28', endDate: '2026-02-03', repeat: 'custom',
         repeatConfig: { every: 3, unit: 'month' },
       });
-      // +3 months: 28.04 — 03.05 (вместо 28.04 + 6 дней = 04.05)
+      // +3 months: 28.04 – 03.05 (вместо 28.04 + 6 дней = 04.05)
       expect(getMultiDayOccurrence(task, '2026-05-02')).toEqual({
         startStr: '2026-04-28', endStr: '2026-05-03',
       });
@@ -390,15 +390,15 @@ describe('getMultiDayOccurrence', () => {
         date: '2026-01-01', endDate: '2026-01-03', repeat: 'custom',
         repeatConfig: { every: 5, unit: 'day' },
       });
-      // Next: 06.01 — 08.01 (duration 2 days preserved)
+      // Next: 06.01 – 08.01 (duration 2 days preserved)
       expect(getMultiDayOccurrence(task, '2026-01-06')).toEqual({
         startStr: '2026-01-06', endStr: '2026-01-08',
       });
     });
 
     it('Bug 5 fix: monthly start day clamped to last day of short month (Feb 29 → Feb 28)', () => {
-      // 2026 — невисокосный, Feb 29 не существует.
-      // Задача 29.01 — 03.02. 2-е вхождение должно быть 28.02 (а не 01.03 из-за JS rollover).
+      // 2026 – невисокосный, Feb 29 не существует.
+      // Задача 29.01 – 03.02. 2-е вхождение должно быть 28.02 (а не 01.03 из-за JS rollover).
       const task = makeTask({ date: '2026-01-29', endDate: '2026-02-03', repeat: 'monthly' });
       expect(getMultiDayOccurrence(task, '2026-03-01')).toEqual({
         startStr: '2026-02-28', endStr: '2026-03-03',
@@ -408,18 +408,18 @@ describe('getMultiDayOccurrence', () => {
     it('Bug 5 fix: monthly start day clamped to last day of short month (day 31)', () => {
       // 31.01 в feb→clamp до 28. 3-е вхождение (Apr 2026) → 31 → April has 30 → clamp 30.
       const task = makeTask({ date: '2026-01-31', endDate: '2026-02-02', repeat: 'monthly' });
-      // 2-е вхождение: 28.02 — 02.03 (clamped Feb 31 → Feb 28)
+      // 2-е вхождение: 28.02 – 02.03 (clamped Feb 31 → Feb 28)
       expect(getMultiDayOccurrence(task, '2026-03-01')).toEqual({
         startStr: '2026-02-28', endStr: '2026-03-02',
       });
-      // 3-е вхождение: 31.03 — 02.04 (Mar has 31)
+      // 3-е вхождение: 31.03 – 02.04 (Mar has 31)
       expect(getMultiDayOccurrence(task, '2026-04-01')).toEqual({
         startStr: '2026-03-31', endStr: '2026-04-02',
       });
     });
 
     it('Bug 5 fix: yearly Feb 29 → Feb 28 in non-leap year', () => {
-      // 2024 — високосный, есть 29 февраля. 2025 — нет (28 февраля).
+      // 2024 – високосный, есть 29 февраля. 2025 – нет (28 февраля).
       const task = makeTask({ date: '2024-02-29', endDate: '2024-03-02', repeat: 'yearly' });
       expect(getMultiDayOccurrence(task, '2025-03-01')).toEqual({
         startStr: '2025-02-28', endStr: '2025-03-02',
@@ -429,10 +429,10 @@ describe('getMultiDayOccurrence', () => {
 });
 
 // ──────────────────────────────────────────────────────────────
-// 5. getTasksForDate — basic / predefined repeats
+// 5. getTasksForDate – basic / predefined repeats
 // ──────────────────────────────────────────────────────────────
 
-describe('getTasksForDate — single-day & predefined repeats', () => {
+describe('getTasksForDate – single-day & predefined repeats', () => {
   it('returns task on its exact date', () => {
     const t = makeTask({ date: '2026-01-01' });
     expect(getTasksForDate([t], d('2026-01-01'))).toHaveLength(1);
@@ -521,10 +521,10 @@ describe('getTasksForDate — single-day & predefined repeats', () => {
 });
 
 // ──────────────────────────────────────────────────────────────
-// 6. getTasksForDate — custom interval / cyclic / dependency
+// 6. getTasksForDate – custom interval / cyclic / dependency
 // ──────────────────────────────────────────────────────────────
 
-describe('getTasksForDate — custom modes', () => {
+describe('getTasksForDate – custom modes', () => {
   describe('custom interval', () => {
     it('every 2 days', () => {
       const t = makeTask({
@@ -558,7 +558,7 @@ describe('getTasksForDate — custom modes', () => {
   });
 
   describe('cyclic pattern', () => {
-    // [2 active, 2 rest, 3 active, 1 rest, 4 active] — 12-day cycle, 9 active days
+    // [2 active, 2 rest, 3 active, 1 rest, 4 active] – 12-day cycle, 9 active days
     const t = makeTask({
       date: '2026-01-01', repeat: 'custom',
       repeatConfig: {
@@ -629,7 +629,7 @@ describe('getTasksForDate — custom modes', () => {
 });
 
 // ──────────────────────────────────────────────────────────────
-// 7. Conflict #1 — endAfter enforcement
+// 7. Conflict #1 – endAfter enforcement
 // ──────────────────────────────────────────────────────────────
 
 describe('endAfter enforcement (Conflict #1 fix)', () => {
@@ -650,7 +650,7 @@ describe('endAfter enforcement (Conflict #1 fix)', () => {
   });
 
   describe('cyclic mode', () => {
-    // Pattern [{2,1}] — 2 active, 1 rest. endAfter=5 → only first 5 active days
+    // Pattern [{2,1}] – 2 active, 1 rest. endAfter=5 → only first 5 active days
     const t = makeTask({
       date: '2026-01-01', repeat: 'custom',
       repeatConfig: { cyclicPattern: [{ active: 2, rest: 1 }], endAfter: 5 },
@@ -707,7 +707,7 @@ describe('endAfter enforcement (Conflict #1 fix)', () => {
 // 8. Multi-day tasks
 // ──────────────────────────────────────────────────────────────
 
-describe('getTasksForDate — multi-day tasks', () => {
+describe('getTasksForDate – multi-day tasks', () => {
   it('shows all days of original multi-day range', () => {
     const t = makeTask({ date: '2026-01-01', endDate: '2026-01-03' });
     expect(getTasksForDate([t], d('2026-01-01'))).toHaveLength(1);
@@ -745,10 +745,10 @@ describe('getTasksForDate — multi-day tasks', () => {
 });
 
 // ──────────────────────────────────────────────────────────────
-// 9. Conditions — months, holidays, weather
+// 9. Conditions – months, holidays, weather
 // ──────────────────────────────────────────────────────────────
 
-describe('getTasksForDate — conditions', () => {
+describe('getTasksForDate – conditions', () => {
   describe('months filter (seasonal)', () => {
     const t = makeTask({
       date: '2026-01-15', repeat: 'custom',
@@ -811,7 +811,7 @@ describe('getTasksForDate — conditions', () => {
 });
 
 // ──────────────────────────────────────────────────────────────
-// 12. Weather tolerance ±2°C — warning surfaced via task.weatherWarning
+// 12. Weather tolerance ±2°C – warning surfaced via task.weatherWarning
 // ──────────────────────────────────────────────────────────────
 
 describe('weather tolerance ±2°C', () => {
@@ -851,7 +851,7 @@ describe('weather tolerance ±2°C', () => {
     expect(r[0].weatherWarning).toContain('26');
   });
 
-  it('discrete conditions (skipRain) — no tolerance, strict reject', () => {
+  it('discrete conditions (skipRain) – no tolerance, strict reject', () => {
     const t = makeWeatherTask({ skipRain: true });
     const wm = new Map([['2026-01-05', { tempMax: 20, tempMin: 10, weatherCode: 61 }]]);
     expect(getTasksForDate([t], d('2026-01-05'), new Set(), null, wm)).toHaveLength(0);
@@ -980,10 +980,10 @@ describe('weather shown lock (past/today persistence)', () => {
 });
 
 // ──────────────────────────────────────────────────────────────
-// 10. Conflict #4 — conditionScope perDay/whole
+// 10. Conflict #4 – conditionScope perDay/whole
 // ──────────────────────────────────────────────────────────────
 
-describe('conditionScope — perDay vs whole (Conflict #4 fix)', () => {
+describe('conditionScope – perDay vs whole (Conflict #4 fix)', () => {
   const holidayMap = new Map([['2026-01-02', { type: 'holiday' }]]);
   // 3-day task Jan 1-3, day 2 is a holiday
 
@@ -1046,7 +1046,7 @@ describe('conditionScope — perDay vs whole (Conflict #4 fix)', () => {
 // 11. Sorting & multiple tasks
 // ──────────────────────────────────────────────────────────────
 
-describe('getTasksForDate — sorting & multiple tasks', () => {
+describe('getTasksForDate – sorting & multiple tasks', () => {
   it('sorts tasks by time (untimed last)', () => {
     const tasks: Task[] = [
       makeTask({ id: 'a', date: '2026-01-01' }),                 // no time → 99:99

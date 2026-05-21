@@ -40,7 +40,7 @@ export interface RepeatConfig {
   endAfter?: number;
   cyclicPattern?: CyclicSegment[];
   dependencyDays?: number;             // «через N дней после выполнения»
-  months?: number[];                   // 1..12 — сезонный фильтр
+  months?: number[];                   // 1..12 – сезонный фильтр
   conditionScope?: 'perDay' | 'whole'; // для многодневных: проверять каждый день или весь блок
   weatherCondition?: WeatherCondition;
   holidaySettings?: HolidaySettings;
@@ -58,7 +58,7 @@ export type SubtaskItemKind = 'subtask' | 'attachment' | 'link';
 
 export interface SubtaskItem {
   id: string;
-  /** 'subtask' (default — has checkbox), 'attachment' (standalone file), 'link' (URL with preview) */
+  /** 'subtask' (default – has checkbox), 'attachment' (standalone file), 'link' (URL with preview) */
   kind?: SubtaskItemKind;
   title: string;
   done: boolean;
@@ -88,11 +88,11 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  time?: string;       // HH:MM — начало
-  endTime?: string;    // HH:MM — конец (для многочасовых)
-  endDate?: string;    // YYYY-MM-DD — конец (для многодневных)
+  time?: string;       // HH:MM – начало
+  endTime?: string;    // HH:MM – конец (для многочасовых)
+  endDate?: string;    // YYYY-MM-DD – конец (для многодневных)
   status: TaskStatus;
-  date: string;        // YYYY-MM-DD — начало
+  date: string;        // YYYY-MM-DD – начало
   repeat: TaskRepeat;
   repeatUntil?: string;
   type: TaskType;
@@ -119,7 +119,7 @@ function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
-/** Создать дату (year, month, day), клампя day к фактической длине месяца — чтобы не было rollover */
+/** Создать дату (year, month, day), клампя day к фактической длине месяца – чтобы не было rollover */
 function makeDateClamped(year: number, month: number, day: number): Date {
   const norm = new Date(year, month, 1);  // 1-е число целевого месяца (без rollover)
   const max = daysInMonth(norm.getFullYear(), norm.getMonth());
@@ -160,19 +160,19 @@ export function getMultiDayOccurrence(task: Task, dateStr: string): { startStr: 
     return { startStr: task.date, endStr: task.endDate };
   }
 
-  // Без повтора — только оригинальное вхождение
+  // Без повтора – только оригинальное вхождение
   if (task.repeat === 'none') return null;
 
   const durationDays = Math.round((origEnd.getTime() - origStart.getTime()) / 86_400_000);
 
-  // Для daily: каждое вхождение — пересекается со следующим (длится >= duration+1 дней),
+  // Для daily: каждое вхождение – пересекается со следующим (длится >= duration+1 дней),
   // фактически любой день после origStart покрыт. Считаем что occStart = checkDate (одно сплошное).
   if (task.repeat === 'daily') {
     return { startStr: dateStr, endStr: dateStr };
   }
 
   let occStart: Date | null = null;
-  // Сдвиг по месяцам/годам — если задан, occEnd считается календарно через сдвиг от origEnd,
+  // Сдвиг по месяцам/годам – если задан, occEnd считается календарно через сдвиг от origEnd,
   // чтобы вхождение сохраняло те же даты начала и конца (Fix 5).
   let monthShift = 0;
   let yearShift  = 0;
@@ -226,7 +226,7 @@ export function getMultiDayOccurrence(task: Task, dateStr: string): { startStr: 
       let k = Math.floor(monthDiff / every);
       occStart = addMonthsClamped(origStart, k * every);
       // Rollback: если из-за day-of-month occStart оказался ПОЗЖЕ checkDate
-      // (напр. orig=20.05, checkDate=01.06, k даёт 20.06 — но 01.06 не в этом блоке).
+      // (напр. orig=20.05, checkDate=01.06, k даёт 20.06 – но 01.06 не в этом блоке).
       if (occStart > checkDate && k > 0) {
         k -= 1;
         occStart = addMonthsClamped(origStart, k * every);
@@ -252,18 +252,18 @@ export function getMultiDayOccurrence(task: Task, dateStr: string): { startStr: 
 
   let occEnd: Date;
   if (monthShift > 0) {
-    // Fix 5: monthly — конец вхождения = origEnd, сдвинутый на monthShift месяцев (с клампингом)
+    // Fix 5: monthly – конец вхождения = origEnd, сдвинутый на monthShift месяцев (с клампингом)
     occEnd = addMonthsClamped(origEnd, monthShift);
   } else if (yearShift > 0) {
-    // Fix 5: yearly — конец вхождения = origEnd, сдвинутый на yearShift лет (с клампингом)
+    // Fix 5: yearly – конец вхождения = origEnd, сдвинутый на yearShift лет (с клампингом)
     occEnd = addYearsClamped(origEnd, yearShift);
   } else {
-    // day/week — фиксированная длительность в днях
+    // day/week – фиксированная длительность в днях
     occEnd = new Date(occStart);
     occEnd.setDate(occEnd.getDate() + durationDays);
   }
 
-  // Конфликт #3: если вхождение оканчивается после repeatUntil — целиком пропускаем
+  // Конфликт #3: если вхождение оканчивается после repeatUntil – целиком пропускаем
   if (task.repeatUntil) {
     const occEndStr = toDateStr(occEnd);
     if (occEndStr > task.repeatUntil) return null;
@@ -278,7 +278,7 @@ function isRepeatMultiDayActiveOn(task: Task, dateStr: string): boolean {
   if (task.repeatUntil && dateStr > task.repeatUntil) return false;
   const occ = getMultiDayOccurrence(task, dateStr);
   if (!occ) return false;
-  // Исключаем оригинальное вхождение — его обрабатывает caller отдельно
+  // Исключаем оригинальное вхождение – его обрабатывает caller отдельно
   return occ.startStr > task.date;
 }
 
@@ -296,7 +296,7 @@ function evaluateCyclicPattern(pattern: CyclicSegment[], diffDays: number): bool
   return false;
 }
 
-/** Допуск ±N°C для температурных условий: в пределах допуска — показываем с предупреждением */
+/** Допуск ±N°C для температурных условий: в пределах допуска – показываем с предупреждением */
 export const WEATHER_TEMP_TOLERANCE = 2;
 
 export interface WeatherCheckResult {
@@ -319,7 +319,7 @@ export function checkWeatherCondition(
   const isSnow   = (code >= 71 && code <= 77) || (code >= 85 && code <= 86);
   const isStorm  = code >= 95;
 
-  // Дискретные проверки погоды — без допуска
+  // Дискретные проверки погоды – без допуска
   if (cond.skipRain     && (isRain || isStorm)) return { ok: false };
   if (cond.skipSnow     && isSnow)              return { ok: false };
   if (cond.skipStorm    && isStorm)             return { ok: false };
@@ -327,32 +327,32 @@ export function checkWeatherCondition(
   if (cond.skipCloudy   && isCloudy)            return { ok: false };
   if (cond.requireClear && !isClear)            return { ok: false };
 
-  // Температурные пороги — с допуском ±WEATHER_TEMP_TOLERANCE°C
+  // Температурные пороги – с допуском ±WEATHER_TEMP_TOLERANCE°C
   const warns: string[] = [];
   const T = WEATHER_TEMP_TOLERANCE;
 
   if (cond.minTempDay != null) {
     if (entry.tempMax < cond.minTempDay - T) return { ok: false };
     if (entry.tempMax < cond.minTempDay) {
-      warns.push(`днём ${entry.tempMax}°C — на ${cond.minTempDay - entry.tempMax}° ниже минимума (${cond.minTempDay}°)`);
+      warns.push(`днём ${entry.tempMax}°C – на ${cond.minTempDay - entry.tempMax}° ниже минимума (${cond.minTempDay}°)`);
     }
   }
   if (cond.maxTempDay != null) {
     if (entry.tempMax > cond.maxTempDay + T) return { ok: false };
     if (entry.tempMax > cond.maxTempDay) {
-      warns.push(`днём ${entry.tempMax}°C — на ${entry.tempMax - cond.maxTempDay}° выше максимума (${cond.maxTempDay}°)`);
+      warns.push(`днём ${entry.tempMax}°C – на ${entry.tempMax - cond.maxTempDay}° выше максимума (${cond.maxTempDay}°)`);
     }
   }
   if (cond.minTempNight != null) {
     if (entry.tempMin < cond.minTempNight - T) return { ok: false };
     if (entry.tempMin < cond.minTempNight) {
-      warns.push(`ночью ${entry.tempMin}°C — ниже минимума (${cond.minTempNight}°)`);
+      warns.push(`ночью ${entry.tempMin}°C – ниже минимума (${cond.minTempNight}°)`);
     }
   }
   if (cond.maxTempNight != null) {
     if (entry.tempMin > cond.maxTempNight + T) return { ok: false };
     if (entry.tempMin > cond.maxTempNight) {
-      warns.push(`ночью ${entry.tempMin}°C — выше максимума (${cond.maxTempNight}°)`);
+      warns.push(`ночью ${entry.tempMin}°C – выше максимума (${cond.maxTempNight}°)`);
     }
   }
 
@@ -440,7 +440,7 @@ function evaluateCustomRepeat(
 
 /**
  * Возвращает 1-based порядковый номер вхождения задачи на указанную дату
- * (1 = первое вхождение). 0 — если дата раньше начала или вне расписания.
+ * (1 = первое вхождение). 0 – если дата раньше начала или вне расписания.
  * Используется для проверки `endAfter` (макс. число повторений).
  */
 function getOccurrenceIndex(
@@ -532,7 +532,7 @@ type HolidayMapLike = Map<string, { type: string }>;
 type WeatherMapLike = Map<string, { tempMax: number; tempMin: number; weatherCode?: number }>;
 
 export interface GetTasksOptions {
-  /** Сегодняшняя дата в формате YYYY-MM-DD (по умолчанию — реальная сегодня) */
+  /** Сегодняшняя дата в формате YYYY-MM-DD (по умолчанию – реальная сегодня) */
   todayStr?: string;
   /**
    * Набор ключей `${taskId}__${dateStr}`, которые когда-то прошли погодные условия
@@ -590,7 +590,7 @@ export function getTasksForDate(
         if (idx > cfg.endAfter) isMatch = false;
       }
 
-      // ── Conflict #4: scope условий — perDay или весь блок ─────
+      // ── Conflict #4: scope условий – perDay или весь блок ─────
       const wholeScope = cfg?.conditionScope === 'whole' && !!task.endDate;
       let scopeStartStr = dateStr;
       let scopeEndStr   = dateStr;
@@ -601,7 +601,7 @@ export function getTasksForDate(
 
       if (isMatch && cfg?.months && cfg.months.length > 0) {
         if (wholeScope) {
-          // месяцы для whole-блока — пройдёт только если все дни в нужных месяцах
+          // месяцы для whole-блока – пройдёт только если все дни в нужных месяцах
           const d = new Date(scopeStartStr + 'T00:00:00');
           const end = new Date(scopeEndStr + 'T00:00:00');
           while (d <= end) {
@@ -650,7 +650,7 @@ export function getTasksForDate(
           const weatherKey = `${task.id}__${dateStr}`;
           const res = checkWeatherCondition(weatherMap?.get(dateStr), wcond);
           if (!res.ok) {
-            // Защёлка: для прошедших/сегодняшних дней — если ранее показывали, оставляем видимой
+            // Защёлка: для прошедших/сегодняшних дней – если ранее показывали, оставляем видимой
             if (dateStr <= todayStr && weatherShownLock?.has(weatherKey)) {
               weatherWarning = 'Погода ухудшилась после начала дня';
             } else {

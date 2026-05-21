@@ -7,10 +7,12 @@ import { TaskCompletion } from '../tasks/entities/task-completion.entity';
 import { Tag } from '../tags/entities/tag.entity';
 import { AchievementsService } from './achievements.service';
 import { AchievementsController } from './achievements.controller';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserAchievement, User, Task, TaskCompletion, Tag]),
+    NotificationsModule,
   ],
   controllers: [AchievementsController],
   providers: [AchievementsService],

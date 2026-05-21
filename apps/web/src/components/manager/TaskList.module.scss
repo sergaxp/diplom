@@ -435,7 +435,7 @@
     padding: 1rem 0.85rem 1.5rem;
     gap: 1rem;
   }
-  // Big clock at top is already provided by MobileDayStrip — hide the one in TaskList on mobile
+  // Big clock at top is already provided by MobileDayStrip – hide the one in TaskList on mobile
   .clockRow { display: none; }
   .clockTime { font-size: 1.85rem; }
 }

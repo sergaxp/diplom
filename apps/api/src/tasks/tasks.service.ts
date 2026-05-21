@@ -8,6 +8,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TagsService } from '../tags/tags.service';
 import { AchievementsService, AchievementDef } from '../achievements/achievements.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class TasksService {
@@ -20,6 +21,7 @@ export class TasksService {
     private readonly globalTaskRepo: Repository<GlobalTask>,
     private readonly tagsService: TagsService,
     private readonly achievementsService: AchievementsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   findGlobalTasks(): Promise<GlobalTask[]> {
@@ -123,8 +125,19 @@ export class TasksService {
       this.completionRepo.create({ taskId, userId, date }),
     );
 
-    // Загружаем задачу для контекста достижений
+    // Загружаем задачу для контекста достижений и уведомления
     const task = await this.taskRepo.findOne({ where: { id: taskId } });
+    if (task) {
+      await this.notifications.create({
+        userId,
+        kind:  'task_completed',
+        title: `Задача выполнена: ${task.title}`,
+        body:  task.description ?? null,
+        icon:  'CheckCircle2',
+        color: '#22c55e',
+      });
+    }
+
     const newAchievements = await this.achievementsService.checkAndUnlock(userId, {
       type:     'task_completed',
       taskTime: task?.time ?? null,

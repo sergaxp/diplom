@@ -1,0 +1,219 @@
+.root {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 880px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem 1.75rem 2rem;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.coinsBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f59e0b22, #eab30822);
+  border: 1px solid #eab30855;
+  color: #b45309;
+  font-weight: 700;
+  font-size: 0.95rem;
+
+  [data-theme='dark'] & {
+    color: #fde68a;
+  }
+}
+
+.coinIcon {
+  color: #eab308;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.coinsValue {
+  letter-spacing: 0.02em;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.section {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 1.5rem 0 0.5rem;
+}
+
+.sectionDesc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0 0 0.85rem;
+  line-height: 1.5;
+}
+
+.fontPreview {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.fontPreviewBig {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.fontPreviewLine {
+  font-size: 0.62rem;
+  color: var(--text-2);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.itemCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: var(--border-strong);
+  }
+}
+
+.itemCardOwned {
+  opacity: 0.85;
+}
+
+.preview {
+  margin: 0.25rem 0 0.6rem;
+}
+
+.itemTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+  color: var(--text);
+}
+
+.itemDesc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-bottom: 0.85rem;
+  min-height: 2.4em;
+}
+
+.itemFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.itemPrice {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.buyBtn {
+  padding: 0.35rem 0.85rem;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: 5px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:hover:not(:disabled) { opacity: 0.85; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.ownedBadge {
+  font-size: 0.78rem;
+  color: #16a34a;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  background: rgba(22, 163, 74, 0.1);
+  border-radius: 4px;
+}
+
+.loading,
+.error {
+  padding: 0.75rem 1rem;
+  border-radius: 5px;
+  font-size: 0.875rem;
+}
+
+.loading { color: var(--text-muted); }
+.error   {
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.08);
+  border: 1px solid rgba(185, 28, 28, 0.2);
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+  .body { padding: 1rem 0.75rem; }
+  .card { padding: 1rem; }
+  .title { font-size: 1.25rem; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
+}

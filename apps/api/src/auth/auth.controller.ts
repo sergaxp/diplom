@@ -22,7 +22,7 @@ export class AuthController {
   // POST /auth/register
   @Post('register')
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponse> {
-    // RegisterDto совместим с CreateUserDto — поля те же
+    // RegisterDto совместим с CreateUserDto – поля те же
     return this.authService.register(registerDto as CreateUserDto);
   }
 
@@ -46,7 +46,7 @@ export class AuthController {
     return this.authService.verifyEmail(token);
   }
 
-  // GET /auth/me — проверить текущий токен
+  // GET /auth/me – проверить текущий токен
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@Request() req: Express.Request & { user: unknown }): { user: unknown } {

@@ -10,9 +10,13 @@ export interface PublicProfile {
   avatarUrl: string | null;
   coverUrl: string | null;
   bio: string | null;
+  location: string | null;
   createdAt: string;
   xp: number;
   level: number;
+  selectedFrame?: string | null;
+  selectedFont?: string | null;
+  socialLinks?: Record<string, string> | null;
 }
 
 export interface UpdateProfilePayload {
@@ -24,6 +28,9 @@ export interface UpdateProfilePayload {
   locationLon?: number;
   showGlobalEvents?: boolean;
   showHolidays?: boolean;
+  selectedFrame?: string | null;
+  selectedFont?: string | null;
+  socialLinks?: Record<string, string> | null;
 }
 
 export const profileApi = {
@@ -64,4 +71,13 @@ export const profileApi = {
 
   getPublic: (username: string): Promise<PublicProfile> =>
     api.get<PublicProfile>(`/users/${username}`).then(r => r.data),
+
+  changePassword: (data: { currentPassword: string; newPassword: string }): Promise<void> =>
+    api.patch('/users/me/password', data).then(() => undefined),
+
+  changeEmail: (data: { newEmail: string; password: string }): Promise<User> =>
+    api.patch<User>('/users/me/email', data).then(r => r.data),
+
+  deleteAccount: (password: string): Promise<void> =>
+    api.delete('/users/me', { data: { password } }).then(() => undefined),
 };

@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsIn, Matches, MaxLength } from 'class-validator';
 
-// Manual partial — avoids @nestjs/mapped-types dependency
+// Manual partial – avoids @nestjs/mapped-types dependency
 export class UpdateTaskDto {
   @IsOptional()
   @IsString()

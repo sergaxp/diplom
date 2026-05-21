@@ -29,7 +29,7 @@ const PERIOD_LABELS: Record<ChartPeriod, string> = {
 const HOURS         = Array.from({ length: 17 }, (_, i) => i + 7); // 7–23
 const HOUR_H        = 52;
 const TASK_H        = Math.max(Math.round(HOUR_H * 0.65), 30);      // ~34px
-const TASK_MINS     = Math.ceil((TASK_H / HOUR_H) * 60);             // ~40 мин — окно перекрытия
+const TASK_MINS     = Math.ceil((TASK_H / HOUR_H) * 60);             // ~40 мин – окно перекрытия
 const ALLDAY_TASK_H = 22;
 const ALLDAY_GAP    = 3;
 
@@ -52,7 +52,7 @@ function luminance(hex: string): number {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
-/** Style for a task block — uses first tag color as full background */
+/** Style for a task block – uses first tag color as full background */
 function taskColorStyle(t: Task): React.CSSProperties | undefined {
   const tag = t.tags?.[0];
   if (tag?.color) {
@@ -392,7 +392,7 @@ const TYPE_CLS: Record<string, string> = {
   normal:    styles.chartTaskNormal,
 };
 
-// ── TimeGridView — shared by 'day' and 'week' ────────────────
+// ── TimeGridView – shared by 'day' and 'week' ────────────────
 interface TimeGridProps {
   days: Date[];
   tasks: Task[];
@@ -502,7 +502,7 @@ function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, showWee
                 className={[styles.chartCol, isToday ? styles.chartColToday : ''].join(' ')}
                 style={{ height: colH }}
               >
-                {/* Hour lines — start below the all-day section */}
+                {/* Hour lines – start below the all-day section */}
                 {HOURS.map(h => (
                   <div key={h} className={styles.chartHourLine}
                     style={{ top: alldaySectH + (h - 7) * HOUR_H, height: HOUR_H }}
@@ -519,13 +519,13 @@ function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, showWee
                   <div className={styles.nowLine} style={{ top: alldaySectH + nowTop }} />
                 )}
 
-                {/* All-day tasks at TOP — use global slot map for proper spanning */}
+                {/* All-day tasks at TOP – use global slot map for proper spanning */}
                 {allDay.map(t => {
                   const slot     = adSlot.get(t.id) ?? 0;
                   const range    = adRange.get(t.id);
                   const connL    = !!range && range.min < dayIdx;
                   const connR    = !!range && range.max > dayIdx;
-                  // Only render on the leftmost day of a span — bar will extend right via width
+                  // Only render on the leftmost day of a span – bar will extend right via width
                   if (connL) return null;
                   const spanLen  = range ? range.max - range.min + 1 : 1;
                   const tagStyle = taskColorStyle(t);
@@ -639,7 +639,7 @@ function SpanMonthView({ year, month, tasks, selectedDate, onSelect, holidayMap,
   return (
     <div className={styles.spanMonth}>
       {showMonthLabel && <div className={styles.spanMonthTitle}>{MONTHS[month]}</div>}
-      {/* Weekday headers — only show when not in stacked quarter mode */}
+      {/* Weekday headers – only show when not in stacked quarter mode */}
       {!showMonthLabel && (
         <div className={styles.spanMonthHead}>
           {WEEKDAYS.map(d => <span key={d} className={styles.spanMonthWd}>{d}</span>)}
@@ -702,7 +702,7 @@ function SpanMonthView({ year, month, tasks, selectedDate, onSelect, holidayMap,
 // Weekday-aligned year grid:
 //   header: "Месяц | Пн Вт Ср Чт Пт Сб Вс Пн Вт …"  (37 day columns)
 //   each month row places its days at columns offset by the weekday of the 1st
-const YR_COLS    = 37;            // 5 full weeks + 2 days — fits any month (max offset 6 + 31 days)
+const YR_COLS    = 37;            // 5 full weeks + 2 days – fits any month (max offset 6 + 31 days)
 const YR_SLOT_H  = 18;            // px per task slot
 const YR_HEAD_H  = 18;            // px for the day-number row
 const YR_MAX_SL  = 2;             // visible task slots per month before "+N"
@@ -825,7 +825,7 @@ function YearView({ year, tasks, selectedDate, onSelect, holidayMap }: YearViewP
                 );
               })}
 
-              {/* Task bars — positioned by firstDow + day-1 */}
+              {/* Task bars – positioned by firstDow + day-1 */}
               {vis.map(({ task, sd, ed, slot, cL, cR }) => {
                 const startCol = firstDow + sd - 1;
                 const span     = ed - sd + 1;
@@ -1109,7 +1109,7 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
           <div className={styles.nav}>
             <button className={styles.navBtn} onClick={prevMonth}>‹</button>
 
-            {/* Month · Year — fixed-width group so layout stays stable on month change */}
+            {/* Month · Year – fixed-width group so layout stays stable on month change */}
             <div className={styles.navCenter}>
               <div className={styles.pickerWrap}>
                 <button

@@ -11,13 +11,20 @@ import { Task, tasksApi, completionKey, toDateStr } from '../../lib/tasks';
 import { Tag, tagsApi } from '../../lib/tags';
 import { useAuthStore } from '../../store/authStore';
 import { useAchievementStore } from '../../store/achievementStore';
+import { authApi } from '../../lib/auth';
 import styles from './page.module.scss';
 
 export default function ManagerPage() {
-  const { user, ready } = useAuthStore();
+  const { user, ready, setUser } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
   const pushAchievement = useAchievementStore(s => s.push);
+
+  /** Если получены новые достижения – за них начислены монеты, обновляем coins пользователя */
+  const refreshUserCoins = async () => {
+    const fresh = await authApi.me().catch(() => null);
+    if (fresh) setUser(fresh);
+  };
 
   const [selectedDate, setSelectedDate] = useState(() => {
     const d = new Date(); d.setHours(0, 0, 0, 0); return d;
@@ -32,6 +39,12 @@ export default function ManagerPage() {
     queryKey: ['tasks'],
     queryFn: tasksApi.getAll,
     enabled: !!user,
+    // Длинный интервал + staleTime, чтобы фоновые refetch не перетирали
+    // только что отправленные локальные изменения (race condition).
+    // Cross-device sync всё ещё работает: ~30с –  комфортный gap.
+    refetchInterval: 30_000,
+    staleTime: 25_000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: globalEvents = [] } = useQuery({
@@ -74,6 +87,7 @@ export default function ManagerPage() {
       if (newAchievements.length > 0) {
         qc.invalidateQueries({ queryKey: ['achievements'] });
         if (user) qc.invalidateQueries({ queryKey: ['profile', user.username] });
+        refreshUserCoins();
       }
     },
     onError: (_, __, ctx) => qc.setQueryData(['tasks'], ctx?.prev),
@@ -110,8 +124,15 @@ export default function ManagerPage() {
       );
       return { prev };
     },
+    onSuccess: (serverTask, { id }) => {
+      // Сразу применяем серверный ответ –  защищает от race с фоновым refetch
+      if (serverTask && id) {
+        qc.setQueryData<Task[]>(['tasks'], old =>
+          (old ?? []).map(t => t.id === id ? serverTask : t),
+        );
+      }
+    },
     onError: (_, __, ctx) => qc.setQueryData(['tasks'], ctx?.prev),
-    onSettled: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
   // ── Toggle completion ─────────────────────────────────────────
@@ -133,6 +154,7 @@ export default function ManagerPage() {
       if (newAchievements.length > 0) {
         qc.invalidateQueries({ queryKey: ['achievements'] });
         if (user) qc.invalidateQueries({ queryKey: ['profile', user.username] });
+        refreshUserCoins();
       }
     },
     onError: (_, __, ctx) => qc.setQueryData(['completions'], ctx?.prev),

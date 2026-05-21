@@ -44,7 +44,7 @@ function saveLock(set: Set<string>): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
   } catch {
-    /* localStorage переполнен — игнорируем */
+    /* localStorage переполнен – игнорируем */
   }
 }
 
@@ -62,7 +62,7 @@ export function useWeatherShownLock(): Set<string> {
     sizeRef.current = lockRef.current.size;
   }
 
-  // После каждого рендера: если размер вырос — сохранить
+  // После каждого рендера: если размер вырос – сохранить
   useEffect(() => {
     if (!lockRef.current) return;
     if (lockRef.current.size !== sizeRef.current) {

@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -19,6 +20,9 @@ import { extname } from 'path';
 import { UsersService } from './users.service';
 import { StorageService } from '../storage/storage.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ChangeEmailDto } from './dto/change-email.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 const ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.gif'];
@@ -42,6 +46,12 @@ export class UsersController {
     private readonly storageService: StorageService,
   ) {}
 
+  // GET /users/stats – публичная статистика для лендинга (без авторизации)
+  @Get('stats')
+  async publicStats() {
+    return this.usersService.getPublicStats();
+  }
+
   // GET /users/me
   @UseGuards(JwtAuthGuard)
   @Get('me')
@@ -54,6 +64,29 @@ export class UsersController {
   @Patch('me')
   async updateMe(@Request() req, @Body() dto: UpdateUserDto) {
     return this.usersService.update(req.user.id, dto);
+  }
+
+  // PATCH /users/me/password – смена пароля
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changePassword(@Request() req, @Body() dto: ChangePasswordDto) {
+    await this.usersService.changePassword(req.user.id, dto);
+  }
+
+  // PATCH /users/me/email – смена email
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/email')
+  async changeEmail(@Request() req, @Body() dto: ChangeEmailDto) {
+    return this.usersService.changeEmail(req.user.id, dto);
+  }
+
+  // DELETE /users/me – удаление аккаунта
+  @UseGuards(JwtAuthGuard)
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAccount(@Request() req, @Body() dto: DeleteAccountDto) {
+    await this.usersService.deleteAccount(req.user.id, dto.password);
   }
 
   // POST /users/me/avatar
@@ -102,12 +135,13 @@ export class UsersController {
     return this.usersService.updateCover(req.user.id, coverUrl);
   }
 
-  // POST /users/me/ping — обновить lastSeenAt (вызывается периодически с фронтенда)
+  // POST /users/me/ping – обновить lastSeenAt (вызывается периодически с фронтенда)
   @UseGuards(JwtAuthGuard)
   @Post('me/ping')
-  @HttpCode(HttpStatus.NO_CONTENT)
   async ping(@Request() req) {
     await this.usersService.updateLastSeen(req.user.id);
+    const granted = await this.usersService.grantDailyBonusIfDue(req.user.id);
+    return { dailyBonusGranted: granted };
   }
 
   // GET /users/:username

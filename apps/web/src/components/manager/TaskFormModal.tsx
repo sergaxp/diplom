@@ -247,7 +247,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
   const toggleItem = (itemId: string) =>
     replaceItems(items => items.map(it => it.id === itemId ? { ...it, done: !it.done } : it));
 
-  // Delete a section item — also removes its files from MinIO
+  // Delete a section item – also removes its files from MinIO
   const deleteItem = async (item: SubtaskItem) => {
     replaceItems(items => items.filter(it => it.id !== item.id));
     setConfirmId(null);
@@ -435,7 +435,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                   const isImg = a.type.startsWith('image/');
                   const isVid = a.type.startsWith('video/');
 
-                  // Image / video — media block
+                  // Image / video – media block
                   if (isImg || isVid) {
                     return (
                       <div key={item.id} className={styles.tgMedia}>
@@ -459,7 +459,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                     );
                   }
 
-                  // Generic file — horizontal card (PDF/zip/etc.)
+                  // Generic file – horizontal card (PDF/zip/etc.)
                   const sizeKb = a.size != null ? (a.size / 1024).toFixed(1) + ' КБ' : '';
                   return (
                     <div key={item.id} className={styles.tgFile}>
@@ -520,7 +520,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                     );
                   }
 
-                  // Plain link — compact card with icon
+                  // Plain link – compact card with icon
                   return (
                     <div key={item.id} className={styles.tgFile}>
                       <button
@@ -685,6 +685,20 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { titleRef.current?.focus(); }, []);
+
+  // Sync sections when items are deleted externally (e.g., from another device)
+  const prevTaskSubtasksRef = useRef<SubtaskSection[] | undefined>(task?.subtasks);
+  useEffect(() => {
+    if (!isEdit || !task?.subtasks) return;
+    const prev = prevTaskSubtasksRef.current ?? [];
+    prevTaskSubtasksRef.current = task.subtasks;
+    const prevIds = new Set(prev.flatMap(s => s.items.map(i => i.id)));
+    const newIds  = new Set(task.subtasks.flatMap(s => s.items.map(i => i.id)));
+    if ([...prevIds].some(id => !newIds.has(id))) {
+      setSections(task.subtasks);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task?.subtasks]);
 
   const cap = (v: string) => v ? v.charAt(0).toUpperCase() + v.slice(1) : v;
 
@@ -913,7 +927,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
             <button className={styles.closeBtn} onClick={onClose} type="button" aria-label="Закрыть">✕</button>
           </div>
 
-          {/* Описание — под названием */}
+          {/* Описание – под названием */}
           <textarea
             className={styles.descInput}
             value={description}
@@ -922,10 +936,10 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
             rows={2}
           />
 
-          {/* Мета-поля: дата, время, приоритет — под описанием */}
+          {/* Мета-поля: дата, время, приоритет – под описанием */}
           <div className={styles.metaRow}>
 
-            {/* Дата — кнопка с попапом */}
+            {/* Дата – кнопка с попапом */}
             <div className={styles.datePickerWrap}>
               <div className={styles.field}>
                 <button
@@ -937,7 +951,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
                   {getDateButtonLabel(formDate)}
                   {multiDay && endDate && (
                     <span className={styles.dateBtnEnd}>
-                      {' '}— {new Date(endDate + 'T00:00:00').toLocaleDateString('ru', { day: 'numeric', month: 'short' })}
+                      {' '}– {new Date(endDate + 'T00:00:00').toLocaleDateString('ru', { day: 'numeric', month: 'short' })}
                     </span>
                   )}
                   {repeat !== 'none' && <span className={styles.dateBtnRepeat}>↻</span>}
@@ -988,7 +1002,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               {PRIORITY_LABELS[priority]}
             </button>
 
-            {/* Тег — кнопка с дропдауном */}
+            {/* Тег – кнопка с дропдауном */}
             <button
               ref={tagBtnRef}
               type="button"
@@ -1022,7 +1036,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
         <form onSubmit={handleSubmit} className={styles.formWrap}>
           <div className={styles.body}>
 
-            {/* LEFT — подзадачи */}
+            {/* LEFT – подзадачи */}
             <div className={styles.left}>
               {sections.map((sec, idx) => (
                 <SubtaskSectionComp
@@ -1042,7 +1056,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               </button>
             </div>
 
-            {/* RIGHT — погода */}
+            {/* RIGHT – погода */}
             <div className={styles.right}>
               <WeatherWidget date={isEdit ? toDateStr(date) : formDate} />
             </div>

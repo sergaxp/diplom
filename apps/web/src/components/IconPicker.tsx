@@ -50,7 +50,16 @@ export function IconPicker({ value, onChange }: Props) {
   const handleToggle = () => {
     if (!open && triggerRef.current) {
       const r = triggerRef.current.getBoundingClientRect();
-      setDropPos({ top: r.bottom + 5, left: r.left });
+      const vw = typeof window !== 'undefined' ? window.innerWidth  : 1024;
+      const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
+      // На мобильных дропдаун шире кнопки –  зажимаем его в видимую область
+      const dropW = Math.min(312, vw - 16);
+      const dropH = 380; // высота с категориями + поиск + сетка
+      const left  = Math.min(Math.max(8, r.left), vw - dropW - 8);
+      const top   = r.bottom + 5 + dropH > vh
+        ? Math.max(8, r.top - dropH - 5)
+        : r.bottom + 5;
+      setDropPos({ top, left });
     }
     setOpen(v => !v);
   };
@@ -110,7 +119,7 @@ export function IconPicker({ value, onChange }: Props) {
           <button type="button" title="Без иконки"
             className={[styles.btn, styles.btnNone, !value ? styles.btnActive : ''].join(' ')}
             onClick={() => { onChange(''); setOpen(false); setSearch(''); }}>
-            —
+            –
           </button>
         )}
         {visibleNames.length === 0 && q && (
@@ -137,7 +146,7 @@ export function IconPicker({ value, onChange }: Props) {
         onClick={handleToggle} title={value || 'Без иконки'}>
         {SelectedIcon
           ? <SelectedIcon size={16} strokeWidth={1.75} />
-          : <span className={styles.fallback}>—</span>}
+          : <span className={styles.fallback}>–</span>}
         <span className={[styles.name, !value ? styles.nameEmpty : ''].join(' ')}>
           {value || 'Без иконки'}
         </span>

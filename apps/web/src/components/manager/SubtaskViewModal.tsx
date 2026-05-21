@@ -91,7 +91,7 @@ export function SubtaskViewModal({ item, userTags, onClose, onEdit, onToggle, on
 
             <h2 className={[styles.title, item.done ? styles.titleDone : ''].join(' ')}>{item.title}</h2>
 
-            {/* Time — top-right corner */}
+            {/* Time – top-right corner */}
             {item.time && (
               <span className={styles.timeChip}>
                 <Icons.Clock size={12} strokeWidth={1.75}/> {item.time}

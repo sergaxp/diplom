@@ -291,7 +291,7 @@ export function DatePickerPopup({
       return;
     }
 
-    // Стрелки влево/вправо — переключение между сегментами на краях
+    // Стрелки влево/вправо – переключение между сегментами на краях
     if (e.key === 'ArrowLeft' && e.currentTarget.selectionStart === 0) {
       e.preventDefault();
       if (seg === 'mon')  focusPrev('mon');
@@ -350,7 +350,7 @@ export function DatePickerPopup({
 
   // Значения для отображения в опциях повтора.
   // При редактировании начальной даты обновляются в реальном времени;
-  // при редактировании конечной — остаются на начальной дате.
+  // при редактировании конечной – остаются на начальной дате.
   const rptDay = (calTarget === 'start' && editDay.length >= 1)
     ? Math.max(1, Math.min(31, parseInt(editDay) || dayN))
     : dayN;
@@ -556,7 +556,7 @@ export function DatePickerPopup({
         <div className={styles.dateSection}>
           <div className={styles.dateRow}>
             {taskType !== 'mandatory' && multiDay ? (
-              // Оба поля в общей обёртке — гарантирует равную ширину всегда
+              // Оба поля в общей обёртке – гарантирует равную ширину всегда
               <>
                 <div className={styles.datePillPair}>
                   {renderDateEl('start', true)}
@@ -576,7 +576,7 @@ export function DatePickerPopup({
                   <button type="button" className={styles.multiAdd}
                     onClick={() => {
                       onChangeMultiDay(true);
-                      // Если конечная дата пустая или раньше/равна начальной — ставим следующий день
+                      // Если конечная дата пустая или раньше/равна начальной – ставим следующий день
                       if (!endDate || endDate <= date) {
                         onChangeEndDate(toStr(addDays(fromStr(date), 1)));
                       }

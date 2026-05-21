@@ -16,6 +16,11 @@ export interface User {
   role: 'user' | 'admin';
   isEmailVerified: boolean;
   createdAt: string;
+  xp?: number;
+  coins?: number;
+  selectedFrame?: string | null;
+  selectedFont?: string | null;
+  socialLinks?: Record<string, string> | null;
 }
 
 export interface AuthResult {

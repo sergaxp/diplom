@@ -87,7 +87,7 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
     }
   };
 
-  // Mark for deletion — actual MinIO removal happens on Save
+  // Mark for deletion – actual MinIO removal happens on Save
   const removeAttachment = (idx: number) => {
     const a = attachments[idx];
     setAttachments(prev => prev.filter((_, i) => i !== idx));
@@ -98,7 +98,7 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
         addedKeysRef.current.splice(addIdx, 1);
         storageApi.remove(a.key).catch(() => { /* ignore */ });
       } else {
-        // Pre-existing key — defer deletion until Save
+        // Pre-existing key – defer deletion until Save
         removedKeysRef.current.push(a.key);
       }
     }
@@ -155,7 +155,7 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
         rows={2}
       />
 
-      {/* Attachments — bigger previews */}
+      {/* Attachments – bigger previews */}
       {(attachments.length > 0 || uploading > 0) && (
         <div className={styles.attachGrid}>
           {attachments.map((a, i) => (

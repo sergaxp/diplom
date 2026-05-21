@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Task, toDateStr, getTasksForDate } from '../../lib/tasks';
 import { useMonthWeather, useCurrentWeather } from '../../lib/weather';
 import { useAuthStore } from '../../store/authStore';
-import { useHolidays, HolidayMap, getHolidayColor } from '../../lib/holidays';
+import { useHolidays, HolidayMap } from '../../lib/holidays';
 import styles from './MobileDayStrip.module.scss';
 
 const MONTH_GEN  = ['января','февраля','марта','апреля','мая','июня',
@@ -64,16 +65,66 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
   const { data: weather } = useMonthWeather(selectedDate.getFullYear(), selectedDate.getMonth(), location);
   const { data: currentWeather } = useCurrentWeather(location);
 
-  // 4 day cards centered around selectedDate (yesterday, today, +1, +2 relative to today)
+  // Month picker state
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+
+  // 4 day cards centered around selectedDate (-1, 0, +1, +2 relative to selectedDate)
   const stripDays = useMemo(() => {
     const days: Date[] = [];
     for (let i = -1; i <= 2; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
+      const d = new Date(selectedDate);
+      d.setHours(0,0,0,0);
+      d.setDate(selectedDate.getDate() + i);
       days.push(d);
     }
     return days;
-  }, [today]);
+  }, [selectedDate]);
+
+  // ── Swipe handling ──────────────────────────────────────────
+  const touchStart = useRef<{ x: number; y: number; t: number } | null>(null);
+  const SWIPE_THRESHOLD = 40; // px
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY, t: Date.now() };
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s = touchStart.current;
+    touchStart.current = null;
+    if (!s) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - s.x;
+    const dy = t.clientY - s.y;
+    // Игнорируем вертикальный/слабый свайп
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    const dir = dx < 0 ? 1 : -1; // влево = вперёд
+    const next = new Date(selectedDate);
+    if (expanded) {
+      next.setMonth(next.getMonth() + dir);
+    } else {
+      next.setDate(next.getDate() + dir);
+    }
+    next.setHours(0, 0, 0, 0);
+    onSelect(next);
+  };
+
+  // ── Month nav (expanded mode) ───────────────────────────────
+  const shiftMonth = (dir: -1 | 1) => {
+    const next = new Date(selectedDate);
+    next.setMonth(next.getMonth() + dir);
+    next.setHours(0, 0, 0, 0);
+    onSelect(next);
+  };
+
+  const pickMonthYear = (m: number, y: number) => {
+    const dim = new Date(y, m + 1, 0).getDate();
+    const day = Math.min(selectedDate.getDate(), dim);
+    const next = new Date(y, m, day);
+    next.setHours(0, 0, 0, 0);
+    onSelect(next);
+    setMonthPickerOpen(false);
+  };
 
   const { data: holCur  } = useHolidays(selectedDate.getFullYear(),     showHolidays);
   const { data: holNext } = useHolidays(selectedDate.getFullYear() + 1, showHolidays);
@@ -148,16 +199,57 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
   return (
     <div className={styles.root}>
       {!expanded ? (
-        // ── Default strip mode ──
-        <div className={styles.strip}>
+        // ── Default strip mode ── (swipe влево/вправо двигает выбранный день)
+        <div
+          className={styles.strip}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
           {stripDays.map(d => renderDayCard(d))}
         </div>
       ) : (
-        // ── Expanded month grid ──
-        <div className={styles.monthBlock}>
-          <div className={styles.monthTitle}>
-            {MONTHS[selectedDate.getMonth()]} · {selectedDate.getFullYear()}
+        // ── Expanded month grid ── (swipe двигает месяц, есть кнопки и picker)
+        <div
+          className={styles.monthBlock}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <div className={styles.monthNav}>
+            <button
+              type="button"
+              className={styles.monthNavBtn}
+              onClick={() => shiftMonth(-1)}
+              aria-label="Предыдущий месяц"
+            >
+              <ChevronLeft size={18} strokeWidth={2}/>
+            </button>
+            <button
+              type="button"
+              className={styles.monthTitleBtn}
+              onClick={() => setMonthPickerOpen(o => !o)}
+            >
+              {MONTHS[selectedDate.getMonth()]} · {selectedDate.getFullYear()}
+              <span className={styles.monthCaret}>▾</span>
+            </button>
+            <button
+              type="button"
+              className={styles.monthNavBtn}
+              onClick={() => shiftMonth(1)}
+              aria-label="Следующий месяц"
+            >
+              <ChevronRight size={18} strokeWidth={2}/>
+            </button>
           </div>
+
+          {monthPickerOpen && (
+            <MonthYearPicker
+              year={selectedDate.getFullYear()}
+              month={selectedDate.getMonth()}
+              onPick={pickMonthYear}
+              onClose={() => setMonthPickerOpen(false)}
+            />
+          )}
+
           <div className={styles.monthWeekHead}>
             {WEEKDAYS.map((w, i) => (
               <span
@@ -234,6 +326,61 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
         <button type="button" className={styles.toggleBtn} onClick={onToggleExpand} title={expanded ? 'Свернуть' : 'Развернуть месяц'}>
           {expanded ? '⌃' : '⌄'}
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Month / Year picker (mobile only) ───────────────────────────
+interface PickerProps {
+  year: number;
+  month: number;
+  onPick: (month: number, year: number) => void;
+  onClose: () => void;
+}
+
+function MonthYearPicker({ year, month, onPick, onClose }: PickerProps) {
+  const [pageYear, setPageYear] = useState(year);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const click = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('mousedown', click);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('mousedown', click);
+      document.removeEventListener('keydown', esc);
+    };
+  }, [onClose]);
+
+  const monthsShort = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+
+  return (
+    <div ref={ref} className={styles.pickerPanel}>
+      <div className={styles.pickerYearRow}>
+        <button type="button" className={styles.pickerYearBtn}
+          onClick={() => setPageYear(y => y - 1)} aria-label="Предыдущий год">‹</button>
+        <span className={styles.pickerYearLabel}>{pageYear}</span>
+        <button type="button" className={styles.pickerYearBtn}
+          onClick={() => setPageYear(y => y + 1)} aria-label="Следующий год">›</button>
+      </div>
+      <div className={styles.pickerMonthsGrid}>
+        {monthsShort.map((m, i) => {
+          const isActive = i === month && pageYear === year;
+          return (
+            <button
+              key={m}
+              type="button"
+              className={[styles.pickerMonthCell, isActive ? styles.pickerMonthCellActive : ''].join(' ')}
+              onClick={() => onPick(i, pageYear)}
+            >
+              {m}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -123,7 +123,7 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
         {task.status === 'missed' && '✕'}
       </button>
 
-      {/* Body — кликабельно для открытия редактора */}
+      {/* Body – кликабельно для открытия редактора */}
       <div className={styles.taskBody} onClick={() => onEdit(task)} role="button" tabIndex={0}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onEdit(task); }}>
         {task.time && <span className={styles.taskTime}>{task.time}</span>}
@@ -242,6 +242,13 @@ export function TaskList({
   const [createOpen,    setCreateOpen]    = useState(false);
   const [editingTask,   setEditingTask]   = useState<Task | null>(null);
   const [sortByPriority, setSortByPriority] = useState(false);
+
+  // Sync editingTask with fresh server data so external changes (other devices) propagate into the modal
+  useEffect(() => {
+    if (!editingTask) return;
+    const fresh = tasks.find(t => t.id === editingTask.id);
+    if (fresh && fresh !== editingTask) setEditingTask(fresh);
+  }, [tasks]);
 
   const user     = useAuthStore(s => s.user);
   const location = { lat: user?.locationLat, lon: user?.locationLon, name: user?.location };

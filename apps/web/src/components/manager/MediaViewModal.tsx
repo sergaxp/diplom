@@ -54,7 +54,7 @@ export function MediaViewModal({ item, onClose, onDelete }: Props) {
       if (item.linkType === 'image' && item.thumbnailUrl) {
         return <img src={item.thumbnailUrl} alt={item.title || item.url} className={styles.fullMedia}/>;
       }
-      // For video / page links — show preview and open-in-new-tab button
+      // For video / page links – show preview and open-in-new-tab button
       return (
         <div className={styles.linkPreview}>
           {item.thumbnailUrl ? (

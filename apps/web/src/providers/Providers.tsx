@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { authApi, hasToken, clearAuth } from '../lib/auth';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
+import { applyFont } from '../store/fontStore';
 import { api } from '../lib/api';
 import { AchievementToast } from '../components/AchievementToast';
 
@@ -12,6 +13,17 @@ const PING_INTERVAL = 2 * 60 * 1000; // 2 минуты
 
 function AuthInitializer() {
   const { setUser, setReady } = useAuthStore();
+
+  const pingAndRefresh = async () => {
+    try {
+      const res = await api.post<{ dailyBonusGranted?: boolean }>('/users/me/ping');
+      if (res.data?.dailyBonusGranted) {
+        // Подтягиваем свежие coins после начисления ежедневного бонуса
+        const fresh = await authApi.me().catch(() => null);
+        if (fresh) setUser(fresh);
+      }
+    } catch { /* ignore */ }
+  };
 
   useEffect(() => {
     if (!hasToken()) {
@@ -22,7 +34,7 @@ function AuthInitializer() {
       .me()
       .then((user) => {
         setUser(user);
-        api.post('/users/me/ping').catch(() => {});
+        pingAndRefresh();
       })
       .catch(() => {
         clearAuth();
@@ -33,7 +45,7 @@ function AuthInitializer() {
   useEffect(() => {
     if (!hasToken()) return;
     const id = setInterval(() => {
-      if (hasToken()) api.post('/users/me/ping').catch(() => {});
+      if (hasToken()) pingAndRefresh();
     }, PING_INTERVAL);
     return () => clearInterval(id);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -47,6 +59,15 @@ function ThemeInitializer() {
   return null;
 }
 
+/** Применяет шрифт пользователя (selectedFont) к <html data-font>. */
+function FontApplier() {
+  const font = useAuthStore(s => s.user?.selectedFont ?? null);
+  useEffect(() => {
+    applyFont(font);
+  }, [font]);
+  return null;
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () => new QueryClient({ defaultOptions: { queries: { staleTime: 60_000, retry: 1 } } }),
@@ -56,6 +77,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ThemeInitializer />
       <AuthInitializer />
+      <FontApplier />
       {children}
       <AchievementToast />
     </QueryClientProvider>

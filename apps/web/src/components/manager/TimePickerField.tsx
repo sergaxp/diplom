@@ -39,7 +39,7 @@ const ALL_SLOTS: string[] = (() => {
   return s;
 })();
 
-const ITEM_H = 32; // px — must match CSS
+const ITEM_H = 32; // px – must match CSS
 
 // ── Props ────────────────────────────────────────────────────────
 
@@ -47,7 +47,7 @@ interface Props {
   value: string;    // "HH:MM" or ""
   endValue: string; // "HH:MM" or ""
   taskDate: string; // "YYYY-MM-DD"
-  /** Hide the "+ до" end-time button — single-time picker only. */
+  /** Hide the "+ до" end-time button – single-time picker only. */
   hideEnd?: boolean;
   onChange: (v: string) => void;
   onChangeEnd: (v: string) => void;

@@ -13,7 +13,7 @@ RUN pnpm install --frozen-lockfile
 
 RUN pnpm --filter web build
 
-# Standalone не копирует статику автоматически — делаем это вручную
+# Standalone не копирует статику автоматически – делаем это вручную
 RUN cp -r apps/web/.next/static \
          apps/web/.next/standalone/apps/web/.next/static && \
     cp -r apps/web/public \

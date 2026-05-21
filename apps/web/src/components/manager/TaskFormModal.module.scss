@@ -105,7 +105,7 @@
   &::placeholder { color: var(--text-4); }
 }
 
-// ── Meta row (date / time / priority) — под описанием ─────────
+// ── Meta row (date / time / priority) – под описанием ─────────
 .metaRow {
   display: flex;
   flex-wrap: wrap;
@@ -323,9 +323,6 @@
     border-right: none;
     padding: 0.85rem 1rem;
   }
-  .right {
-    display: none;
-  }
   .top {
     padding: 1.25rem 1rem 0.5rem;
   }
@@ -347,7 +344,7 @@
   }
 }
 
-// ── Left — подзадачи ──────────────────────────────────────────
+// ── Left – подзадачи ──────────────────────────────────────────
 .left {
   padding: 1rem 1.25rem;
   overflow-y: auto;
@@ -540,7 +537,7 @@
   &:focus { color: var(--text); }
 }
 
-// ── Right — настройки ─────────────────────────────────────────
+// ── Right – настройки ─────────────────────────────────────────
 .right {
   padding: 1rem 1.25rem;
   overflow-y: auto;
@@ -551,6 +548,10 @@
 
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
+}
+
+@media (max-width: 768px) {
+  .right { display: none; }
 }
 
 // ── Виджет погоды ─────────────────────────────────────────────
@@ -909,7 +910,7 @@
   &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-hover); border-style: solid; }
 }
 
-// ── Subtask item — title now a button (opens editor) ──────────
+// ── Subtask item – title now a button (opens editor) ──────────
 .subtaskItemTitle {
   flex: 1;
   min-width: 0;
@@ -1284,7 +1285,7 @@
 
 // ─── Link card with rich preview ──────────────────────────────
 .tgLink {
-  // No background — URL sits above, card has its own bg
+  // No background – URL sits above, card has its own bg
 }
 
 .tgLinkBody {

@@ -9,17 +9,299 @@
 .main {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
+  padding: 0 1.25rem 4rem;
+}
+
+// ── Preview image (theme-aware) ──────────────────────────────
+.previewWrap {
+  width: 100%;
+  max-width: 1100px;
+  margin: 1.75rem auto 0;
+  padding: 0;
+  display: flex;
   justify-content: center;
 }
 
-.startBtn {
-  padding: 0.75rem 2.5rem;
+.preview {
+  width: 100%;
+  height: auto;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  display: block;
+}
+
+// По умолчанию html без data-theme = светлая. Показываем light, прячем dark.
+.previewLight { display: block; }
+.previewDark  { display: none; }
+
+[data-theme='dark'] {
+  .previewLight { display: none; }
+  .previewDark  { display: block; }
+}
+
+// ── Hero ─────────────────────────────────────────────────────
+.hero {
+  width: 100%;
+  max-width: 760px;
+  text-align: center;
+  padding: 3rem 0 3rem;
+}
+
+.heroTitle {
+  font-size: clamp(1.85rem, 5.5vw, 2.85rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0 0 1rem;
+  color: var(--text);
+}
+
+.heroAccent {
+  // Без градиентов –  спокойный акцентный цвет
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.heroSubtitle {
+  font-size: clamp(0.95rem, 2vw, 1.05rem);
+  color: var(--text-2);
+  line-height: 1.65;
+  max-width: 580px;
+  margin: 0 auto 1.75rem;
+}
+
+.heroCta {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.25rem;
+}
+
+.primaryBtn {
+  padding: 0.7rem 1.5rem;
   background: var(--text);
   color: var(--bg);
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 0.92rem;
+  font-weight: 600;
   text-decoration: none;
   transition: opacity 0.15s;
-  &:hover { opacity: 0.8; }
+  &:hover { opacity: 0.85; }
+}
+
+.secondaryBtn {
+  padding: 0.7rem 1.35rem;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+  &:hover { background: var(--bg-hover); border-color: var(--text-2); }
+}
+
+// ── Stats ────────────────────────────────────────────────────
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1rem 0.85rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.statLabel,
+.statLabelLive {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
+}
+
+.statValue {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+.statHint {
+  font-size: 0.72rem;
+  color: var(--text-4);
+}
+
+// ── Features ─────────────────────────────────────────────────
+.features {
+  width: 100%;
+  max-width: 1080px;
+  padding: 2.5rem 0;
+}
+
+.sectionTitle {
+  font-size: clamp(1.3rem, 3vw, 1.7rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 1.5rem;
+  text-align: center;
+  color: var(--text);
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.featureCard {
+  padding: 1.05rem 1.1rem 1.15rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.15s, background 0.15s;
+  &:hover {
+    border-color: var(--border-strong);
+    background: var(--bg-surface);
+  }
+}
+
+.featureIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: var(--bg-hover);
+  color: var(--text);
+  margin-bottom: 0.65rem;
+}
+
+.featureTitle {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+
+.featureText {
+  font-size: 0.82rem;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+// ── Steps ────────────────────────────────────────────────────
+.steps {
+  width: 100%;
+  max-width: 720px;
+  padding: 1rem 0 2.5rem;
+}
+
+.stepList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.95rem;
+  padding: 0.95rem 1.05rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.stepNum {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.stepTitle {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.18rem;
+}
+
+.stepText {
+  font-size: 0.82rem;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+// ── Footer CTA ───────────────────────────────────────────────
+.footerCta {
+  width: 100%;
+  max-width: 720px;
+  margin: 1.5rem 0 0.5rem;
+  padding: 2rem 1.5rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.footerCtaTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+  color: var(--text);
+}
+
+.footerCtaText {
+  color: var(--text-2);
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+}
+
+// ── Responsive ───────────────────────────────────────────────
+@media (max-width: 640px) {
+  .previewWrap { margin-top: 1rem; }
+  .preview { max-height: 50vh; }
+  .hero { padding: 2rem 0 2rem; }
+  .main { padding: 0 1rem 2rem; }
+  .features { padding: 1.75rem 0; }
+  .footerCta { padding: 1.5rem 1rem; }
 }

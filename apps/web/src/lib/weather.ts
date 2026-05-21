@@ -29,7 +29,7 @@ export interface CurrentWeather {
   humidity: number;
 }
 
-// Координаты по умолчанию — Челябинск
+// Координаты по умолчанию – Челябинск
 const DEFAULT_LAT = 55.16;
 const DEFAULT_LON = 61.40;
 const DEFAULT_TZ  = 'Asia/Yekaterinburg';
@@ -152,7 +152,7 @@ async function fetchDayWeatherData(
 
   let url: string;
   if (daysDiff > 16) {
-    // Слишком далеко в будущем — данных нет
+    // Слишком далеко в будущем – данных нет
     return null;
   } else if (daysDiff < -92) {
     url = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({

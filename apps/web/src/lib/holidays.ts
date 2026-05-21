@@ -53,8 +53,8 @@ function fmtDate(d: Date): string {
  *
  * По ТК РФ при совпадении праздника с выходным отдых переносится
  * на ближайший рабочий день (практически всегда на понедельник).
- * Если API уже добавил безымянный holiday на этот день — просто именуем его.
- * Если нет — создаём запись сами.
+ * Если API уже добавил безымянный holiday на этот день – просто именуем его.
+ * Если нет – создаём запись сами.
  */
 function applyTransfers(year: number, map: Map<string, HolidayEntry>): void {
   for (const { mm, dd, name } of BUILTIN) {
@@ -74,10 +74,13 @@ function applyTransfers(year: number, map: Map<string, HolidayEntry>): void {
     if (!existing) {
       map.set(transferDate, { date: transferDate, name: `${name} (перенос)`, type: 'holiday' });
     } else if (existing.type === 'holiday' && !existing.name) {
-      // API подтвердил — добавляем имя
+      // API подтвердил – добавляем имя
       map.set(transferDate, { ...existing, name: `${name} (перенос)` });
+    } else if (existing.type === 'shortday') {
+      // Перенос праздника имеет приоритет над сокращённым днём (May 11 и т.п.)
+      map.set(transferDate, { date: transferDate, name: `${name} (перенос)`, type: 'holiday' });
     }
-    // existing.name уже задано (другой праздник) — не трогаем
+    // existing.name уже задано (другой именованный праздник) – не трогаем
   }
 }
 
@@ -85,8 +88,8 @@ function applyTransfers(year: number, map: Map<string, HolidayEntry>): void {
 
 const LS_KEY = (year: number) => `wt_holidays_${year}`;
 const CACHE_TTL  = 30 * 24 * 60 * 60 * 1000;
-/** Увеличить при изменении формата/логики кеша — инвалидирует старые записи */
-const CACHE_VER  = 4;
+/** Увеличить при изменении формата/логики кеша – инвалидирует старые записи */
+const CACHE_VER  = 5;
 
 function readCache(year: number): HolidayEntry[] | null {
   try {
@@ -115,7 +118,7 @@ async function fetchHolidays(year: number): Promise<HolidayEntry[]> {
   const cached = readCache(year);
   if (cached) return cached;
 
-  // Базовые праздники — всегда без API
+  // Базовые праздники – всегда без API
   const map = new Map<string, HolidayEntry>(
     getBuiltinHolidays(year).map(e => [e.date, e]),
   );
@@ -124,16 +127,19 @@ async function fetchHolidays(year: number): Promise<HolidayEntry[]> {
     const apiData: HolidayEntry[] = await api.get(`/holidays/${year}`).then(r => r.data);
     if (Array.isArray(apiData)) {
       for (const e of apiData) {
+        const existing = map.get(e.date);
         if (e.type === 'shortday' || e.type === 'workday') {
-          // Сокращённые и рабочие субботы — только из официального календаря
-          map.set(e.date, e);
-        } else if (e.type === 'holiday' && !map.has(e.date)) {
+          // Не перезаписываем BUILTIN праздники (Jan 9 – Новогодние каникулы, и т.д.)
+          if (!existing || existing.type !== 'holiday') {
+            map.set(e.date, e);
+          }
+        } else if (e.type === 'holiday' && !existing) {
           // Дополнительный нерабочий день из API (мосты, нестандартные переносы)
           map.set(e.date, e);
         }
       }
     }
-  } catch { /* API недоступен — работаем только на встроенных */ }
+  } catch { /* API недоступен – работаем только на встроенных */ }
 
   // Применяем переносы Вс→Пн и Сб→Пн
   applyTransfers(year, map);

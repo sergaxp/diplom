@@ -18,10 +18,15 @@ import { UserAchievement } from './achievements/entities/user-achievement.entity
 import { HolidayCache } from './holidays/entities/holiday-cache.entity';
 import { HolidaysModule } from './holidays/holidays.module';
 import { StorageModule } from './storage/storage.module';
+import { ShopModule } from './shop/shop.module';
+import { UserInventory } from './shop/entities/user-inventory.entity';
+import { NotificationsModule } from './notifications/notifications.module';
+import { Notification } from './notifications/entities/notification.entity';
+import { AccountDeletion } from './users/entities/account-deletion.entity';
 
 @Module({
   imports: [
-    // Конфиг — .env доступен везде через process.env
+    // Конфиг – .env доступен везде через process.env
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -34,8 +39,8 @@ import { StorageModule } from './storage/storage.module';
       username: process.env.DATABASE_USER ?? 'sergey',
       password: process.env.DATABASE_PASSWORD ?? '',
       database: process.env.DATABASE_NAME ?? 'warmingtea_dev',
-      entities: [User, Task, TaskCompletion, GlobalTask, Tag, UserAchievement, HolidayCache],
-      synchronize: true, // ⚠️ ТОЛЬКО в DEV! В продакшене — миграции
+      entities: [User, Task, TaskCompletion, GlobalTask, Tag, UserAchievement, HolidayCache, UserInventory, Notification, AccountDeletion],
+      synchronize: true, // ⚠️ ТОЛЬКО в DEV! В продакшене – миграции
       logging: process.env.NODE_ENV === 'development',
     }),
 
@@ -48,6 +53,8 @@ import { StorageModule } from './storage/storage.module';
     AchievementsModule,
     HolidaysModule,
     StorageModule,
+    ShopModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -67,8 +67,22 @@ body {
   overflow-x: hidden;
 }
 
+// ── Font selection ─────────────────────────────────────────────
+// По умолчанию (без data-font) — системный
+:root {
+  --font-app: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+html[data-font='alegreya'] {
+  --font-app: var(--font-alegreya), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+html[data-font='manrope'] {
+  --font-app: var(--font-manrope), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: var(--font-app);
   background: var(--bg);
   color: var(--text);
 }

@@ -12,13 +12,13 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
-  // GET /tasks/events — глобальные события (для всех пользователей)
+  // GET /tasks/events – глобальные события (для всех пользователей)
   @Get('events')
   getGlobalTasks() {
     return this.tasksService.findGlobalTasks();
   }
 
-  // GET /tasks/completions — must be BEFORE :id routes
+  // GET /tasks/completions – must be BEFORE :id routes
   @Get('completions')
   getCompletions(@Request() req: { user: { id: string } }) {
     return this.tasksService.getCompletionKeys(req.user.id);

@@ -40,7 +40,7 @@ function cycleTotalDays(pattern: CyclicSegment[]): number {
 interface Props {
   initial?: RepeatConfig | null;
   selectedDate: string;
-  /** Конечная дата задачи (для multiDay) — нужна для расчёта min значений */
+  /** Конечная дата задачи (для multiDay) – нужна для расчёта min значений */
   taskEndDate?: string;
   multiDay?: boolean;
   onSave: (cfg: RepeatConfig, repeatUntil?: string) => void;
@@ -132,10 +132,10 @@ function MiniCalendar({ value, minDate, onChange }: MiniCalProps) {
 /**
  * Минимально допустимый «каждые N» для multi-day задачи: «buffer ≥ 1 day»,
  * т.е. следующее вхождение начинается СТРОГО после окончания текущего
- * (back-to-back). Buffer = K - durationDays для day; для остальных единиц —
+ * (back-to-back). Buffer = K - durationDays для day; для остальных единиц –
  * наименьшее N такое, что start + N*unit > end.
  *
- * Для 0-длительности (start == end) даёт 1 во всех единицах — позволяет
+ * Для 0-длительности (start == end) даёт 1 во всех единицах – позволяет
  * выставить «Каждый день / неделю / месяц / год».
  */
 function calcMinEvery(unit: 'day' | 'week' | 'month' | 'year', startStr: string, endStr: string): number {
@@ -227,7 +227,7 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
   const [endAfter, setEndAfter] = useState(10);
   const [endDate,  setEndDate]  = useState('');
 
-  // ── Если включён multiDay — заблокировать cyclic / dependency ──
+  // ── Если включён multiDay – заблокировать cyclic / dependency ──
   useEffect(() => {
     if (multiDay && mode !== 'interval' && mode !== 'adaptive') setMode('interval');
   }, [multiDay, mode]);
@@ -436,7 +436,7 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
                 type="button"
                 className={`${styles.modeTab} ${mode === 'adaptive' ? styles.modeTabActive : ''}`}
                 onClick={() => setMode('adaptive')}
-                title="Адаптивный режим — в разработке"
+                title="Адаптивный режим – в разработке"
               >
                 Адаптивный <span className={styles.modeTabBadge}>скоро</span>
               </button>
@@ -461,7 +461,7 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
                     max={365}
                     value={every}
                     onChange={e => setEvery(Math.max(currentMinEvery, parseInt(e.target.value) || currentMinEvery))}
-                    title={multiDay && currentMinEvery > 1 ? `Минимум ${currentMinEvery} — чтобы вхождения не накладывались на длительность задачи` : ''}
+                    title={multiDay && currentMinEvery > 1 ? `Минимум ${currentMinEvery} – чтобы вхождения не накладывались на длительность задачи` : ''}
                   />
                   <div className={styles.unitBtns}>
                     {UNIT_OPTS.map(u => (
@@ -483,7 +483,7 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
                 </div>
                 {multiDay && currentMinEvery > 1 && (
                   <div className={styles.minEveryHint}>
-                    Минимум для многодневной задачи — {currentMinEvery} {unitLabel(unit, currentMinEvery)}
+                    Минимум для многодневной задачи – {currentMinEvery} {unitLabel(unit, currentMinEvery)}
                   </div>
                 )}
 
@@ -515,7 +515,7 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
             {mode === 'cyclic' && !multiDay && (
               <div className={styles.cyclicBlock}>
                 <div className={styles.cyclicHint}>
-                  Задайте паттерн: сколько дней задача активна, затем сколько дней отдыха — и так по кругу.
+                  Задайте паттерн: сколько дней задача активна, затем сколько дней отдыха – и так по кругу.
                 </div>
                 <div className={styles.cyclicRows}>
                   {cyclicPattern.map((seg, idx) => (
@@ -584,7 +584,7 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
               <div className={styles.depBlock}>
                 <div className={styles.depHint}>
                   Задача появится снова через указанное число дней <b>после её выполнения</b>.
-                  Если не выполнена — будет висеть до выполнения.
+                  Если не выполнена – будет висеть до выполнения.
                 </div>
                 <div className={styles.depRow}>
                   <span className={styles.depLabel}>Через</span>
@@ -764,7 +764,7 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
                     <input
                       className={styles.tempInput}
                       type="number"
-                      placeholder="—"
+                      placeholder="–"
                       value={minTempDay}
                       onChange={e => setMinTempDay(e.target.value)}
                     />
@@ -772,7 +772,7 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
                     <input
                       className={styles.tempInput}
                       type="number"
-                      placeholder="—"
+                      placeholder="–"
                       value={maxTempDay}
                       onChange={e => setMaxTempDay(e.target.value)}
                     />
@@ -784,7 +784,7 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
                     <input
                       className={styles.tempInput}
                       type="number"
-                      placeholder="—"
+                      placeholder="–"
                       value={minTempNight}
                       onChange={e => setMinTempNight(e.target.value)}
                     />
@@ -792,7 +792,7 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
                     <input
                       className={styles.tempInput}
                       type="number"
-                      placeholder="—"
+                      placeholder="–"
                       value={maxTempNight}
                       onChange={e => setMaxTempNight(e.target.value)}
                     />

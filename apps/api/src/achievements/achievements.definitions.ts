@@ -17,6 +17,14 @@ export const RANK_XP: Record<AchievementRank, number> = {
   4: 4000,
 };
 
+/** Монеты за разблокировку достижения соответствующего ранга */
+export const RANK_COINS: Record<AchievementRank, number> = {
+  1: 1,
+  2: 2,
+  3: 3,
+  4: 4,
+};
+
 export const ACHIEVEMENTS: AchievementDef[] = [
   // ── Первые шаги (Обычные) ─────────────────────────────────
   { id: 'first_task',      title: 'Первый шаг',           description: 'Создать первую задачу',                            rank: 1, xp: 500,  icon: 'Plus' },

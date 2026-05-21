@@ -18,95 +18,162 @@
   flex: 1;
 }
 
+// ── Banner ────────────────────────────────────────────────────
 .banner {
-  height: 160px;
-  background: linear-gradient(135deg, #312e81 0%, #1e1b4b 50%, #0f172a 100%);
+  height: 240px;
+  background: var(--bg-surface);
+  background-size: cover;
+  background-position: center;
+  border-bottom: 1px solid var(--border);
 }
 
-.content {
-  max-width: 680px;
+.bannerHasImage {
+  background-color: #000;
+}
+
+// ── Hero strip (avatar + name + actions) ──────────────────────
+.hero {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.heroInner {
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 0 24px 60px;
+  padding: 0 24px 18px;
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
   position: relative;
 }
 
 .avatarWrap {
-  width: 100px;
-  height: 100px;
+  margin-top: -56px;
   border-radius: 50%;
-  border: 3px solid var(--bg);
-  background: var(--bg-surface);
-  overflow: hidden;
-  margin-top: -50px;
-  margin-bottom: 16px;
+  background: var(--bg-card);
+  padding: 4px;
   flex-shrink: 0;
 }
 
-.avatarImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.heroMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 4px;
+  min-width: 0;
 }
 
-.avatarInitial {
+.nameRow {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-muted);
-}
-
-.info {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.names {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .displayName {
-  font-size: 1.375rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--text);
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .username {
-  font-size: .9375rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
 }
 
-.bio {
-  font-size: .9375rem;
-  color: var(--text);
-  line-height: 1.6;
-  white-space: pre-wrap;
-  margin: 0;
+.levelBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #312e81;
+  color: #c7d2fe;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
 
-.meta {
-  font-size: .8125rem;
-  color: var(--text-muted);
+.coinsBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #b45309;
+  font-size: 0.78rem;
+  font-weight: 700;
+
+  [data-theme='dark'] & {
+    color: #fde68a;
+  }
+}
+
+.coinDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #eab308;
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.25);
+  display: inline-block;
+}
+
+// ── Social chips ──────────────────────────────────────────────
+.socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.socialChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+
+  &:hover {
+    border-color: var(--social-color, var(--border-strong));
+    color: var(--social-color, var(--text));
+    background: var(--bg-hover);
+  }
+}
+
+.socialLabel {
+  line-height: 1;
+}
+
+// ── Hero actions (edit button) ────────────────────────────────
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 4px;
+  flex-shrink: 0;
 }
 
 .editBtn {
   display: inline-block;
-  padding: 8px 18px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
   color: var(--text);
-  font-size: .875rem;
+  font-size: 0.85rem;
   font-weight: 500;
   text-decoration: none;
-  transition: background .15s, color .15s;
-  align-self: flex-start;
+  transition: background 0.15s, color 0.15s;
   background: transparent;
 
   &:hover {
@@ -116,36 +183,90 @@
   }
 }
 
-// ── Level badge & XP bar ──────────────────────────────────────
-.nameRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+// ── Two-column layout ────────────────────────────────────────
+.columns {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 22px 24px 60px;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 18px;
+  align-items: flex-start;
 }
 
-.levelBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 9px;
-  border-radius: 99px;
-  background: #312e81;
-  color: #c7d2fe;
-  font-size: .75rem;
+.sideCol,
+.mainCol {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+
+.cardTitle {
+  font-size: 0.92rem;
   font-weight: 700;
-  letter-spacing: .03em;
-  flex-shrink: 0;
+  color: var(--text);
+  margin: 0 0 10px;
 }
 
-.xpWrap {
+.bio {
+  font-size: 0.9rem;
+  color: var(--text);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  margin: 0 0 12px;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.metaList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 6px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-2);
+    font-size: 0.82rem;
+  }
+}
+
+// ── XP block ─────────────────────────────────────────────────
+.xpRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.xpLevel {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.xpLabel {
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
 
 .xpBar {
-  flex: 1;
-  max-width: 240px;
   height: 6px;
   background: var(--bg-active);
   border-radius: 99px;
@@ -154,63 +275,48 @@
 
 .xpFill {
   height: 100%;
-  background: linear-gradient(90deg, #6366f1, #818cf8);
+  background: #6366f1;
   border-radius: 99px;
-  transition: width .4s ease;
+  transition: width 0.4s ease;
   min-width: 2px;
 }
 
-.xpLabel {
-  font-size: .75rem;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-// ── Achievements section ──────────────────────────────────────
-.achSection {
-  margin-top: 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.achHeader {
+// ── Achievements ─────────────────────────────────────────────
+.achHead {
   display: flex;
   align-items: baseline;
   gap: 10px;
-}
-
-.achTitle2 {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
+  margin-bottom: 14px;
 }
 
 .achCount {
-  font-size: .8125rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
 .achGroup {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 16px;
+
+  &:last-child { margin-bottom: 0; }
 }
 
 .achGroupLabel {
-  font-size: .7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
 }
 
 .achGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 8px;
 }
 
-// ── Achievement card ──────────────────────────────────────────
 .achCard {
   display: flex;
   align-items: center;
@@ -219,7 +325,7 @@
   border-radius: 8px;
   border: 1px solid;
   position: relative;
-  transition: opacity .15s;
+  transition: opacity 0.15s;
 
   &[data-tooltip]:hover::after {
     content: attr(data-tooltip);
@@ -251,7 +357,7 @@
 .achCardLocked {
   border-color: var(--border-light);
   background: transparent;
-  opacity: .45;
+  opacity: 0.45;
 }
 
 .achIcon {
@@ -264,7 +370,6 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 1rem;
 }
 
 .achSecretGlyph {
@@ -282,7 +387,7 @@
 }
 
 .achTitle {
-  font-size: .8125rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -291,13 +396,59 @@
 }
 
 .achRank {
-  font-size: .7rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
 }
 
 .achCheck {
-  font-size: .75rem;
+  font-size: 0.75rem;
   color: #4ade80;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+// ── Responsive ────────────────────────────────────────────────
+@media (max-width: 840px) {
+  .columns {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .banner { height: 160px; }
+
+  .heroInner {
+    padding: 0 16px 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .avatarWrap {
+    margin-top: -46px;
+  }
+
+  .heroActions {
+    width: 100%;
+  }
+
+  .editBtn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .displayName { font-size: 1.25rem; }
+
+  .columns {
+    padding: 16px 12px 40px;
+  }
+
+  .card {
+    padding: 14px 14px;
+  }
+
+  .achGrid {
+    grid-template-columns: 1fr;
+  }
 }

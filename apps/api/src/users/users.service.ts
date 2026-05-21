@@ -4,14 +4,18 @@ import {
   NotFoundException,
   Logger,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ChangeEmailDto } from './dto/change-email.dto';
 import { AchievementsService } from '../achievements/achievements.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class UsersService {
@@ -21,6 +25,8 @@ export class UsersService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly achievementsService: AchievementsService,
+    private readonly dataSource: DataSource,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ── Создание пользователя ──────────────────────────────────
@@ -46,7 +52,7 @@ export class UsersService {
     // Хешируем пароль
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Создаём пользователя — НЕ устанавливаем displayName здесь
+    // Создаём пользователя – НЕ устанавливаем displayName здесь
     // чтобы не было конфликта типов string vs string|null
     const user = this.usersRepository.create({
       username,
@@ -71,7 +77,7 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { username } });
   }
 
-  // ── Найти по email (с паролем — для аутентификации) ───────
+  // ── Найти по email (с паролем – для аутентификации) ───────
   async findByEmailWithPassword(email: string): Promise<User | null> {
     return this.usersRepository
       .createQueryBuilder('user')
@@ -96,6 +102,46 @@ export class UsersService {
     if (updateUserDto.username && updateUserDto.username !== user.username) {
       const taken = await this.findByUsername(updateUserDto.username);
       if (taken) throw new ConflictException('Это имя пользователя уже занято');
+    }
+
+    // Если меняется selectedFrame – убедимся, что рамка куплена (или null)
+    if (
+      updateUserDto.selectedFrame !== undefined &&
+      updateUserDto.selectedFrame !== null
+    ) {
+      const owned = await this.usersRepository.manager
+        .createQueryBuilder()
+        .select('1')
+        .from('user_inventory', 'inv')
+        .where('inv."userId" = :userId AND inv."itemId" = :itemId', {
+          userId: user.id,
+          itemId: updateUserDto.selectedFrame,
+        })
+        .getRawOne();
+      if (!owned) {
+        throw new BadRequestException('Эта рамка не куплена');
+      }
+    }
+
+    // Если меняется selectedFont – проверяем, что соответствующий font-товар куплен.
+    // selectedFont = null означает системный (бесплатно).
+    if (
+      updateUserDto.selectedFont !== undefined &&
+      updateUserDto.selectedFont !== null
+    ) {
+      const itemId = `font_${updateUserDto.selectedFont}`;
+      const owned = await this.usersRepository.manager
+        .createQueryBuilder()
+        .select('1')
+        .from('user_inventory', 'inv')
+        .where('inv."userId" = :userId AND inv."itemId" = :itemId', {
+          userId: user.id,
+          itemId,
+        })
+        .getRawOne();
+      if (!owned) {
+        throw new BadRequestException('Этот шрифт не куплен');
+      }
     }
 
     // Применяем только явно переданные поля (фильтруем undefined от class-transformer)
@@ -141,6 +187,148 @@ export class UsersService {
     await this.usersRepository.update(id, { lastSeenAt: new Date() });
   }
 
+  /** Публичная статистика для лендинга:
+   *  totalUsers – всего активных аккаунтов,
+   *  onlineUsers – пользователи с lastSeenAt за последние 5 минут,
+   *  deletedToday – количество удалённых сегодня аккаунтов. */
+  async getPublicStats(): Promise<{ totalUsers: number; onlineUsers: number; deletedToday: number }> {
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const [totalUsers, onlineUsers, deletedToday] = await Promise.all([
+      this.usersRepository.count({ where: { isActive: true } }),
+      this.usersRepository
+        .createQueryBuilder('u')
+        .where('u.isActive = :a', { a: true })
+        .andWhere('u.lastSeenAt >= :since', { since: fiveMinAgo })
+        .getCount(),
+      this.deletedToday(),
+    ]);
+    return { totalUsers, onlineUsers, deletedToday };
+  }
+
+  /** Начислить ежедневный бонус (1 монетка), если ещё не начисляли сегодня.
+   *  Возвращает true, если бонус был выдан. */
+  async grantDailyBonusIfDue(id: string): Promise<boolean> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      select: ['id', 'lastDailyBonusAt'],
+    });
+    if (!user) return false;
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const last  = user.lastDailyBonusAt ? new Date(user.lastDailyBonusAt) : null;
+    if (last) last.setHours(0, 0, 0, 0);
+
+    if (last && last.getTime() === today.getTime()) return false;
+
+    await this.usersRepository.update(id, {
+      lastDailyBonusAt: new Date(),
+    });
+    await this.usersRepository.increment({ id }, 'coins', 1);
+    await this.notifications.create({
+      userId: id,
+      kind:   'daily_bonus',
+      title:  'Ежедневный бонус: +1 монета',
+      body:   'Спасибо, что вернулись! Загляните в магазин.',
+      icon:   'Coins',
+      color:  '#eab308',
+    }).catch(() => { /* ignore */ });
+    return true;
+  }
+
+  // ── Смена пароля ───────────────────────────────────────────
+  async changePassword(id: string, dto: ChangePasswordDto): Promise<void> {
+    if (dto.currentPassword === dto.newPassword) {
+      throw new BadRequestException('Новый пароль должен отличаться от текущего');
+    }
+    const user = await this.usersRepository
+      .createQueryBuilder('u')
+      .addSelect('u.password')
+      .where('u.id = :id', { id })
+      .getOne();
+    if (!user) throw new NotFoundException('Пользователь не найден');
+
+    const valid = await bcrypt.compare(dto.currentPassword, user.password);
+    if (!valid) throw new UnauthorizedException('Неверный текущий пароль');
+
+    const hashed = await bcrypt.hash(dto.newPassword, 12);
+    await this.usersRepository.update(id, { password: hashed });
+  }
+
+  // ── Смена email ────────────────────────────────────────────
+  async changeEmail(id: string, dto: ChangeEmailDto): Promise<User> {
+    const user = await this.usersRepository
+      .createQueryBuilder('u')
+      .addSelect('u.password')
+      .where('u.id = :id', { id })
+      .getOne();
+    if (!user) throw new NotFoundException('Пользователь не найден');
+
+    const valid = await bcrypt.compare(dto.password, user.password);
+    if (!valid) throw new UnauthorizedException('Неверный пароль');
+
+    if (user.email === dto.newEmail) {
+      throw new BadRequestException('Это уже ваш текущий email');
+    }
+    const exists = await this.usersRepository.findOne({ where: { email: dto.newEmail } });
+    if (exists) throw new ConflictException('Этот email уже используется');
+
+    user.email = dto.newEmail;
+    user.isEmailVerified = false;
+    const saved = await this.usersRepository.save(user);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _pw, ...rest } = saved as User & { password?: string };
+    return rest as User;
+  }
+
+  // ── Удаление аккаунта ──────────────────────────────────────
+  async deleteAccount(id: string, password: string): Promise<void> {
+    const user = await this.usersRepository
+      .createQueryBuilder('u')
+      .addSelect('u.password')
+      .where('u.id = :id', { id })
+      .getOne();
+    if (!user) throw new NotFoundException('Пользователь не найден');
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) throw new UnauthorizedException('Неверный пароль');
+
+    const usernameHint = user.username;
+    // Каскадно очищаем связанные записи. Используем транзакцию.
+    await this.dataSource.transaction(async (em) => {
+      // task_completion → task → tag link rows → tag/task/achievement/inventory
+      await em.query('DELETE FROM task_completion WHERE "userId" = $1', [id]);
+      await em.query(
+        'DELETE FROM task_tags WHERE "taskId" IN (SELECT id FROM task WHERE "userId" = $1)',
+        [id],
+      );
+      await em.query('DELETE FROM task WHERE "userId" = $1', [id]);
+      await em.query('DELETE FROM tag WHERE "userId" = $1', [id]);
+      await em.query('DELETE FROM user_achievements WHERE "userId" = $1', [id]);
+      await em.query('DELETE FROM user_inventory WHERE "userId" = $1', [id]);
+      await em.query('DELETE FROM notifications WHERE "userId" = $1', [id]);
+      await em.query('DELETE FROM users WHERE id = $1', [id]);
+
+      // Записываем факт удаления для публичной статистики
+      await em.query(
+        'INSERT INTO account_deletion ("usernameHint") VALUES ($1)',
+        [usernameHint],
+      );
+    });
+    this.logger.log(`Пользователь удалён: ${usernameHint} (${id})`);
+  }
+
+  /** Сколько аккаунтов было удалено сегодня (с 00:00 локального времени). */
+  async deletedToday(): Promise<number> {
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const res = await this.dataSource
+      .createQueryBuilder()
+      .select('COUNT(*)', 'count')
+      .from('account_deletion', 'd')
+      .where('d."deletedAt" >= :since', { since: start })
+      .getRawOne<{ count: string }>();
+    return res ? parseInt(res.count, 10) : 0;
+  }
+
   // ── Верификация email ──────────────────────────────────────
   async verifyEmail(token: string): Promise<User> {
     const user = await this.usersRepository.findOne({
@@ -157,7 +345,7 @@ export class UsersService {
   async getPublicProfile(username: string): Promise<Partial<User> & { level: number }> {
     const user = await this.usersRepository.findOne({
       where: { username, isActive: true },
-      select: ['id', 'username', 'displayName', 'avatarUrl', 'coverUrl', 'bio', 'createdAt', 'xp'],
+      select: ['id', 'username', 'displayName', 'avatarUrl', 'coverUrl', 'bio', 'location', 'createdAt', 'xp', 'selectedFrame', 'selectedFont', 'socialLinks'],
     });
     if (!user) throw new NotFoundException('Пользователь не найден');
     return { ...user, level: Math.floor((user.xp ?? 0) / 1000) };

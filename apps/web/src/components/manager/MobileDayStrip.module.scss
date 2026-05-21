@@ -14,6 +14,9 @@
   padding: 10px 10px 8px;
   overflow-x: auto;
   scrollbar-width: none;
+  // Разрешаем горизонтальный pan, не блокируя вертикальный скролл всей страницы
+  touch-action: pan-y;
+  user-select: none;
   &::-webkit-scrollbar { display: none; }
 }
 
@@ -100,18 +103,139 @@
 
 // ── Expanded month block ──────────────────────────────────────
 .monthBlock {
+  position: relative;
   padding: 10px 12px 8px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  touch-action: pan-y;
 }
 
-.monthTitle {
-  text-align: center;
+.monthNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.monthNavBtn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.12s;
+
+  &:hover { background: var(--bg-hover); }
+}
+
+.monthTitleBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px 12px;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 4px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-input);
+  }
+}
+
+.monthCaret {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+// ── Month/Year picker panel ──────────────────────────────────
+.pickerPanel {
+  position: absolute;
+  top: 48px;
+  left: 12px;
+  right: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+  padding: 10px 10px 12px;
+  z-index: 50;
+}
+
+.pickerYearRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 8px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 8px;
+}
+
+.pickerYearBtn {
+  width: 30px;
+  height: 30px;
+  background: none;
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+  &:hover { background: var(--bg-hover); }
+}
+
+.pickerYearLabel {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pickerMonthsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.pickerMonthCell {
+  padding: 10px 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-2);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+}
+
+.pickerMonthCellActive {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
 }
 
 .monthWeekHead {

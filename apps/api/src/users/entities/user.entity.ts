@@ -25,7 +25,7 @@ export class User {
   @Column({ type: 'varchar', select: false })
   password: string;
 
-  // Для всех nullable полей — явно указываем type: 'varchar'
+  // Для всех nullable полей – явно указываем type: 'varchar'
   // иначе TypeORM видит тип как "Object" из-за string | null
   @Column({ type: 'varchar', nullable: true, length: 255, default: null })
   displayName: string | null;
@@ -77,6 +77,25 @@ export class User {
 
   @Column({ type: 'integer', default: 0 })
   xp: number;
+
+  @Column({ type: 'integer', default: 0 })
+  coins: number;
+
+  /** Когда в последний раз начислили ежедневный бонус за вход */
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  lastDailyBonusAt: Date | null;
+
+  /** ID экипированной рамки аватара (напр. 'frame_blue'); null = без рамки */
+  @Column({ type: 'varchar', length: 64, nullable: true, default: null })
+  selectedFrame: string | null;
+
+  /** Ключ выбранного шрифта (напр. 'alegreya'); null = системный */
+  @Column({ type: 'varchar', length: 32, nullable: true, default: null })
+  selectedFont: string | null;
+
+  /** Карта { provider -> url } внешних ссылок профиля (vk, telegram, github и т.д.) */
+  @Column({ type: 'json', nullable: true, default: null })
+  socialLinks: Record<string, string> | null;
 
   @CreateDateColumn()
   createdAt: Date;

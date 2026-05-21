@@ -43,6 +43,7 @@
   position: fixed;
   z-index: 9999;
   width: 312px;
+  max-width: calc(100vw - 16px);
   background: var(--bg);
   border: 1px solid var(--border-input);
   border-radius: 8px;

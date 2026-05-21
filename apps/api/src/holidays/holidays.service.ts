@@ -23,14 +23,20 @@ export class HolidaysService {
     private readonly repo: Repository<HolidayCache>,
   ) {}
 
+  private static readonly CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 дней
+
   async getByYear(year: number): Promise<HolidayEntry[]> {
     const cached = await this.repo.findOne({ where: { year } });
-    if (cached) return cached.entries;
+    if (cached) {
+      const ageMs = Date.now() - new Date(cached.fetchedAt).getTime();
+      if (ageMs <= HolidaysService.CACHE_TTL_MS) return cached.entries;
+      // Устаревший кеш – переспрашиваем и обновляем
+    }
 
     const entries = await this.fetchAndParse(year);
     try {
-      await this.repo.save({ year, entries });
-    } catch { /* race condition — не страшно */ }
+      await this.repo.upsert({ year, entries }, ['year']);
+    } catch { /* race condition – не страшно */ }
     return entries;
   }
 
@@ -49,8 +55,8 @@ export class HolidaysService {
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
       if (res.status === 404) {
-        // Данные ещё не опубликованы (будущий год) — это норма, не ошибка
-        this.logger.debug(`No calendar data for ${year} (404 — year not published yet)`);
+        // Данные ещё не опубликованы (будущий год) – это норма, не ошибка
+        this.logger.debug(`No calendar data for ${year} (404 – year not published yet)`);
         return [];
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -73,7 +79,7 @@ export class HolidaysService {
     const entries: HolidayEntry[] = [];
 
     // ── Рабочие субботы из transitions ────────────────────────
-    // transitions[].from = "DD.MM" — этот день является рабочим (перенос)
+    // transitions[].from = "DD.MM" – этот день является рабочим (перенос)
     const workdays = new Set<string>();
     const transList: { from: string }[] = Array.isArray(raw.transitions) ? raw.transitions : [];
     for (const tr of transList) {
@@ -94,8 +100,8 @@ export class HolidaysService {
 
       for (const token of dStr.split(',')) {
         const trimmed  = token.trim();
-        const isShort  = trimmed.endsWith('+');
-        // '*' = перенесённый выходной, обрабатываем как обычный нерабочий
+        // '+' = предпраздничный сокращённый, '*' = предпраздничный перенесённый (тоже сокращённый)
+        const isShort  = trimmed.endsWith('+') || trimmed.endsWith('*');
         const cleaned  = trimmed.replace(/[^0-9]/g, '');
         const dayNum   = parseInt(cleaned, 10);
         if (!dayNum || dayNum < 1 || dayNum > 31) continue;
@@ -114,7 +120,7 @@ export class HolidaysService {
           // Рабочий день в будни, но нерабочий по календарю → праздник (мосты, переносы)
           entries.push({ date, name: '', type: 'holiday' });
         }
-        // Обычные Сб/Вс пропускаем — фронтенд добавляет все 14 праздников через BUILTIN
+        // Обычные Сб/Вс пропускаем – фронтенд добавляет все 14 праздников через BUILTIN
       }
     }
 

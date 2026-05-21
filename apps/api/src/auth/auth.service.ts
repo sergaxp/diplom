@@ -67,6 +67,14 @@ export class AuthService {
     }
 
     await this.usersService.updateLastSeen(user.id);
+    // Ежедневный бонус за вход – 1 монетка, если ещё не выдавали сегодня
+    const bonusGranted = await this.usersService.grantDailyBonusIfDue(user.id);
+    if (bonusGranted) {
+      // Перечитываем пользователя, чтобы вернуть свежие coins/lastDailyBonusAt
+      const refreshed = await this.usersService.findById(user.id);
+      const tokens = this.generateTokens(refreshed);
+      return { user: this.stripPassword(refreshed), tokens };
+    }
     const tokens = this.generateTokens(user);
     return { user: this.stripPassword(user), tokens };
   }
@@ -95,7 +103,7 @@ export class AuthService {
     const accessSecret  = process.env.JWT_SECRET ?? 'fallback-dev-secret';
     const refreshSecret = process.env.JWT_REFRESH_SECRET ?? 'fallback-dev-refresh-secret';
 
-    // expiresIn — число секунд
+    // expiresIn – число секунд
     const accessToken  = this.jwtService.sign(payload, { secret: accessSecret,  expiresIn: 86400 });   // 24h
     const refreshToken = this.jwtService.sign(payload, { secret: refreshSecret, expiresIn: 2592000 }); // 30d
 
