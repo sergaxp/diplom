@@ -54,12 +54,8 @@ export class ShopService {
       }
 
       user.coins -= item.price;
-      // Автоэкипировка сразу после покупки
       if (item.kind === 'frame') {
         user.selectedFrame = item.id;
-      } else if (item.kind === 'font') {
-        // У шрифтов meta.key — это значение для selectedFont (напр. 'alegreya')
-        user.selectedFont = item.meta?.key ?? null;
       }
 
       await em.save(user);

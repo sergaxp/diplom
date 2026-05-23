@@ -15,7 +15,6 @@ export interface PublicProfile {
   xp: number;
   level: number;
   selectedFrame?: string | null;
-  selectedFont?: string | null;
   socialLinks?: Record<string, string> | null;
 }
 
@@ -29,7 +28,6 @@ export interface UpdateProfilePayload {
   showGlobalEvents?: boolean;
   showHolidays?: boolean;
   selectedFrame?: string | null;
-  selectedFont?: string | null;
   socialLinks?: Record<string, string> | null;
 }
 

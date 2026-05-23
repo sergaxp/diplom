@@ -1,7 +1,7 @@
 import { api } from './api';
 import { User } from './auth';
 
-export type ShopItemKind = 'frame' | 'font';
+export type ShopItemKind = 'frame';
 
 export interface ShopItem {
   id: string;

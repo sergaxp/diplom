@@ -47,12 +47,6 @@ export class UpdateUserDto {
   @MaxLength(64)
   selectedFrame?: string | null;
 
-  /** Ключ выбранного шрифта ('alegreya'/'manrope'), или null для системного */
-  @IsOptional()
-  @IsString()
-  @MaxLength(32)
-  selectedFont?: string | null;
-
   /** Ссылки на соцсети: { provider: url }. Передайте {} чтобы стереть все. */
   @IsOptional()
   @IsObject()

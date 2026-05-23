@@ -89,10 +89,6 @@ export class User {
   @Column({ type: 'varchar', length: 64, nullable: true, default: null })
   selectedFrame: string | null;
 
-  /** Ключ выбранного шрифта (напр. 'alegreya'); null = системный */
-  @Column({ type: 'varchar', length: 32, nullable: true, default: null })
-  selectedFont: string | null;
-
   /** Карта { provider -> url } внешних ссылок профиля (vk, telegram, github и т.д.) */
   @Column({ type: 'json', nullable: true, default: null })
   socialLinks: Record<string, string> | null;

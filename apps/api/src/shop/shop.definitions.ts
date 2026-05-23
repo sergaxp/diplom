@@ -1,4 +1,4 @@
-export type ShopItemKind = 'frame' | 'font';
+export type ShopItemKind = 'frame';
 
 export interface ShopItemDef {
   id: string;
@@ -45,23 +45,6 @@ export const SHOP_ITEMS: ShopItemDef[] = [
     meta: { color: '#eab308' },
   },
 
-  // ── Шрифты ─────────────────────────────────────────────────
-  {
-    id: 'font_alegreya',
-    kind: 'font',
-    title: 'Alegreya Sans',
-    description: 'Гуманистичный sans-serif с характером. Применяется ко всему интерфейсу и видна другим на вашем профиле.',
-    price: 3,
-    meta: { key: 'alegreya' },
-  },
-  {
-    id: 'font_manrope',
-    kind: 'font',
-    title: 'Manrope',
-    description: 'Современный геометричный sans-serif. Применяется ко всему интерфейсу и видна другим на вашем профиле.',
-    price: 3,
-    meta: { key: 'manrope' },
-  },
 ];
 
 export const SHOP_ITEM_MAP = new Map<string, ShopItemDef>(

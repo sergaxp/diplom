@@ -32,8 +32,8 @@
   height: 16px;
   padding: 0 4px;
   border-radius: 999px;
-  background: #ef4444;
-  color: #fff;
+  background: var(--text-muted);
+  color: var(--bg);
   font-size: 0.62rem;
   font-weight: 700;
   display: flex;
@@ -121,8 +121,8 @@
 }
 
 .itemUnread {
-  background: rgba(99, 102, 241, 0.06);
-  &:hover { background: rgba(99, 102, 241, 0.1); }
+  background: var(--bg-hover);
+  &:hover { background: var(--bg-active); }
 
   &::before {
     content: '';
@@ -132,7 +132,7 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: #6366f1;
+    background: var(--text-muted);
     transform: translateY(-50%);
   }
 }

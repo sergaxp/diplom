@@ -103,7 +103,7 @@
 
 .tagBtnDanger {
   @extend .tagBtn;
-  &:hover { background: rgba(220, 38, 38, 0.1); color: #dc2626; }
+  &:hover { background: var(--bg-hover); color: var(--text-2); }
 }
 
 /* ── Форма ── */

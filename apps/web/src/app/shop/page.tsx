@@ -8,7 +8,6 @@ import { AvatarFramed } from '../../components/AvatarFramed';
 import { useAuthStore } from '../../store/authStore';
 import { shopApi, ShopItem } from '../../lib/shop';
 import { authApi } from '../../lib/auth';
-import { fontFamilyFor } from '../../lib/fonts';
 import styles from './page.module.scss';
 
 export default function ShopPage() {
@@ -43,9 +42,7 @@ export default function ShopPage() {
   const coins = user.coins ?? 0;
   const errMsg = (buyMut.error as { response?: { data?: { message?: string } } } | null)?.response?.data?.message;
 
-  // Группировка по категориям
   const frames = items.filter(i => i.kind === 'frame');
-  const fonts  = items.filter(i => i.kind === 'font');
 
   return (
     <div className={styles.root}>
@@ -83,26 +80,6 @@ export default function ShopPage() {
                   />
                 ))}
               </div>
-
-              {fonts.length > 0 && (
-                <>
-                  <h2 className={styles.section}>Шрифты</h2>
-                  <p className={styles.sectionDesc}>
-                    Шрифт применяется ко всему интерфейсу и виден другим пользователям на вашем профиле.
-                  </p>
-                  <div className={styles.grid}>
-                    {fonts.map(item => (
-                      <ShopItemCard
-                        key={item.id}
-                        item={item}
-                        user={user}
-                        onBuy={() => buyMut.mutate(item.id)}
-                        busy={buyMut.isPending}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
             </>
           )}
         </div>
@@ -120,31 +97,19 @@ interface CardProps {
 
 function ShopItemCard({ item, user, onBuy, busy }: CardProps) {
   const color = item.meta?.color;
-  const isFont = item.kind === 'font';
-  const fontFamily = isFont ? fontFamilyFor(item.meta?.key ?? null) : undefined;
 
   return (
     <div className={[styles.itemCard, item.owned ? styles.itemCardOwned : ''].join(' ')}>
       <div className={styles.preview}>
-        {isFont ? (
-          <div className={styles.fontPreview} style={{ fontFamily }}>
-            <span className={styles.fontPreviewBig}>Aa</span>
-            <span className={styles.fontPreviewLine}>Быстрая лиса 1234</span>
-          </div>
-        ) : (
-          <AvatarFramed
-            avatarUrl={user.avatarUrl}
-            displayName={user.displayName}
-            username={user.username}
-            frameId={item.id}
-            size={80}
-          />
-        )}
+        <AvatarFramed
+          avatarUrl={user.avatarUrl}
+          displayName={user.displayName}
+          username={user.username}
+          frameId={item.id}
+          size={80}
+        />
       </div>
-      <div
-        className={styles.itemTitle}
-        style={color ? { color } : (isFont ? { fontFamily } : undefined)}
-      >
+      <div className={styles.itemTitle} style={color ? { color } : undefined}>
         {item.title}
       </div>
       <div className={styles.itemDesc}>{item.description}</div>

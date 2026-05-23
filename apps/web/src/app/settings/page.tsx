@@ -16,7 +16,6 @@ import { clearAuth, User } from '../../lib/auth';
 import { tagsApi } from '../../lib/tags';
 import { shopApi } from '../../lib/shop';
 import { SOCIAL_PROVIDERS, getSocialIcon } from '../../lib/socials';
-import { FONT_CATALOG, SYSTEM_FONT_FAMILY } from '../../lib/fonts';
 import { TagManager } from '../../components/manager/TagManager';
 import styles from './page.module.scss';
 
@@ -918,92 +917,7 @@ function AppearanceTab({ user, setUser }: { user: User; setUser: (u: User | null
         </div>
       </div>
 
-      <FontPicker user={user} setUser={setUser} />
     </>
-  );
-}
-
-// ── Font Picker ──────────────────────────────────────────────────
-function FontPicker({ user, setUser }: { user: User; setUser: (u: User | null) => void }) {
-  const { data: shopItems = [] } = useQuery({
-    queryKey: ['shop', 'items'],
-    queryFn: shopApi.getItems,
-  });
-  const ownedFontKeys = new Set(
-    shopItems.filter(i => i.kind === 'font' && i.owned).map(i => i.meta?.key ?? ''),
-  );
-
-  const mut = useMutation({
-    mutationFn: (fontKey: string | null) => profileApi.update({ selectedFont: fontKey }),
-    // Optimistic — шрифт применяется немедленно везде
-    onMutate: (fontKey) => {
-      const prev = user;
-      setUser({ ...user, selectedFont: fontKey });
-      return { prev };
-    },
-    onSuccess: (u: User) => setUser(u),
-    onError: (_e, _v, ctx) => { if (ctx?.prev) setUser(ctx.prev); },
-  });
-
-  const current = user.selectedFont ?? null;
-
-  return (
-    <div className={styles.section}>
-      <div className={styles.sectionHead}>
-        <span className={styles.sectionTitle}>Шрифт интерфейса</span>
-        <span className={styles.sectionDesc}>
-          Применяется ко всему сайту и виден другим пользователям на вашем профиле.
-          Новые шрифты можно купить в <Link href="/shop" className={styles.inlineLink}>магазине</Link>.
-        </span>
-      </div>
-
-      <div className={styles.fontGrid}>
-        {/* Системный — бесплатно */}
-        <button
-          type="button"
-          className={[styles.fontOption, !current ? styles.fontOptionActive : ''].join(' ')}
-          onClick={() => mut.mutate(null)}
-          disabled={mut.isPending}
-          style={{ fontFamily: SYSTEM_FONT_FAMILY }}
-        >
-          <span className={styles.fontSampleBig}>Aa</span>
-          <span className={styles.fontSampleLine}>Быстрая бурая лиса 1234</span>
-          <span className={styles.fontOptionLabel}>Системный</span>
-        </button>
-
-        {FONT_CATALOG.map(f => {
-          const owned = ownedFontKeys.has(f.key);
-          const isActive = current === f.key;
-          return (
-            <button
-              key={f.key}
-              type="button"
-              className={[
-                styles.fontOption,
-                isActive ? styles.fontOptionActive : '',
-                !owned   ? styles.fontOptionLocked : '',
-              ].join(' ')}
-              onClick={() => {
-                if (!owned) return;
-                mut.mutate(f.key);
-              }}
-              disabled={mut.isPending}
-              style={{ fontFamily: f.cssFamily }}
-              title={owned ? f.label : 'Купите шрифт в магазине'}
-            >
-              <span className={styles.fontSampleBig}>Aa</span>
-              <span className={styles.fontSampleLine}>Быстрая бурая лиса 1234</span>
-              <span className={styles.fontOptionLabel}>{f.label}</span>
-              {!owned && (
-                <Link href="/shop" className={styles.fontLockBadge} onClick={e => e.stopPropagation()}>
-                  В магазин →
-                </Link>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 

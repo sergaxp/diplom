@@ -173,10 +173,10 @@
   font-weight: 600;
 }
 
-.badgeAdmin  { background: #fef3c7; color: #92400e; }
+.badgeAdmin  { background: var(--bg-active); color: var(--text-2); }
 .badgeUser   { background: var(--bg-active); color: var(--text-2); }
-.badgeActive { background: #dcfce7; color: #166534; }
-.badgeOff    { background: #fee2e2; color: #991b1b; }
+.badgeActive { background: var(--bg-active); color: var(--text-2); }
+.badgeOff    { background: var(--bg-hover);  color: var(--text-muted); }
 
 /* ── Кнопки действий ── */
 .actionBtn {
@@ -193,8 +193,8 @@
   &:hover { background: var(--bg-hover); }
 }
 
-.actionBtnDanger  { color: #dc2626; border-color: rgba(220, 38, 38, 0.4); &:hover { background: rgba(220, 38, 38, 0.08); } }
-.actionBtnSuccess { color: #16a34a; border-color: rgba(22, 163, 74, 0.4);  &:hover { background: rgba(22, 163, 74, 0.08); } }
+.actionBtnDanger  { color: var(--text-2); border-color: var(--border-input); &:hover { background: var(--bg-hover); } }
+.actionBtnSuccess { color: var(--text-2); border-color: var(--border-input); &:hover { background: var(--bg-hover); } }
 
 .selfLabel { font-size: .75rem; color: var(--text-4); }
 .loading   { padding: 24px; text-align: center; color: var(--text-4); }
@@ -210,8 +210,8 @@
   vertical-align: middle;
 }
 
-.dot_online   { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,.25); }
-.dot_recently { background: #f59e0b; }
+.dot_online   { background: var(--text-muted); }
+.dot_recently { background: var(--border-strong); }
 .dot_offline  { background: var(--border-strong); }
 
 .onlineLabel { font-size: .8125rem; color: var(--text-2); vertical-align: middle; }
@@ -480,11 +480,11 @@
 
 .eventError {
   font-size: .8125rem;
-  color: #b91c1c;
+  color: var(--text-2);
   padding: 6px 10px;
-  background: rgba(220, 38, 38, 0.08);
+  background: var(--bg-hover);
   border-radius: 6px;
-  border: 1px solid rgba(220, 38, 38, 0.3);
+  border: 1px solid var(--border-input);
 }
 
 .eventEmpty {
@@ -523,14 +523,14 @@
   flex-shrink: 0;
   width: 28px; height: 28px;
   border-radius: 6px;
-  border: 1px solid rgba(220, 38, 38, 0.4);
+  border: 1px solid var(--border-input);
   background: none;
-  color: #dc2626;
+  color: var(--text-2);
   cursor: pointer;
   font-size: .875rem;
   transition: background .1s;
 
-  &:hover { background: rgba(220, 38, 38, 0.08); }
+  &:hover { background: var(--bg-hover); }
   &:disabled { opacity: .5; cursor: default; }
 }
 
@@ -591,9 +591,9 @@
 .setupError {
   padding: 8px 12px;
   border-radius: 8px;
-  background: rgba(220, 38, 38, 0.08);
-  border: 1px solid rgba(220, 38, 38, 0.3);
-  color: #b91c1c;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-input);
+  color: var(--text-2);
   font-size: .875rem;
 }
 

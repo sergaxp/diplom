@@ -123,8 +123,8 @@
 }
 
 .cellWeekend {
-  border-color: rgba(239, 68, 68, 0.35);
-  &:hover { border-color: rgba(239, 68, 68, 0.6); }
+  border-color: var(--border);
+  &:hover { border-color: var(--border-strong); }
 }
 
 .cellSelected {
@@ -178,7 +178,7 @@
   top: 3px;
   right: 3px;
   font-size: 0.55rem;
-  color: #fff;
+  color: var(--bg);
   border-radius: 99px;
   padding: 1px 4px;
   line-height: 1.2;
@@ -518,8 +518,8 @@
   align-items: center;
   padding: 4px 12px;
   border-radius: 999px;
-  background: #ea580c;
-  color: #fff;
+  background: var(--text);
+  color: var(--bg);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -572,7 +572,7 @@
 }
 
 .chartColToday {
-  background: rgba(234, 88, 12, 0.04);
+  background: var(--bg-alt);
 }
 
 .chartHourLine {
@@ -589,7 +589,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: #ef4444;
+  background: var(--text-2);
   z-index: 5;
   pointer-events: none;
 
@@ -601,7 +601,7 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #ef4444;
+    background: var(--text-2);
   }
 }
 
@@ -662,10 +662,10 @@
   background: var(--bg-card);
   color: var(--text);
   border: 1px solid var(--border);
-  border-left: 3px solid #6366f1;
+  border-left: 3px solid var(--text-muted);
 }
-.chartTaskMandatory { background: #b91c1c; color: #fff; border-left: 3px solid #7f1d1d; }
-.chartTaskEvent     { background: #1d4ed8; color: #fff; border-left: 3px solid #1e3a8a; }
+.chartTaskMandatory { background: var(--bg-active); color: var(--text); border-left: 3px solid var(--border-strong); }
+.chartTaskEvent     { background: var(--bg-hover);  color: var(--text); border-left: 3px solid var(--border-strong); }
 
 .chartTaskRepeat {
   font-size: 0.62rem;
@@ -770,7 +770,7 @@
   line-height: 1;
   align-self: flex-start;
 }
-.monthGridDayNumOff { color: #ef4444; }
+.monthGridDayNumOff { color: var(--text-muted); }
 
 .monthGridTasks {
   display: flex;
@@ -898,7 +898,7 @@
 }
 
 .spanCellOut { opacity: 0.3; pointer-events: none; }
-.spanCellToday { background: rgba(234, 88, 12, 0.08); }
+.spanCellToday { background: var(--bg-active); }
 .spanCellSel { outline: 2px solid var(--border-strong); outline-offset: -2px; }
 
 .spanDayNum {
@@ -994,7 +994,7 @@
 }
 
 .yearHeaderWdOff {
-  color: #ef4444;
+  color: var(--text-muted);
 }
 
 .yearHeaderDay {
@@ -1067,7 +1067,7 @@
   opacity: 0.5;
 }
 
-.yearDayCellToday  { background: rgba(234, 88, 12, 0.1); }
+.yearDayCellToday  { background: var(--bg-active); }
 .yearDayCellSel    { outline: 2px solid var(--border-strong); outline-offset: -2px; }
 
 .yearOverflow {

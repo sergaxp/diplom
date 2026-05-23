@@ -132,7 +132,7 @@
   align-items: center;
   justify-content: center;
   line-height: 1;
-  &:hover { background: #cc3333; }
+  &:hover { background: var(--bg-active); }
 }
 
 .playBadge {
@@ -160,7 +160,7 @@
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 3px;
-  &:hover { color: #cc3333; background: rgba(204,51,51,0.08); }
+  &:hover { color: var(--text-2); background: var(--bg-hover); }
 }
 
 // ── Chips ─────────────────────────────────────────────────────
@@ -268,11 +268,11 @@
 
 .submitBtn {
   padding: 6px 16px;
-  background: #dc2626;
+  background: var(--text);
   border: none;
   border-radius: 5px;
   font-size: 0.85rem;
-  color: #fff;
+  color: var(--bg);
   cursor: pointer;
   font-family: inherit;
   font-weight: 500;

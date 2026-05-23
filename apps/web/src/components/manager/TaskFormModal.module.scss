@@ -281,7 +281,7 @@
   background: none;
   border-radius: 5px;
   font-size: 0.875rem;
-  color: #3b82f6;
+  color: var(--text);
   cursor: pointer;
   font-family: inherit;
   text-align: left;
@@ -434,7 +434,7 @@
   padding: 0 0.1rem;
   line-height: 1;
   transition: color 0.1s;
-  &:hover { color: #e05050; }
+  &:hover { color: var(--text-2); }
 }
 
 // ── Subtask items ─────────────────────────────────────────────
@@ -504,7 +504,7 @@
   opacity: 0;
   line-height: 1;
   transition: opacity 0.1s, color 0.1s;
-  &:hover { color: #e05050; }
+  &:hover { color: var(--text-2); }
 }
 
 .addSubtask {
@@ -748,14 +748,14 @@
 .deleteBtn {
   padding: 0.45rem 1rem;
   background: none;
-  border: 1px solid rgba(204, 51, 51, 0.4);
+  border: 1px solid var(--border-input);
   border-radius: 5px;
   font-size: 0.875rem;
-  color: #cc3333;
+  color: var(--text-2);
   cursor: pointer;
   font-family: inherit;
   transition: background 0.1s, border-color 0.1s;
-  &:hover { background: rgba(204, 51, 51, 0.08); border-color: #cc3333; }
+  &:hover { background: var(--bg-hover); border-color: var(--border-strong); }
 }
 
 .clearBtn {
@@ -1005,7 +1005,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--bg);
 }
 
 .itemAttachName {
@@ -1060,7 +1060,7 @@
   cursor: pointer;
   padding: 4px 6px;
   border-radius: 4px;
-  &:hover { color: #cc3333; background: rgba(204,51,51,0.08); }
+  &:hover { color: var(--text-2); background: var(--bg-hover); }
 }
 
 // ── Compact subtask row (laconic look) ────────────────────────
@@ -1218,7 +1218,7 @@
   width: 56px;
   height: 56px;
   background: rgba(0,0,0,0.55);
-  color: #fff;
+  color: var(--bg);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1253,8 +1253,8 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: rgba(64, 128, 220, 0.18);
-  color: #4080dc;
+  background: var(--bg-hover);
+  color: var(--text-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1303,7 +1303,7 @@
 
 .tgLinkUrl {
   font-size: 0.78rem;
-  color: #4080dc;
+  color: var(--text-2);
   word-break: break-all;
   padding-right: 44px;
   &:hover { text-decoration: underline; }
@@ -1314,7 +1314,7 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px 0;
-  border-left: 3px solid #4080dc;
+  border-left: 3px solid var(--border-strong);
   background: var(--bg-alt);
   border-radius: 6px;
   overflow: hidden;
@@ -1323,7 +1323,7 @@
 .tgLinkSource {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #4080dc;
+  color: var(--text-2);
 }
 
 .tgLinkTitle {
@@ -1359,11 +1359,11 @@
 
 .confirmDeleteBtn {
   padding: 3px 9px;
-  background: #cc3333;
+  background: var(--text);
   border: none;
   border-radius: 4px;
   font-size: 0.75rem;
-  color: #fff;
+  color: var(--bg);
   cursor: pointer;
   font-family: inherit;
   font-weight: 500;
@@ -1387,7 +1387,7 @@
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.55);
   border: none;
-  color: #fff;
+  color: var(--bg);
   font-size: 1rem;
   cursor: pointer;
   display: flex;
@@ -1396,16 +1396,16 @@
   line-height: 1;
   padding: 0;
   transition: background 0.12s;
-  &:hover { background: rgba(204, 51, 51, 0.85); }
+  &:hover { background: var(--text-2); }
 }
 
 .tileConfirmBtn {
   padding: 4px 10px;
-  background: #cc3333;
+  background: var(--text);
   border: none;
   border-radius: 12px;
   font-size: 0.72rem;
-  color: #fff;
+  color: var(--bg);
   cursor: pointer;
   font-family: inherit;
   font-weight: 500;

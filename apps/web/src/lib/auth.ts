@@ -19,7 +19,6 @@ export interface User {
   xp?: number;
   coins?: number;
   selectedFrame?: string | null;
-  selectedFont?: string | null;
   socialLinks?: Record<string, string> | null;
 }
 

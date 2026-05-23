@@ -10,7 +10,6 @@ import { AvatarFramed } from '../../../components/AvatarFramed';
 import { profileApi } from '../../../lib/profile';
 import { achievementsApi, RANK_LABEL, RANK_COLOR, AchievementResult } from '../../../lib/achievements';
 import { SOCIAL_PROVIDERS, getSocialIcon, resolveSocialHref } from '../../../lib/socials';
-import { fontFamilyFor } from '../../../lib/fonts';
 import { useAuthStore } from '../../../store/authStore';
 import styles from './page.module.scss';
 
@@ -103,12 +102,7 @@ export default function ProfilePage({
       {isError   && <div className={styles.state}>Пользователь не найден</div>}
 
       {profile && (
-        // Применяем шрифт владельца профиля только в его области, чтобы другие
-        // пользователи видели его выбор. Хидер/уведомления используют свой шрифт.
-        <div
-          className={styles.body}
-          style={profile.selectedFont ? { fontFamily: fontFamilyFor(profile.selectedFont) } : undefined}
-        >
+        <div className={styles.body}>
           {/* ── Hero (banner + avatar + actions) ────────────────── */}
           <div
             className={[styles.banner, profile.coverUrl ? styles.bannerHasImage : ''].join(' ')}

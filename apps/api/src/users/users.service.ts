@@ -123,27 +123,6 @@ export class UsersService {
       }
     }
 
-    // Если меняется selectedFont – проверяем, что соответствующий font-товар куплен.
-    // selectedFont = null означает системный (бесплатно).
-    if (
-      updateUserDto.selectedFont !== undefined &&
-      updateUserDto.selectedFont !== null
-    ) {
-      const itemId = `font_${updateUserDto.selectedFont}`;
-      const owned = await this.usersRepository.manager
-        .createQueryBuilder()
-        .select('1')
-        .from('user_inventory', 'inv')
-        .where('inv."userId" = :userId AND inv."itemId" = :itemId', {
-          userId: user.id,
-          itemId,
-        })
-        .getRawOne();
-      if (!owned) {
-        throw new BadRequestException('Этот шрифт не куплен');
-      }
-    }
-
     // Применяем только явно переданные поля (фильтруем undefined от class-transformer)
     const patch = Object.fromEntries(
       Object.entries(updateUserDto).filter(([, v]) => v !== undefined),
@@ -345,7 +324,7 @@ export class UsersService {
   async getPublicProfile(username: string): Promise<Partial<User> & { level: number }> {
     const user = await this.usersRepository.findOne({
       where: { username, isActive: true },
-      select: ['id', 'username', 'displayName', 'avatarUrl', 'coverUrl', 'bio', 'location', 'createdAt', 'xp', 'selectedFrame', 'selectedFont', 'socialLinks'],
+      select: ['id', 'username', 'displayName', 'avatarUrl', 'coverUrl', 'bio', 'location', 'createdAt', 'xp', 'selectedFrame', 'socialLinks'],
     });
     if (!user) throw new NotFoundException('Пользователь не найден');
     return { ...user, level: Math.floor((user.xp ?? 0) / 1000) };

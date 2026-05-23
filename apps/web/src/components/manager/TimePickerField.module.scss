@@ -170,7 +170,7 @@ $pill-h: 32px;
   align-items: center;
   flex-shrink: 0;
   transition: color 0.1s, background 0.1s;
-  &:hover { color: #cc3333; background: rgba(204, 51, 51, 0.08); }
+  &:hover { color: var(--text-2); background: var(--bg-hover); }
 }
 
 // ── Dropdown ──────────────────────────────────────────────────

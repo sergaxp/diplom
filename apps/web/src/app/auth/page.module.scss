@@ -10,7 +10,7 @@
   justify-content: center;
   background: var(--bg);
   padding: 2rem 1rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: sans-serif;
 }
 
 // Декоративный фон
@@ -99,11 +99,11 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.65rem 0.9rem;
-  background: rgba(204, 51, 51, 0.08);
-  border: 1px solid rgba(204, 51, 51, 0.25);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-input);
   border-radius: 6px;
   font-size: 0.875rem;
-  color: #cc3333;
+  color: var(--text-2);
   margin-bottom: 1.1rem;
   animation: fadeUp 0.25s ease both;
 }
@@ -156,13 +156,13 @@
 }
 
 .inputError {
-  border-color: rgba(204, 51, 51, 0.5);
-  &:focus { border-color: #cc3333; }
+  border-color: var(--border-strong);
+  &:focus { border-color: var(--text-2); }
 }
 
 .fieldError {
   font-size: 0.78rem;
-  color: #cc3333;
+  color: var(--text-2);
 }
 
 // ── Кнопка ───────────────────────────────────────────────────
@@ -192,7 +192,7 @@
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(0, 0, 0, 0.15);
   border-top-color: var(--bg);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;

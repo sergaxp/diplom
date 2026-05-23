@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { authApi, hasToken, clearAuth } from '../lib/auth';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
-import { applyFont } from '../store/fontStore';
 import { api } from '../lib/api';
 import { AchievementToast } from '../components/AchievementToast';
 
@@ -59,14 +58,6 @@ function ThemeInitializer() {
   return null;
 }
 
-/** Применяет шрифт пользователя (selectedFont) к <html data-font>. */
-function FontApplier() {
-  const font = useAuthStore(s => s.user?.selectedFont ?? null);
-  useEffect(() => {
-    applyFont(font);
-  }, [font]);
-  return null;
-}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -77,7 +68,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ThemeInitializer />
       <AuthInitializer />
-      <FontApplier />
       {children}
       <AchievementToast />
     </QueryClientProvider>
