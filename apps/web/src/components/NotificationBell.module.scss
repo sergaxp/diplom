@@ -198,8 +198,11 @@
 
 @media (max-width: 480px) {
   .dropdown {
-    width: calc(100vw - 16px);
-    right: -8px;
+    position: fixed;
+    top: 56px;
+    left: 8px;
+    right: 8px;
+    width: auto;
   }
   .itemClose { opacity: 1; }
 }

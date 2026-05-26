@@ -8,6 +8,12 @@ import { useAuthStore } from '../../store/authStore';
 import * as LucideIcons from 'lucide-react';
 import { adminApi, AdminUser, GlobalTask } from '../../lib/admin';
 import { IconPicker } from '../../components/IconPicker';
+import {
+  adminFeedbackApi,
+  BugReport, FeatureRequest,
+  BugReportStatus, FeatureRequestStatus,
+  BUG_STATUS_LABEL, FEATURE_STATUS_LABEL,
+} from '../../lib/feedback';
 import styles from './page.module.scss';
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number; style?: React.CSSProperties }>;
@@ -255,6 +261,127 @@ function GlobalEventsSection() {
   );
 }
 
+// ── Секция обратной связи ──────────────────────────────────────
+type FeedbackTab = 'bugs' | 'features';
+
+function AdminFeedbackSection() {
+  const qc = useQueryClient();
+  const [tab, setTab] = useState<FeedbackTab>('bugs');
+
+  const { data: bugs = [], isLoading: bugsLoading } = useQuery({
+    queryKey: ['admin', 'feedback', 'bugs'],
+    queryFn: adminFeedbackApi.getAllBugReports,
+  });
+
+  const { data: features = [], isLoading: featuresLoading } = useQuery({
+    queryKey: ['admin', 'feedback', 'features'],
+    queryFn: adminFeedbackApi.getAllFeatureRequests,
+  });
+
+  const bugStatusMut = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: BugReportStatus }) =>
+      adminFeedbackApi.updateBugStatus(id, status),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'feedback', 'bugs'] }),
+  });
+
+  const featureStatusMut = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: FeatureRequestStatus }) =>
+      adminFeedbackApi.updateFeatureStatus(id, status),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'feedback', 'features'] }),
+  });
+
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  return (
+    <div className={styles.section}>
+      <div className={styles.sectionHead}>
+        <h2 className={styles.sectionTitle}>Обратная связь</h2>
+      </div>
+
+      <div className={styles.feedbackTabs}>
+        <button
+          className={[styles.feedbackTab, tab === 'bugs' ? styles.feedbackTabActive : ''].join(' ')}
+          onClick={() => setTab('bugs')}
+        >
+          Баги {bugs.length > 0 && <span className={styles.feedbackCount}>{bugs.length}</span>}
+        </button>
+        <button
+          className={[styles.feedbackTab, tab === 'features' ? styles.feedbackTabActive : ''].join(' ')}
+          onClick={() => setTab('features')}
+        >
+          Нововведения {features.length > 0 && <span className={styles.feedbackCount}>{features.length}</span>}
+        </button>
+      </div>
+
+      {tab === 'bugs' && (
+        bugsLoading ? <div className={styles.loading}>Загрузка...</div> :
+        bugs.length === 0 ? <div className={styles.feedbackEmpty}>Нет баг-репортов</div> :
+        <div className={styles.feedbackList}>
+          {bugs.map((b: BugReport) => (
+            <div key={b.id} className={styles.feedbackItem}>
+              <div className={styles.feedbackItemTop}>
+                <div className={styles.feedbackItemMeta}>
+                  <span className={styles.feedbackItemUser}>@{b.user?.username ?? '—'}</span>
+                  <span className={styles.feedbackItemDate}>{formatDate(b.createdAt)}</span>
+                </div>
+                <select
+                  className={styles.feedbackSelect}
+                  value={b.status}
+                  onChange={e => bugStatusMut.mutate({ id: b.id, status: e.target.value as BugReportStatus })}
+                >
+                  {(Object.keys(BUG_STATUS_LABEL) as BugReportStatus[]).map(s => (
+                    <option key={s} value={s}>{BUG_STATUS_LABEL[s]}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.feedbackItemTitle}>{b.title}</div>
+              {b.description && <div className={styles.feedbackItemDesc}>{b.description}</div>}
+              {b.attachmentUrls?.length ? (
+                <div className={styles.feedbackAttachments}>
+                  {b.attachmentUrls.map((url, i) => (
+                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className={styles.feedbackAttachLink}>
+                      Вложение {i + 1}
+                    </a>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'features' && (
+        featuresLoading ? <div className={styles.loading}>Загрузка...</div> :
+        features.length === 0 ? <div className={styles.feedbackEmpty}>Нет заявок на нововведения</div> :
+        <div className={styles.feedbackList}>
+          {features.map((f: FeatureRequest) => (
+            <div key={f.id} className={styles.feedbackItem}>
+              <div className={styles.feedbackItemTop}>
+                <div className={styles.feedbackItemMeta}>
+                  <span className={styles.feedbackItemUser}>@{f.user?.username ?? '—'}</span>
+                  <span className={styles.feedbackItemDate}>{formatDate(f.createdAt)}</span>
+                </div>
+                <select
+                  className={styles.feedbackSelect}
+                  value={f.status}
+                  onChange={e => featureStatusMut.mutate({ id: f.id, status: e.target.value as FeatureRequestStatus })}
+                >
+                  {(Object.keys(FEATURE_STATUS_LABEL) as FeatureRequestStatus[]).map(s => (
+                    <option key={s} value={s}>{FEATURE_STATUS_LABEL[s]}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.feedbackItemTitle}>{f.title}</div>
+              {f.description && <div className={styles.feedbackItemDesc}>{f.description}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Главная страница ───────────────────────────────────────────
 export default function AdminPage() {
   const { user, ready } = useAuthStore();
@@ -352,6 +479,9 @@ export default function AdminPage() {
 
         {/* Глобальные события */}
         <GlobalEventsSection />
+
+        {/* Обратная связь */}
+        <AdminFeedbackSection />
       </div>
     </div>
   );

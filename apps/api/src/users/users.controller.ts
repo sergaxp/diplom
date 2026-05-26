@@ -104,7 +104,7 @@ export class UsersController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('Файл не загружен');
-    const avatarUrl = await this.storageService.uploadAvatar(
+    const avatarUrl = await this.storageService.uploadProfile(
       file.buffer,
       file.originalname,
       file.mimetype,
@@ -127,7 +127,7 @@ export class UsersController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('Файл не загружен');
-    const coverUrl = await this.storageService.uploadAvatar(
+    const coverUrl = await this.storageService.uploadProfile(
       file.buffer,
       file.originalname,
       file.mimetype,

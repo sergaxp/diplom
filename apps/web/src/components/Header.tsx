@@ -9,6 +9,7 @@ import { useThemeStore } from '../store/themeStore';
 import { clearAuth } from '../lib/auth';
 import { AvatarFramed } from './AvatarFramed';
 import { NotificationBell } from './NotificationBell';
+import { FeedbackDropdown } from './feedback/FeedbackDropdown';
 import styles from './Header.module.scss';
 
 export function Header() {
@@ -39,6 +40,8 @@ export function Header() {
     <header className={styles.header}>
       <Link href="/manager" className={styles.logo}>WT</Link>
       <div className={styles.right}>
+        {ready && user && <FeedbackDropdown />}
+
         <button
           className={`${styles.themeToggle}${theme === 'dark' ? ` ${styles.themeToggleDark}` : ''}`}
           onClick={toggle}

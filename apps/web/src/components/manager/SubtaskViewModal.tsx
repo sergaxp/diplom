@@ -64,7 +64,7 @@ export function SubtaskViewModal({ item, userTags, onClose, onEdit, onToggle, on
     if (next.attachments && next.attachments.length === 0) delete next.attachments;
     onUpdate(next);
     setConfirmAttIdx(null);
-    if (a.key) { try { await storageApi.remove(a.key); } catch { /* ignore */ } }
+    if (a.key) { try { await storageApi.remove(a.key, 'tasks'); } catch { /* ignore */ } }
   };
 
   return (

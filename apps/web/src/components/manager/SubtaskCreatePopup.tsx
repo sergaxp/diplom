@@ -76,7 +76,7 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
     setUploading(c => c + files.length);
     for (const file of Array.from(files)) {
       try {
-        const up = await storageApi.upload(file);
+        const up = await storageApi.upload(file, 'tasks');
         addedKeysRef.current.push(up.key);
         setAttachments(prev => [...prev, { name: up.name, url: up.url, type: up.type, size: up.size, key: up.key }]);
       } catch (e) {
@@ -96,7 +96,7 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
       const addIdx = addedKeysRef.current.indexOf(a.key);
       if (addIdx >= 0) {
         addedKeysRef.current.splice(addIdx, 1);
-        storageApi.remove(a.key).catch(() => { /* ignore */ });
+        storageApi.remove(a.key, 'tasks').catch(() => { /* ignore */ });
       } else {
         // Pre-existing key – defer deletion until Save
         removedKeysRef.current.push(a.key);
@@ -109,7 +109,7 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
     if (!t) { titleRef.current?.focus(); return; }
     // Commit deferred deletions
     for (const k of removedKeysRef.current) {
-      try { await storageApi.remove(k); } catch { /* ignore */ }
+      try { await storageApi.remove(k, 'tasks'); } catch { /* ignore */ }
     }
     removedKeysRef.current = [];
     addedKeysRef.current   = [];
@@ -128,7 +128,7 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
   const handleCancel = async () => {
     // Roll back uploads (those files were added this session and aren't going to be saved)
     for (const k of addedKeysRef.current) {
-      try { await storageApi.remove(k); } catch { /* ignore */ }
+      try { await storageApi.remove(k, 'tasks'); } catch { /* ignore */ }
     }
     addedKeysRef.current   = [];
     removedKeysRef.current = [];

@@ -1,26 +1,36 @@
 import { api } from './api';
 
+export type StorageBucket = 'tasks' | 'feedback';
+
 export interface UploadedFile {
   url: string;
-  key: string;        // server-side key, needed for deletion
+  key: string;
   name: string;
   type: string;
   size: number;
 }
 
+export interface LinkPreview {
+  title: string | null;
+  thumbnailUrl: string | null;
+}
+
 export const storageApi = {
-  /** Uploads a file to MinIO via backend. Returns the public URL and storage key. */
-  async upload(file: File): Promise<UploadedFile> {
+  async upload(file: File, bucket: StorageBucket): Promise<UploadedFile> {
     const form = new FormData();
     form.append('file', file);
-    const r = await api.post<UploadedFile>('/storage/upload', form, {
+    const r = await api.post<UploadedFile>(`/storage/upload?bucket=${bucket}`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return r.data;
   },
 
-  /** Deletes a file by its storage key. */
-  async remove(key: string): Promise<void> {
-    await api.delete('/storage/object', { data: { key } });
+  async remove(key: string, bucket: StorageBucket): Promise<void> {
+    await api.delete('/storage/object', { data: { key, bucket } });
+  },
+
+  async linkPreview(url: string): Promise<LinkPreview> {
+    const r = await api.get<LinkPreview>(`/storage/link-preview?url=${encodeURIComponent(url)}`);
+    return r.data;
   },
 };

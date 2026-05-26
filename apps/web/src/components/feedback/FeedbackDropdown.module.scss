@@ -1,0 +1,62 @@
+.wrap {
+  position: relative;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+    background: var(--bg-hover);
+  }
+}
+
+.triggerLabel {
+  @media (max-width: 600px) { display: none; }
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-input);
+  border-radius: 4px;
+  padding: 0.3rem;
+  box-shadow: 0 4px 12px var(--shadow-md);
+  z-index: 200;
+}
+
+.item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.45rem 0.65rem;
+  border: none;
+  background: none;
+  font-size: 0.875rem;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s;
+  &:hover { background: var(--bg-hover); }
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 0.25rem 0;
+}

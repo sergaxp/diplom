@@ -3,54 +3,44 @@ import { Client } from 'minio';
 import { randomUUID } from 'crypto';
 import { extname } from 'path';
 
-const BUCKET     = 'avatars';
-const ATT_BUCKET = 'attachments';
+export const BUCKETS = {
+  profiles: 'profiles',  // аватары и обложки профиля
+  tasks:    'tasks',     // вложения задач
+  feedback: 'feedback',  // файлы баг-репортов
+} as const;
+
+export type BucketName = (typeof BUCKETS)[keyof typeof BUCKETS];
 
 @Injectable()
 export class StorageService implements OnModuleInit {
   private readonly logger = new Logger(StorageService.name);
   private readonly client: Client;
-  private readonly publicUrl: string;
-  private readonly attPublicUrl: string;
+  private readonly endpoint: string;
+  private readonly port: number;
 
   constructor() {
-    const endpoint = process.env.MINIO_ENDPOINT ?? 'localhost';
-    const port     = parseInt(process.env.MINIO_PORT    ?? '9000', 10);
+    this.endpoint = process.env.MINIO_ENDPOINT ?? 'localhost';
+    this.port     = parseInt(process.env.MINIO_PORT ?? '9000', 10);
 
     this.client = new Client({
-      endPoint:  endpoint,
-      port,
+      endPoint:  this.endpoint,
+      port:      this.port,
       useSSL:    false,
       accessKey: process.env.MINIO_ACCESS_KEY ?? 'minioadmin',
       secretKey: process.env.MINIO_SECRET_KEY ?? 'minioadmin123',
     });
-
-    // В prod: MINIO_PUBLIC_URL=https://diplom.warmingtea.su/files (уже включает путь к бакету)
-    // В dev: строим URL из endpoint:port/bucket
-    this.publicUrl = process.env.MINIO_PUBLIC_URL ?? `http://${endpoint}:${port}/${BUCKET}`;
-
-    // Attachments bucket: env MINIO_PUBLIC_URL_ATTACHMENTS or derived from public host
-    const attBase = process.env.MINIO_PUBLIC_URL_ATTACHMENTS;
-    if (attBase) {
-      this.attPublicUrl = attBase;
-    } else if (process.env.MINIO_PUBLIC_URL) {
-      // strip trailing bucket segment and append the attachments bucket
-      this.attPublicUrl = process.env.MINIO_PUBLIC_URL.replace(/\/[^/]+$/, '') + '/' + ATT_BUCKET;
-    } else {
-      this.attPublicUrl = `http://${endpoint}:${port}/${ATT_BUCKET}`;
-    }
   }
 
   async onModuleInit() {
-    for (const b of [BUCKET, ATT_BUCKET]) {
+    for (const bucket of Object.values(BUCKETS)) {
       try {
-        const exists = await this.client.bucketExists(b);
+        const exists = await this.client.bucketExists(bucket);
         if (!exists) {
-          await this.client.makeBucket(b);
-          this.logger.log(`Бакет "${b}" создан`);
+          await this.client.makeBucket(bucket);
+          this.logger.log(`Бакет "${bucket}" создан`);
         }
         await this.client.setBucketPolicy(
-          b,
+          bucket,
           JSON.stringify({
             Version: '2012-10-17',
             Statement: [
@@ -58,45 +48,64 @@ export class StorageService implements OnModuleInit {
                 Effect:    'Allow',
                 Principal: { AWS: ['*'] },
                 Action:    ['s3:GetObject'],
-                Resource:  [`arn:aws:s3:::${b}/*`],
+                Resource:  [`arn:aws:s3:::${bucket}/*`],
               },
             ],
           }),
         );
-        this.logger.log(`Бакет "${b}" готов`);
+        this.logger.log(`Бакет "${bucket}" готов`);
       } catch (err) {
-        this.logger.error(`Ошибка инициализации MinIO (${b})`, err);
+        this.logger.error(`Ошибка инициализации MinIO (${bucket})`, err);
       }
     }
   }
 
-  async uploadAvatar(
+  private publicUrlFor(bucket: BucketName): string {
+    // В prod: MINIO_PUBLIC_URL_<BUCKET> переопределяет базовый URL
+    const envKey = `MINIO_PUBLIC_URL_${bucket.toUpperCase()}`;
+    if (process.env[envKey]) return process.env[envKey]!;
+    if (process.env.MINIO_PUBLIC_URL) {
+      // Если задан глобальный публичный хост, строим путь к конкретному бакету
+      const base = process.env.MINIO_PUBLIC_URL.replace(/\/[^/]+$/, '');
+      return `${base}/${bucket}`;
+    }
+    return `http://${this.endpoint}:${this.port}/${bucket}`;
+  }
+
+  /** Загрузить файл в указанный бакет. Возвращает { url, key }. */
+  async upload(
+    buffer: Buffer,
+    originalName: string,
+    mimeType: string,
+    bucket: BucketName,
+  ): Promise<{ url: string; key: string }> {
+    const safeName = originalName.replace(/[^\w.\-]/g, '_');
+    const key = `${randomUUID()}_${safeName}`;
+    await this.client.putObject(bucket, key, buffer, buffer.length, {
+      'Content-Type': mimeType,
+    });
+    return { url: `${this.publicUrlFor(bucket)}/${key}`, key };
+  }
+
+  /** Загрузить аватар или обложку профиля (бакет profiles). */
+  async uploadProfile(
     buffer: Buffer,
     originalName: string,
     mimeType: string,
   ): Promise<string> {
     const filename = `${randomUUID()}${extname(originalName).toLowerCase()}`;
-    await this.client.putObject(BUCKET, filename, buffer, buffer.length, {
+    await this.client.putObject(BUCKETS.profiles, filename, buffer, buffer.length, {
       'Content-Type': mimeType,
     });
-    return `${this.publicUrl}/${filename}`;
+    return `${this.publicUrlFor(BUCKETS.profiles)}/${filename}`;
   }
 
-  /** Upload a generic attachment. Returns { url, key }. */
-  async uploadAttachment(buffer: Buffer, originalName: string, mimeType: string) {
-    const safeName = originalName.replace(/[^\w.\-]/g, '_');
-    const key = `${randomUUID()}_${safeName}`;
-    await this.client.putObject(ATT_BUCKET, key, buffer, buffer.length, {
-      'Content-Type': mimeType,
-    });
-    return { url: `${this.attPublicUrl}/${key}`, key };
-  }
-
-  async deleteAttachment(key: string) {
+  /** Удалить объект из указанного бакета по его ключу. */
+  async delete(key: string, bucket: BucketName): Promise<void> {
     try {
-      await this.client.removeObject(ATT_BUCKET, key);
+      await this.client.removeObject(bucket, key);
     } catch (err) {
-      this.logger.warn(`deleteAttachment failed for "${key}": ${(err as Error).message}`);
+      this.logger.warn(`delete failed (${bucket}/${key}): ${(err as Error).message}`);
     }
   }
 }

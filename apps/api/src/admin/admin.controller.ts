@@ -9,10 +9,16 @@ import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { UserRole } from '../users/entities/user.entity';
+import { FeedbackService } from '../feedback/feedback.service';
+import type { BugReportStatus } from '../feedback/entities/bug-report.entity';
+import type { FeatureRequestStatus } from '../feedback/entities/feature-request.entity';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly feedbackService: FeedbackService,
+  ) {}
 
   // POST /admin/promote – создание первого или любого администратора
   // Требует секретный ключ из .env (не требует JWT)
@@ -85,5 +91,37 @@ export class AdminController {
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteGlobalTask(@Param('id') id: string) {
     return this.adminService.deleteGlobalTask(id);
+  }
+
+  // ── Обратная связь ──────────────────────────────────────────────
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Get('feedback/bugs')
+  getAllBugReports() {
+    return this.feedbackService.getAllBugReports();
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Get('feedback/features')
+  getAllFeatureRequests() {
+    return this.feedbackService.getAllFeatureRequests();
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Patch('feedback/bugs/:id')
+  updateBugStatus(
+    @Param('id') id: string,
+    @Body('status') status: BugReportStatus,
+  ) {
+    return this.feedbackService.updateBugReportStatus(id, status);
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Patch('feedback/features/:id')
+  updateFeatureStatus(
+    @Param('id') id: string,
+    @Body('status') status: FeatureRequestStatus,
+  ) {
+    return this.feedbackService.updateFeatureRequestStatus(id, status);
   }
 }

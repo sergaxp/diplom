@@ -5,9 +5,13 @@ import { AdminController } from './admin.controller';
 import { User } from '../users/entities/user.entity';
 import { Task } from '../tasks/entities/task.entity';
 import { GlobalTask } from '../tasks/entities/global-task.entity';
+import { FeedbackModule } from '../feedback/feedback.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Task, GlobalTask])],
+  imports: [
+    TypeOrmModule.forFeature([User, Task, GlobalTask]),
+    FeedbackModule,
+  ],
   controllers: [AdminController],
   providers: [AdminService],
 })

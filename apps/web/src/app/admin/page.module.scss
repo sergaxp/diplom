@@ -611,3 +611,129 @@
   &:hover:not(:disabled) { opacity: .8; }
   &:disabled { opacity: .45; cursor: default; }
 }
+
+// ── Feedback section ───────────────────────────────────────────
+.feedbackTabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 1rem;
+}
+
+.feedbackTab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.55rem 0.85rem;
+  border: none;
+  background: none;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s;
+  &:hover { color: var(--text); }
+}
+
+.feedbackTabActive {
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+.feedbackCount {
+  background: var(--bg-active);
+  border-radius: 10px;
+  padding: 0 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.feedbackEmpty {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+.feedbackList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.feedbackItem {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border-light);
+  border-radius: 5px;
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.feedbackItemTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.feedbackItemMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.feedbackItemUser {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.feedbackItemDate {
+  font-size: 0.75rem;
+  color: var(--text-4);
+}
+
+.feedbackItemTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.feedbackItemDesc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+
+.feedbackSelect {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-input);
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  outline: none;
+  &:focus { border-color: var(--border-strong); }
+}
+
+.feedbackAttachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.feedbackAttachLink {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  padding: 2px 6px;
+  transition: color 0.15s;
+  &:hover { color: var(--text); }
+}

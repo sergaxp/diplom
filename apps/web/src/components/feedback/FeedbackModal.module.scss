@@ -1,0 +1,355 @@
+// ── Backdrop & Modal ──────────────────────────────────────────────
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 1rem;
+}
+
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 8px 32px var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.modalWide {
+  max-width: 560px;
+}
+
+// ── Header ────────────────────────────────────────────────────────
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 3px;
+  transition: color 0.15s, background 0.15s;
+  &:hover { color: var(--text); background: var(--bg-hover); }
+}
+
+// ── Form ──────────────────────────────────────────────────────────
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: -0.4rem;
+}
+
+.required {
+  color: var(--text-2);
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border-input);
+  border-radius: 4px;
+  background: var(--bg-surface);
+  color: var(--text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+  &:focus { border-color: var(--border-strong); }
+}
+
+.textarea {
+  @extend .input;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+// ── Attachments ───────────────────────────────────────────────────
+.attachArea {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.attachItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.attachThumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--border-input);
+}
+
+.attachFile {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border-input);
+  border-radius: 4px;
+  background: var(--bg-surface);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  max-width: 160px;
+}
+
+.attachName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachRemove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-input);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  transition: color 0.15s;
+  &:hover { color: var(--text-2); }
+}
+
+.attachBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.4rem 0.7rem;
+  border: 1px dashed var(--border-input);
+  border-radius: 4px;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  &:hover:not(:disabled) { border-color: var(--border-strong); color: var(--text); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ── Error ─────────────────────────────────────────────────────────
+.error {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  margin: 0;
+}
+
+// ── Actions ───────────────────────────────────────────────────────
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.cancelBtn {
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--border-input);
+  border-radius: 4px;
+  background: none;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s;
+  &:hover { background: var(--bg-hover); }
+}
+
+.submitBtn {
+  padding: 0.45rem 1.25rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  &:hover:not(:disabled) { opacity: 0.85; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border-light);
+  padding: 0 1rem;
+  flex-shrink: 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  background: none;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s;
+  &:hover { color: var(--text); }
+}
+
+.tabActive {
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+.tabCount {
+  background: var(--bg-active);
+  border-radius: 10px;
+  padding: 0 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+// ── List ──────────────────────────────────────────────────────────
+.listWrap {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0.75rem 1rem;
+}
+
+.empty {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2rem 0;
+  margin: 0;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.listItem {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border-light);
+  border-radius: 5px;
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.listItemTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.listItemTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+}
+
+.listItemDesc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+
+.listItemDate {
+  font-size: 0.75rem;
+  color: var(--text-4);
+}
+
+.listItemAttach {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.attachLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  padding: 2px 6px;
+  transition: color 0.15s;
+  &:hover { color: var(--text); }
+}
+
+// ── Status badges ─────────────────────────────────────────────────
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: var(--bg-active);
+  color: var(--text-muted);
+}
+
+.badge_unread          { background: var(--bg-active); color: var(--text-muted); }
+.badge_in_progress     { background: var(--bg-hover); color: var(--text-2); }
+.badge_fixed           { background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border-input); }
+.badge_implemented     { background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border-input); }
+.badge_under_discussion { background: var(--bg-active); color: var(--text-2); }
+.badge_not_needed      { background: var(--bg-surface); color: var(--text-4); border: 1px solid var(--border-light); }

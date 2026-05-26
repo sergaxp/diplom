@@ -23,6 +23,9 @@ import { UserInventory } from './shop/entities/user-inventory.entity';
 import { NotificationsModule } from './notifications/notifications.module';
 import { Notification } from './notifications/entities/notification.entity';
 import { AccountDeletion } from './users/entities/account-deletion.entity';
+import { FeedbackModule } from './feedback/feedback.module';
+import { BugReport } from './feedback/entities/bug-report.entity';
+import { FeatureRequest } from './feedback/entities/feature-request.entity';
 
 @Module({
   imports: [
@@ -39,7 +42,7 @@ import { AccountDeletion } from './users/entities/account-deletion.entity';
       username: process.env.DATABASE_USER ?? 'sergey',
       password: process.env.DATABASE_PASSWORD ?? '',
       database: process.env.DATABASE_NAME ?? 'warmingtea_dev',
-      entities: [User, Task, TaskCompletion, GlobalTask, Tag, UserAchievement, HolidayCache, UserInventory, Notification, AccountDeletion],
+      entities: [User, Task, TaskCompletion, GlobalTask, Tag, UserAchievement, HolidayCache, UserInventory, Notification, AccountDeletion, BugReport, FeatureRequest],
       synchronize: true, // ⚠️ ТОЛЬКО в DEV! В продакшене – миграции
       logging: process.env.NODE_ENV === 'development',
     }),
@@ -55,6 +58,7 @@ import { AccountDeletion } from './users/entities/account-deletion.entity';
     StorageModule,
     ShopModule,
     NotificationsModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [AppService],

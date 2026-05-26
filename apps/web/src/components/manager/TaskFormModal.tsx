@@ -255,7 +255,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
     const keys: string[] = [];
     if (item.attachment?.key) keys.push(item.attachment.key);
     if (item.attachments) for (const a of item.attachments) if (a.key) keys.push(a.key);
-    for (const k of keys) { try { await storageApi.remove(k); } catch { /* ignore */ } }
+    for (const k of keys) { try { await storageApi.remove(k, 'tasks'); } catch { /* ignore */ } }
   };
 
   const upsertItem = (item: SubtaskItem) => {
@@ -264,7 +264,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
     if (prev?.attachments) {
       const newKeys = new Set((item.attachments ?? []).map(a => a.key).filter(Boolean) as string[]);
       for (const a of prev.attachments) {
-        if (a.key && !newKeys.has(a.key)) { try { storageApi.remove(a.key); } catch { /* ignore */ } }
+        if (a.key && !newKeys.has(a.key)) { try { storageApi.remove(a.key, 'tasks'); } catch { /* ignore */ } }
       }
     }
     replaceItems(items => {
@@ -284,7 +284,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
     const created: SubtaskItem[] = [];
     for (const f of Array.from(files)) {
       try {
-        const up = await storageApi.upload(f);
+        const up = await storageApi.upload(f, 'tasks');
         created.push({
           id: uid(), kind: 'attachment', title: up.name, done: false,
           attachment: { name: up.name, url: up.url, type: up.type, size: up.size, key: up.key },
@@ -491,10 +491,11 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                   if (item.thumbnailUrl) {
                     return (
                       <div key={item.id} className={styles.tgLink}>
-                        <button
-                          type="button"
+                        <a
                           className={styles.tgLinkBody}
-                          onClick={() => setMediaItem(item)}
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           title={item.url}
                         >
                           <span className={styles.tgLinkUrl}>{item.url}</span>
@@ -514,7 +515,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                               )}
                             </span>
                           </span>
-                        </button>
+                        </a>
                         {cornerDelete}
                       </div>
                     );
@@ -523,10 +524,11 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                   // Plain link – compact card with icon
                   return (
                     <div key={item.id} className={styles.tgFile}>
-                      <button
-                        type="button"
+                      <a
                         className={styles.tgFileBody}
-                        onClick={() => setMediaItem(item)}
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         title={item.url}
                       >
                         <span className={styles.tgFileIcon}>
@@ -536,7 +538,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                           <span className={styles.tgFileName}>{item.title || item.url}</span>
                           {host && <span className={styles.tgFileMeta}>{host}</span>}
                         </span>
-                      </button>
+                      </a>
                       {cornerDelete}
                     </div>
                   );
