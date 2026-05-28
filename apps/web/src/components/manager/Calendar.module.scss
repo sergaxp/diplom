@@ -158,13 +158,29 @@
 .cellToday {
   border-color: var(--accent);
   border-width: 2px;
+  // Лёгкая янтарная заливка — «сегодня» читается даже когда
+  // тонкая обводка сливается с фоном (особенно на светлой теме).
+  background: var(--accent-subtle);
   padding: 5px calc(var(--space-2) - 1px);
 
-  // Янтарный жирный номер дня — «сегодня» цепляет глаз
+  // Тёмно-янтарный жирный номер дня — контраст и на светлой, и на тёмной теме
   .dayNum {
-    color: var(--accent);
+    color: var(--accent-hover);
     font-weight: var(--weight-semibold);
   }
+
+  // Сохраняем янтарную идентичность «сегодня» при наведении
+  // (раньше generic .cell:hover перекрывал обводку и она пропадала).
+  &:hover {
+    background: var(--accent-subtle);
+    border-color: var(--accent);
+  }
+}
+
+// Сегодня И выбранный день: сохраняем «выбранный» бренд-тон, но с янтарной обводкой
+.cellSelected.cellToday {
+  background: var(--brand-subtle);
+  &:hover { background: var(--brand-subtle); }
 }
 
 .dayNum {

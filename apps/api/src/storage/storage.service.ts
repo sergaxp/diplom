@@ -61,12 +61,15 @@ export class StorageService implements OnModuleInit {
   }
 
   private publicUrlFor(bucket: BucketName): string {
-    // В prod: MINIO_PUBLIC_URL_<BUCKET> переопределяет базовый URL
+    // В prod: MINIO_PUBLIC_URL_<BUCKET> переопределяет базовый URL для бакета
     const envKey = `MINIO_PUBLIC_URL_${bucket.toUpperCase()}`;
-    if (process.env[envKey]) return process.env[envKey]!;
+    if (process.env[envKey]) return process.env[envKey]!.replace(/\/+$/, '');
     if (process.env.MINIO_PUBLIC_URL) {
-      // Если задан глобальный публичный хост, строим путь к конкретному бакету
-      const base = process.env.MINIO_PUBLIC_URL.replace(/\/[^/]+$/, '');
+      // MINIO_PUBLIC_URL — общий публичный префикс (напр. https://host/files,
+      // который reverse-proxy маршрутизирует в MinIO). Путь к бакету
+      // достраивается СЕГМЕНТОМ, а не заменой последнего сегмента,
+      // иначе префикс /files терялся и ссылки отдавали 404.
+      const base = process.env.MINIO_PUBLIC_URL.replace(/\/+$/, '');
       return `${base}/${bucket}`;
     }
     return `http://${this.endpoint}:${this.port}/${bucket}`;

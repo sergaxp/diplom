@@ -328,21 +328,9 @@ export function TaskList({
     ? 'Сегодня'
     : selectedDate.toLocaleDateString('ru', { day: 'numeric', month: 'long' });
 
-  const hour = now.getHours();
-  const greeting =
-    hour < 6  ? 'Доброй ночи'  :
-    hour < 12 ? 'Доброе утро'  :
-    hour < 18 ? 'Добрый день'  : 'Добрый вечер';
-  const firstName = user?.displayName?.trim().split(' ')[0] || user?.username;
-
   return (
     <>
       <div className={styles.root}>
-        {/* Приветствие — только в режиме «сегодня» */}
-        {isToday && firstName && (
-          <p className={styles.greeting}>{greeting}, {firstName}</p>
-        )}
-
         {/* Clock + текущая погода */}
         <div className={styles.clockRow}>
           <button type="button" className={styles.clock} onClick={onGoToToday} title="Вернуться к сегодня" aria-label="Вернуться к сегодня">
@@ -367,27 +355,28 @@ export function TaskList({
         <div className={styles.section}>
           <div className={styles.sectionHead}>
             <span className={styles.sectionLabel}>{dateLabel}</span>
-            <IconButton
-              icon={<Plus size={16} strokeWidth={2} />}
-              aria-label="Добавить задачу"
-              variant="ghost"
-              size="sm"
-              onClick={() => setCreateOpen(true)}
-              className={styles.addBtn}
-            />
+            <div className={styles.sectionActions}>
+              {hasPriorityTasks && (
+                <Button
+                  variant={sortByPriority ? 'primary' : 'secondary'}
+                  size="sm"
+                  leftIcon={<AlignLeft size={12} strokeWidth={1.75} />}
+                  onClick={() => setSortByPriority(v => !v)}
+                  className={styles.sortBtn}
+                >
+                  {sortByPriority ? 'По приоритету' : 'По времени'}
+                </Button>
+              )}
+              <IconButton
+                icon={<Plus size={16} strokeWidth={2} />}
+                aria-label="Добавить задачу"
+                variant="ghost"
+                size="sm"
+                onClick={() => setCreateOpen(true)}
+                className={styles.addBtn}
+              />
+            </div>
           </div>
-
-          {hasPriorityTasks && (
-            <Button
-              variant={sortByPriority ? 'primary' : 'secondary'}
-              size="sm"
-              leftIcon={<AlignLeft size={12} strokeWidth={1.75} />}
-              onClick={() => setSortByPriority(v => !v)}
-              className={styles.sortBtn}
-            >
-              {sortByPriority ? 'По приоритету' : 'По времени'}
-            </Button>
-          )}
 
           {holidayName && (
             <div className={styles.holidayBanner}>{holidayName}</div>

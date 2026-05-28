@@ -8,9 +8,10 @@
   position: fixed;
   z-index: var(--z-popover);
   width: 280px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-default);
+  background: var(--bg-popover);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
+  box-shadow: 0 10px 28px var(--shadow-lg);
   overflow: hidden;
 }
 

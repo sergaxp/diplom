@@ -1102,8 +1102,8 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               )}
             </div>
             <div className={styles.footerRight}>
-              <Button variant="secondary" onClick={onClose}>Отмена</Button>
-              <Button variant="accent" type="submit" disabled={!title.trim()}>
+              <Button variant="secondary" size="sm" onClick={onClose}>Отмена</Button>
+              <Button variant="accent" size="sm" type="submit" disabled={!title.trim()}>
                 {isEdit ? 'Сохранить' : 'Создать'}
               </Button>
             </div>

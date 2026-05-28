@@ -154,10 +154,10 @@
   position: fixed;
   z-index: var(--z-popover);
   min-width: 180px;
-  background: var(--bg);
-  border: 1px solid var(--border-input);
+  background: var(--bg-popover);
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
-  box-shadow: 0 8px 24px var(--shadow-lg);
+  box-shadow: 0 10px 28px var(--shadow-lg);
   padding: 4px;
   overflow: hidden;
 }
@@ -183,8 +183,9 @@
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  transition: background var(--duration-fast) var(--ease-default);
-  &:hover { background: var(--bg-hover); }
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); color: var(--brand); }
 }
 
 .tagDropItemActive {
@@ -234,8 +235,9 @@
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  transition: background var(--duration-fast) var(--ease-default);
-  &:hover { background: var(--bg-hover); }
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); color: var(--brand); }
 }
 
 // ── TagManager wrapper inside dropdown ─────────────────────────
@@ -741,10 +743,10 @@
   position: fixed;
   z-index: var(--z-popover);
   min-width: 170px;
-  background: var(--bg);
-  border: 1px solid var(--border-input);
+  background: var(--bg-popover);
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
-  box-shadow: 0 8px 24px var(--shadow-lg);
+  box-shadow: 0 10px 28px var(--shadow-lg);
   padding: 4px;
 }
 
@@ -762,8 +764,9 @@
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  transition: background var(--duration-fast) var(--ease-default);
-  &:hover { background: var(--bg-hover); }
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); color: var(--brand); }
 }
 
 .metaDropItemActive {

@@ -1180,8 +1180,8 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
               const isWeekend = dow === 0 || dow === 6;
               const isWorkday = hol?.type === 'workday';
               const isOff     = (isWeekend && !isWorkday) || hol?.type === 'holiday';
-              const numColor  = hol?.type === 'shortday' ? '#f59e0b'
-                              : hol?.type === 'workday'  ? '#3b82f6'
+              const numColor  = hol?.type === 'shortday' ? 'var(--cal-shortday)'
+                              : hol?.type === 'workday'  ? 'var(--cal-workday)'
                               : undefined;
               const cellTitle = hol?.type === 'holiday'  ? (hol.name || getHolidayName(ds))
                               : hol?.type === 'shortday' ? 'Сокращённый день'
