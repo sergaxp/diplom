@@ -131,12 +131,42 @@ export function DatePickerPopup({
     return m;
   }, [holData]);
 
+  const popupRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   useEffect(() => {
     if (triggerRef.current) {
       const r = triggerRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom+4, left: r.left });
+      setPos({ top: r.bottom + 4, left: r.left });
     }
+  }, [triggerRef]);
+
+  // Удерживаем поповер в пределах вьюпорта (важно для мобильных:
+  // при раскрытии «Повтора»/календаря он не должен уезжать за экран).
+  useEffect(() => {
+    const el = popupRef.current;
+    const trigger = triggerRef.current;
+    if (!el || !trigger) return;
+    const M = 8; // отступ от краёв
+    const clamp = () => {
+      const rect = el.getBoundingClientRect();
+      const tr   = trigger.getBoundingClientRect();
+      const vw = window.innerWidth, vh = window.innerHeight;
+      let left = tr.left;
+      if (left + rect.width > vw - M) left = vw - M - rect.width;
+      if (left < M) left = M;
+      let top = tr.bottom + 4;
+      if (top + rect.height > vh - M) {
+        // не помещается снизу — пробуем над триггером, иначе прижимаем к низу
+        const above = tr.top - 4 - rect.height;
+        top = above >= M ? above : Math.max(M, vh - M - rect.height);
+      }
+      setPos(prev => (prev && prev.left === left && prev.top === top ? prev : { top, left }));
+    };
+    clamp();
+    const ro = new ResizeObserver(clamp);
+    ro.observe(el);
+    window.addEventListener('resize', clamp);
+    return () => { ro.disconnect(); window.removeEventListener('resize', clamp); };
   }, [triggerRef]);
 
   // ── Открыть редактор для поля ─────────────────────────────────
@@ -535,7 +565,7 @@ export function DatePickerPopup({
   return (
     <>
       <div className={styles.backdrop} onMouseDown={onClose} />
-      <div className={styles.popup} style={{ top: pos.top, left: pos.left }} onMouseDown={e=>e.stopPropagation()}>
+      <div ref={popupRef} className={styles.popup} style={{ top: pos.top, left: pos.left }} onMouseDown={e=>e.stopPropagation()}>
 
         {/* ── 1: Shortcuts ── */}
         <div className={styles.shortcuts}>

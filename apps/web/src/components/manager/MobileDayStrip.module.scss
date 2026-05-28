@@ -7,14 +7,17 @@
 }
 
 // ── Horizontal day strip ───────────────────────────────────────
+// Свободная горизонтальная прокрутка с инерцией и мягкой привязкой к карточкам.
 .strip {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
   gap: 6px;
   padding: var(--space-3) var(--space-3) var(--space-2);
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
-  touch-action: pan-y;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   user-select: none;
   &::-webkit-scrollbar { display: none; }
 }
@@ -23,6 +26,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 0 0 auto;
+  width: 72px;
+  scroll-snap-align: center;
   min-height: 110px;
   padding: var(--space-2) 6px 6px;
   background: var(--bg-elevated);

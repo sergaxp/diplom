@@ -68,19 +68,26 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
   // Month picker state
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
 
-  // 4 day cards centered around selectedDate (-1, 0, +1, +2 relative to selectedDate)
+  // Широкая лента дней (±180 дней вокруг сегодня) — листается свободно,
+  // нативной горизонтальной прокруткой с инерцией. Привязка к «сегодня»
+  // стабильна, поэтому лента не пересобирается при смене выбранного дня.
+  const STRIP_RANGE = 180;
   const stripDays = useMemo(() => {
     const days: Date[] = [];
-    for (let i = -1; i <= 2; i++) {
-      const d = new Date(selectedDate);
-      d.setHours(0,0,0,0);
-      d.setDate(selectedDate.getDate() + i);
+    for (let i = -STRIP_RANGE; i <= STRIP_RANGE; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      d.setHours(0, 0, 0, 0);
       days.push(d);
     }
     return days;
-  }, [selectedDate]);
+  }, [today]);
 
-  // ── Swipe handling ──────────────────────────────────────────
+  // ── Прокрутка ленты ──────────────────────────────────────────
+  const stripRef = useRef<HTMLDivElement>(null);
+  const didInitScroll = useRef(false);
+
+  // ── Swipe handling (только для развёрнутого месяца) ──────────
   const touchStart = useRef<{ x: number; y: number; t: number } | null>(null);
   const SWIPE_THRESHOLD = 40; // px
 
@@ -100,11 +107,7 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
     if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.2) return;
     const dir = dx < 0 ? 1 : -1; // влево = вперёд
     const next = new Date(selectedDate);
-    if (expanded) {
-      next.setMonth(next.getMonth() + dir);
-    } else {
-      next.setDate(next.getDate() + dir);
-    }
+    next.setMonth(next.getMonth() + dir);
     next.setHours(0, 0, 0, 0);
     onSelect(next);
   };
@@ -138,6 +141,18 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
   const todayStr = toDateStr(today);
   const selStr   = toDateStr(selectedDate);
 
+  // Центрируем выбранный день в ленте: при первом показе мгновенно,
+  // далее — плавной анимацией (выбор дня/возврат к «сегодня»).
+  useEffect(() => {
+    const c = stripRef.current;
+    if (!c || expanded) return;
+    const el = c.querySelector<HTMLElement>(`[data-date="${selStr}"]`);
+    if (!el) return;
+    const left = el.offsetLeft - (c.clientWidth - el.clientWidth) / 2;
+    c.scrollTo({ left, behavior: didInitScroll.current ? 'smooth' : 'auto' });
+    didInitScroll.current = true;
+  }, [selStr, expanded]);
+
   // Month grid cells
   const monthCells = useMemo(
     () => buildCells(selectedDate.getFullYear(), selectedDate.getMonth()),
@@ -167,6 +182,7 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
       <button
         key={ds}
         type="button"
+        data-date={ds}
         className={[
           styles.dayCard,
           isToday ? styles.dayCardToday : '',
@@ -196,16 +212,20 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
     );
   };
 
+  // Карточки ленты мемоизируем, чтобы тик часов (каждые 30с) не пересчитывал
+  // задачи/погоду для всех ±360 дней.
+  const stripCards = useMemo(
+    () => stripDays.map(d => renderDayCard(d)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stripDays, tasks, weather, holidayMap, selStr, todayStr],
+  );
+
   return (
     <div className={styles.root}>
       {!expanded ? (
-        // ── Default strip mode ── (swipe влево/вправо двигает выбранный день)
-        <div
-          className={styles.strip}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-        >
-          {stripDays.map(d => renderDayCard(d))}
+        // ── Лента дней ── свободная горизонтальная прокрутка с инерцией
+        <div ref={stripRef} className={styles.strip}>
+          {stripCards}
         </div>
       ) : (
         // ── Expanded month grid ── (swipe двигает месяц, есть кнопки и picker)

@@ -55,6 +55,9 @@ export const adminApi = {
   updateUser: (id: string, data: { role?: string; isActive?: boolean }): Promise<AdminUser> =>
     api.patch<AdminUser>(`/admin/users/${id}`, data).then(r => r.data),
 
+  deleteUser: (id: string): Promise<void> =>
+    api.delete(`/admin/users/${id}`).then(() => undefined),
+
   getGlobalTasks: (): Promise<GlobalTask[]> =>
     api.get<GlobalTask[]>('/admin/events').then(r => r.data),
 

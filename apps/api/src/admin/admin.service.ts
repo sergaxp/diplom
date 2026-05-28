@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User, UserRole } from '../users/entities/user.entity';
 import { Task } from '../tasks/entities/task.entity';
 import { GlobalTask } from '../tasks/entities/global-task.entity';
+import { UsersService } from '../users/users.service';
 
 export interface AdminStats {
   totalUsers: number;
@@ -32,6 +33,7 @@ export class AdminService {
     @InjectRepository(User)       private readonly userRepo: Repository<User>,
     @InjectRepository(Task)       private readonly taskRepo: Repository<Task>,
     @InjectRepository(GlobalTask) private readonly globalTaskRepo: Repository<GlobalTask>,
+    private readonly usersService: UsersService,
   ) {}
 
   // ── Статистика ─────────────────────────────────────────────
@@ -73,6 +75,11 @@ export class AdminService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = saved as User & { password: string };
     return result;
+  }
+
+  // ── Полное удаление пользователя ───────────────────────────
+  async deleteUser(id: string): Promise<void> {
+    await this.usersService.purgeUser(id);
   }
 
   // ── Выдать права администратора ────────────────────────────

@@ -354,7 +354,12 @@ export function TaskList({
         {/* Day tasks */}
         <div className={styles.section}>
           <div className={styles.sectionHead}>
-            <span className={styles.sectionLabel}>{dateLabel}</span>
+            <div className={styles.sectionHeadLeft}>
+              <span className={styles.sectionLabel}>{dateLabel}</span>
+              {holidayName && (
+                <span className={styles.holidayBadge} title={holidayName}>{holidayName}</span>
+              )}
+            </div>
             <div className={styles.sectionActions}>
               {hasPriorityTasks && (
                 <Button
@@ -377,10 +382,6 @@ export function TaskList({
               />
             </div>
           </div>
-
-          {holidayName && (
-            <div className={styles.holidayBanner}>{holidayName}</div>
-          )}
 
           {sortedDayTasks.length === 0 ? (
             <EmptyState

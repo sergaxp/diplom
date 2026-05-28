@@ -39,6 +39,14 @@ const STATUS_LABEL: Record<string, string> = {
   offline:  'Не в сети',
 };
 
+// Дата+время «был в сети» / отправки обращения
+function formatDateTime(iso: string | null): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('ru-RU', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  });
+}
+
 // ── Setup-форма ────────────────────────────────────────────────
 function AdminSetup({ username }: { username: string }) {
   const { setUser } = useAuthStore();
@@ -103,12 +111,13 @@ function StatCard({ label, value }: { label: string; value: number }) {
 }
 
 // ── Строка пользователя ────────────────────────────────────────
-function UserRow({ user, isSelf, onToggleRole, onToggleActive }: {
+function UserRow({ user, isSelf, onToggleRole, onToggleActive, onDelete }: {
   user: AdminUser; isSelf: boolean;
-  onToggleRole: () => void; onToggleActive: () => void;
+  onToggleRole: () => void; onToggleActive: () => void; onDelete: () => void;
 }) {
   const initial = (user.displayName || user.username)[0].toUpperCase();
   const status  = onlineStatus(user.lastSeenAt);
+  const [confirmDel, setConfirmDel] = useState(false);
 
   return (
     <tr className={[styles.row, !user.isActive ? styles.rowInactive : ''].join(' ')}>
@@ -125,8 +134,17 @@ function UserRow({ user, isSelf, onToggleRole, onToggleActive }: {
       </td>
       <td className={styles.tdEmail}>{user.email}</td>
       <td className={styles.tdOnline}>
-        <span className={[styles.onlineDot, styles[`dot_${status}`]].join(' ')} aria-hidden="true" />
-        <span className={styles.onlineLabel}>{STATUS_LABEL[status]}</span>
+        <div className={styles.onlineCell}>
+          <div className={styles.onlineStatusRow}>
+            <span className={[styles.onlineDot, styles[`dot_${status}`]].join(' ')} aria-hidden="true" />
+            <span className={styles.onlineLabel}>{STATUS_LABEL[status]}</span>
+          </div>
+          {status !== 'online' && user.lastSeenAt && (
+            <span className={styles.lastSeenAt} title="Последний раз в сети">
+              {formatDateTime(user.lastSeenAt)}
+            </span>
+          )}
+        </div>
       </td>
       <td className={styles.tdRole}>
         <Badge variant={user.role === 'admin' ? 'brand' : 'neutral'} shape="pill">
@@ -143,23 +161,39 @@ function UserRow({ user, isSelf, onToggleRole, onToggleActive }: {
       </td>
       <td className={styles.tdActions}>
         {!isSelf ? (
-          <>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onToggleRole}
-              title={user.role === 'admin' ? 'Снять права' : 'Сделать админом'}
-            >
-              {user.role === 'admin' ? '⬇ Юзер' : '⬆ Админ'}
-            </Button>
-            <Button
-              variant={user.isActive ? 'destructive' : 'primary'}
-              size="sm"
-              onClick={onToggleActive}
-            >
-              {user.isActive ? 'Откл' : 'Вкл'}
-            </Button>
-          </>
+          confirmDel ? (
+            <>
+              <Button variant="destructive" size="sm" onClick={onDelete}>Удалить навсегда</Button>
+              <Button variant="secondary" size="sm" onClick={() => setConfirmDel(false)}>Отмена</Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onToggleRole}
+                title={user.role === 'admin' ? 'Снять права' : 'Сделать админом'}
+              >
+                {user.role === 'admin' ? '⬇ Юзер' : '⬆ Админ'}
+              </Button>
+              <Button
+                variant={user.isActive ? 'destructive' : 'primary'}
+                size="sm"
+                onClick={onToggleActive}
+              >
+                {user.isActive ? 'Откл' : 'Вкл'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={styles.deleteUserBtn}
+                onClick={() => setConfirmDel(true)}
+                title="Удалить пользователя"
+              >
+                Удалить
+              </Button>
+            </>
+          )
         ) : (
           <span className={styles.selfLabel}>Это вы</span>
         )}
@@ -344,7 +378,10 @@ function AdminFeedbackSection() {
   });
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    new Date(iso).toLocaleString('ru-RU', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
 
   const renderLoading = () => (
     <div className={styles.feedbackList}>
@@ -498,6 +535,11 @@ export default function AdminPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin'] }),
   });
 
+  const deleteUserMut = useMutation({
+    mutationFn: (id: string) => adminApi.deleteUser(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin'] }),
+  });
+
   const handleSearch = (val: string) => {
     setSearch(val);
     if (searchDebRef.current) clearTimeout(searchDebRef.current);
@@ -563,6 +605,7 @@ export default function AdminPage() {
                   <UserRow key={u.id} user={u} isSelf={u.id === user.id}
                     onToggleRole={() => updateMut.mutate({ id: u.id, data: { role: u.role === 'admin' ? 'user' : 'admin' } })}
                     onToggleActive={() => updateMut.mutate({ id: u.id, data: { isActive: !u.isActive } })}
+                    onDelete={() => deleteUserMut.mutate(u.id)}
                   />
                 ))}
               </tbody>

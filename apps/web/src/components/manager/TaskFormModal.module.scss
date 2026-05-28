@@ -681,6 +681,15 @@
   }
 }
 
+// Кнопка «Удалить» в футере: нейтральная, краснеет только при наведении
+.deleteBtn {
+  color: var(--text-muted) !important;
+  &:hover {
+    background: var(--error-subtle) !important;
+    color: var(--error) !important;
+  }
+}
+
 // ── Footer ────────────────────────────────────────────────────
 .footer {
   display: flex;

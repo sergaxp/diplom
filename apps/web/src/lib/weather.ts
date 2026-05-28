@@ -126,18 +126,26 @@ async function fetchWeatherForMonth(
 
   const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
 
+  const fetchJson = async (url: string) => {
+    try {
+      const res = await fetch(url);
+      return res.ok ? await res.json() : null;
+    } catch { return null; /* частичные данные допустимы */ }
+  };
+
+  // Оба запроса идут ПАРАЛЛЕЛЬНО — иначе суммарная задержка archive+forecast
+  // делала загрузку календаря заметно медленной.
+  let archiveUrl: string | null = null;
+  let forecastUrl: string | null = null;
+
   // 1) Историческая часть месяца — архивный API (ERA5).
   //    Forecast API отдаёт прошлое надёжно лишь ~3 недели назад (дальше — null),
   //    поэтому глубину истории всегда берём из архива.
   if (monthStart <= yesterday) {
     const archEnd = monthEnd <= yesterday ? end : toDateStr(yesterday);
-    const url = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({
+    archiveUrl = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({
       ...commonParams, start_date: start, end_date: archEnd,
     });
-    try {
-      const res = await fetch(url);
-      if (res.ok) collect(await res.json());
-    } catch { /* частичные данные допустимы */ }
   }
 
   // 2) Сегодня + будущее (и небольшой запас прошлого, чтобы закрыть возможную
@@ -146,14 +154,19 @@ async function fetchWeatherForMonth(
     const pastDays     = monthStart < today ? 7 : 0;
     const forecastDays = Math.min(16, Math.max(1,
       Math.round((monthEnd.getTime() - today.getTime()) / 86_400_000) + 1));
-    const url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
+    forecastUrl = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
       ...commonParams, past_days: String(pastDays), forecast_days: String(forecastDays),
     });
-    try {
-      const res = await fetch(url);
-      if (res.ok) collect(await res.json());
-    } catch { /* частичные данные допустимы */ }
   }
+
+  const [archiveJson, forecastJson] = await Promise.all([
+    archiveUrl  ? fetchJson(archiveUrl)  : Promise.resolve(null),
+    forecastUrl ? fetchJson(forecastUrl) : Promise.resolve(null),
+  ]);
+
+  // Архив — для истории, forecast поверх него для последних дней/будущего.
+  if (archiveJson)  collect(archiveJson);
+  if (forecastJson) collect(forecastJson);
 
   return map;
 }
@@ -169,8 +182,8 @@ async function fetchDayWeatherData(
   const daily = 'temperature_2m_max,temperature_2m_min,apparent_temperature_max,weathercode,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max';
 
   let url: string;
-  if (daysDiff > 16) {
-    // Слишком далеко в будущем – данных нет
+  if (daysDiff > 15) {
+    // forecast_days максимум 16 (сегодня…сегодня+15), дальше прогноза нет
     return null;
   } else if (daysDiff < -14) {
     // Forecast API надёжно отдаёт прошлое лишь ~3 недели назад — глубже берём архив (ERA5)
@@ -180,7 +193,7 @@ async function fetchDayWeatherData(
     });
   } else {
     const pastDays     = Math.max(0, -daysDiff);
-    const forecastDays = Math.max(1, daysDiff + 1);
+    const forecastDays = Math.min(16, Math.max(1, daysDiff + 1));
     url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
       latitude: String(lat), longitude: String(lon), timezone: tz,
       past_days: String(pastDays), forecast_days: String(forecastDays), daily,
@@ -193,6 +206,9 @@ async function fetchDayWeatherData(
 
   const idx = (json.daily.time as string[]).indexOf(date);
   if (idx === -1) return null;
+  // Последний день прогноза модель может ещё не рассчитать → temp = null.
+  // Возвращаем null, чтобы не показывать «0/0 ясно».
+  if (json.daily.temperature_2m_max[idx] == null) return null;
 
   return {
     date,

@@ -105,7 +105,7 @@ function WeatherWidget({ date }: { date: string }) {
     return `${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`;
   })();
 
-  if (daysDiff > 16) {
+  if (daysDiff > 15) {
     return (
       <div className={styles.weatherCard}>
         <div className={styles.weatherHeader}>
@@ -136,7 +136,9 @@ function WeatherWidget({ date }: { date: string }) {
           {(() => { const C = Icons['Cloud']; return C ? <C size={18} strokeWidth={1.5} /> : '☁'; })()}
           <span className={styles.weatherTitle}>{dateLabel}</span>
         </div>
-        <p className={styles.weatherNote}>Не удалось загрузить прогноз</p>
+        <p className={styles.weatherNote}>
+          {isError ? 'Не удалось загрузить прогноз' : 'Прогноз на этот день пока недоступен'}
+        </p>
       </div>
     );
   }
@@ -1084,8 +1086,9 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
             <div className={styles.footerLeft}>
               {isEdit && onDelete && (
                 <Button
-                  variant="destructive"
+                  variant="ghost"
                   size="sm"
+                  className={styles.deleteBtn}
                   onClick={() => { onDelete(); onClose(); }}
                 >
                   Удалить

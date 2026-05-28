@@ -8,11 +8,32 @@
   position: fixed;
   z-index: var(--z-popover);
   width: 280px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
   background: var(--bg-popover);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: 0 10px 28px var(--shadow-lg);
-  overflow: hidden;
+}
+
+// На мобильных — нижний лист на всю ширину, прокручиваемый.
+// !important перекрывает inline-координаты, которые ставит JS.
+@media (max-width: 640px) {
+  .popup {
+    left: 8px !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: 8px !important;
+    width: auto !important;
+    max-width: none;
+    max-height: 80dvh;
+  }
+}
+
+// Бэкдроп затемняем на мобильных, чтобы нижний лист читался как модалка
+@media (max-width: 640px) {
+  .backdrop { background: rgba(0, 0, 0, 0.4); }
 }
 
 .divider { height: 1px; background: var(--border-subtle); }

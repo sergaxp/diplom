@@ -69,6 +69,20 @@ export class AdminController {
     return this.adminService.updateUser(id, data);
   }
 
+  // DELETE /admin/users/:id – полное удаление пользователя и его данных
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Delete('users/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteUser(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string,
+  ) {
+    if (req.user.id === id) {
+      throw new ForbiddenException('Нельзя удалить собственный аккаунт через панель');
+    }
+    return this.adminService.deleteUser(id);
+  }
+
   // ── Глобальные события ──────────────────────────────────────
 
   @UseGuards(JwtAuthGuard, AdminGuard)

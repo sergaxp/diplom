@@ -271,17 +271,29 @@ export class UsersService {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new UnauthorizedException('Неверный пароль');
 
+    await this.purgeUser(id);
+  }
+
+  /**
+   * Полностью удаляет пользователя и все связанные данные.
+   * Без проверки пароля — для самоудаления используйте deleteAccount,
+   * для удаления из админ-панели вызывается напрямую.
+   */
+  async purgeUser(id: string): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('Пользователь не найден');
+
     const usernameHint = user.username;
     // Каскадно очищаем связанные записи. Используем транзакцию.
     await this.dataSource.transaction(async (em) => {
-      // task_completion → task → tag link rows → tag/task/achievement/inventory
-      await em.query('DELETE FROM task_completion WHERE "userId" = $1', [id]);
+      // task_completions → task_tags → tasks/tags/achievement/inventory
+      await em.query('DELETE FROM task_completions WHERE "userId" = $1', [id]);
       await em.query(
-        'DELETE FROM task_tags WHERE "taskId" IN (SELECT id FROM task WHERE "userId" = $1)',
+        'DELETE FROM task_tags WHERE "taskId" IN (SELECT id FROM tasks WHERE "userId" = $1)',
         [id],
       );
-      await em.query('DELETE FROM task WHERE "userId" = $1', [id]);
-      await em.query('DELETE FROM tag WHERE "userId" = $1', [id]);
+      await em.query('DELETE FROM tasks WHERE "userId" = $1', [id]);
+      await em.query('DELETE FROM tags WHERE "userId" = $1', [id]);
       await em.query('DELETE FROM user_achievements WHERE "userId" = $1', [id]);
       await em.query('DELETE FROM user_inventory WHERE "userId" = $1', [id]);
       await em.query('DELETE FROM notifications WHERE "userId" = $1', [id]);

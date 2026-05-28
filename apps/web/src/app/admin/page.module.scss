@@ -178,6 +178,19 @@
 
 .onlineLabel { font-size: var(--text-sm); color: var(--text-secondary); vertical-align: middle; }
 
+.onlineCell { display: flex; flex-direction: column; gap: 2px; }
+.onlineStatusRow { display: flex; align-items: center; }
+.lastSeenAt { font-size: var(--text-xs); color: var(--text-muted); }
+
+/* Кнопка удаления пользователя: нейтральная, краснеет только при наведении */
+.deleteUserBtn {
+  color: var(--text-muted) !important;
+  &:hover {
+    background: var(--error-subtle) !important;
+    color: var(--error) !important;
+  }
+}
+
 /* ── Глобальные события ── */
 .sectionDesc { font-size: var(--text-sm); color: var(--text-muted); margin: calc(var(--space-2) * -1) 0 var(--space-4); }
 
