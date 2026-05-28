@@ -91,52 +91,70 @@ async function fetchWeatherForMonth(
   const start = toDateStr(monthStart);
   const end   = toDateStr(monthEnd);
 
-  const daysSinceStart = Math.round((today.getTime() - monthStart.getTime()) / 86_400_000);
-  const daysToEnd      = Math.round((monthEnd.getTime()  - today.getTime())  / 86_400_000);
+  // Месяц целиком слишком далеко в будущем — прогноза нет
+  const daysToStart = Math.round((monthStart.getTime() - today.getTime()) / 86_400_000);
+  if (daysToStart > 16) return new Map();
 
   const commonParams = {
     latitude: String(lat), longitude: String(lon),
     daily: 'temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum', timezone: tz,
   };
 
-  let fetchUrl: string;
-  if (daysSinceStart > 85) {
-    fetchUrl = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({
-      ...commonParams, start_date: start, end_date: end,
+  const map = new Map<string, DayWeather>();
+
+  const collect = (json: { daily?: Record<string, (number | null)[] | string[]> }) => {
+    const daily = json?.daily;
+    const times = daily?.time as string[] | undefined;
+    if (!times) return;
+    const tMax = daily!.temperature_2m_max as (number | null)[];
+    const tMin = daily!.temperature_2m_min as (number | null)[];
+    const wc   = daily!.weathercode as (number | null)[] | undefined;
+    const pr   = daily!.precipitation_sum as (number | null)[] | undefined;
+    times.forEach((date, i) => {
+      const max = tMax?.[i];
+      if (date >= start && date <= end && max != null) {
+        map.set(date, {
+          date,
+          tempMax: Math.round(max),
+          tempMin: Math.round(tMin[i] as number),
+          weatherCode: wc?.[i] ?? undefined,
+          precipSum: pr?.[i] != null ? Math.round((pr[i] as number) * 10) / 10 : undefined,
+        });
+      }
     });
-  } else if (daysToEnd < 0) {
-    const pastDays = Math.min(daysSinceStart + 5, 92);
-    fetchUrl = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
-      ...commonParams, past_days: String(pastDays), forecast_days: '1',
+  };
+
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+
+  // 1) Историческая часть месяца — архивный API (ERA5).
+  //    Forecast API отдаёт прошлое надёжно лишь ~3 недели назад (дальше — null),
+  //    поэтому глубину истории всегда берём из архива.
+  if (monthStart <= yesterday) {
+    const archEnd = monthEnd <= yesterday ? end : toDateStr(yesterday);
+    const url = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({
+      ...commonParams, start_date: start, end_date: archEnd,
     });
-  } else if (daysSinceStart < -16) {
-    return new Map();
-  } else {
-    const pastDays     = Math.max(0, daysSinceStart);
-    const forecastDays = Math.min(16, Math.max(1, daysToEnd + 1));
-    fetchUrl = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
-      ...commonParams, past_days: String(pastDays), forecast_days: String(forecastDays),
-    });
+    try {
+      const res = await fetch(url);
+      if (res.ok) collect(await res.json());
+    } catch { /* частичные данные допустимы */ }
   }
 
-  const res = await fetch(fetchUrl);
-  if (!res.ok) throw new Error(`Weather API ${res.status}`);
-  const json = await res.json();
+  // 2) Сегодня + будущее (и небольшой запас прошлого, чтобы закрыть возможную
+  //    задержку архива за последние дни) — forecast API.
+  if (monthEnd >= today) {
+    const pastDays     = monthStart < today ? 7 : 0;
+    const forecastDays = Math.min(16, Math.max(1,
+      Math.round((monthEnd.getTime() - today.getTime()) / 86_400_000) + 1));
+    const url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
+      ...commonParams, past_days: String(pastDays), forecast_days: String(forecastDays),
+    });
+    try {
+      const res = await fetch(url);
+      if (res.ok) collect(await res.json());
+    } catch { /* частичные данные допустимы */ }
+  }
 
-  const map = new Map<string, DayWeather>();
-  (json.daily.time as string[]).forEach((date: string, i: number) => {
-    if (date >= start && date <= end && json.daily.temperature_2m_max[i] != null) {
-      map.set(date, {
-        date,
-        tempMax: Math.round(json.daily.temperature_2m_max[i]),
-        tempMin: Math.round(json.daily.temperature_2m_min[i]),
-        weatherCode: json.daily.weathercode?.[i] ?? undefined,
-        precipSum: json.daily.precipitation_sum?.[i] != null
-          ? Math.round(json.daily.precipitation_sum[i] * 10) / 10
-          : undefined,
-      });
-    }
-  });
   return map;
 }
 
@@ -154,7 +172,8 @@ async function fetchDayWeatherData(
   if (daysDiff > 16) {
     // Слишком далеко в будущем – данных нет
     return null;
-  } else if (daysDiff < -92) {
+  } else if (daysDiff < -14) {
+    // Forecast API надёжно отдаёт прошлое лишь ~3 недели назад — глубже берём архив (ERA5)
     url = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({
       latitude: String(lat), longitude: String(lon), timezone: tz,
       start_date: date, end_date: date, daily,
