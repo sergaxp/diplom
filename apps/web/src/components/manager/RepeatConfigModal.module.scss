@@ -1,57 +1,5 @@
-// ── Overlay & Modal ───────────────────────────────────────────
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.modal {
-  background: var(--bg);
-  border: 1px solid var(--border-input);
-  border-radius: 14px;
-  width: 100%;
-  max-width: 440px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 60px var(--shadow-lg);
-  overflow: hidden;
-}
-
-// ── Header ────────────────────────────────────────────────────
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem 0.875rem;
-  border-bottom: 1px solid var(--border-light);
-  flex-shrink: 0;
-}
-
-.title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.closeBtn {
-  background: none;
-  border: none;
-  font-size: 0.85rem;
-  color: var(--text-4);
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 5px;
-  line-height: 1;
-  &:hover { color: var(--text-2); background: var(--bg-hover); }
-}
+/* .overlay/.modal/.header/.title/.closeBtn → <Modal>.
+ * .footer/.cancelBtn/.saveBtn → Modal footer slot + <Button>. */
 
 // ── Body ──────────────────────────────────────────────────────
 
@@ -105,14 +53,14 @@
   color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--duration-default) var(--ease-default), color var(--duration-default) var(--ease-default);
   &:hover { color: var(--text-2); }
 }
 
 .modeTabActive {
-  background: var(--bg);
-  color: var(--text);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  background: var(--bg-elevated);
+  color: var(--brand);
+  font-weight: var(--weight-semibold);
 }
 
 .modeTabDisabled {
@@ -185,7 +133,7 @@
   font-family: inherit;
   text-align: center;
   flex-shrink: 0;
-  &:focus { border-color: var(--border-strong); }
+  &:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-subtle); }
 }
 
 .unitBtns {
@@ -203,15 +151,15 @@
   color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 0.1s, background 0.1s, color 0.1s;
+  transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
   &:hover { border-color: var(--border-strong); background: var(--bg-hover); color: var(--text); }
 }
 
 .unitBtnActive {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--bg);
-  &:hover { opacity: 0.85; }
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--text-on-brand);
+  &:hover { background: var(--brand-hover); color: var(--text-on-brand); }
 }
 
 .wdRow {
@@ -231,15 +179,15 @@
   color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.1s;
+  transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
   &:hover { border-color: var(--border-strong); background: var(--bg-hover); color: var(--text); }
 }
 
 .wdBtnActive {
-  border-color: var(--border-strong);
-  background: var(--bg-active);
-  color: var(--text);
-  font-weight: 600;
+  border-color: var(--brand);
+  background: var(--brand-subtle);
+  color: var(--brand);
+  font-weight: var(--weight-semibold);
 }
 
 .checkRow {
@@ -253,7 +201,7 @@
 
   input[type='checkbox'] {
     cursor: pointer;
-    accent-color: var(--text);
+    accent-color: var(--brand);
     width: 15px;
     height: 15px;
     flex-shrink: 0;
@@ -346,7 +294,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.1s, color 0.1s;
+  transition: background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
   &:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-2); }
   &:disabled { opacity: 0.3; cursor: default; }
 }
@@ -361,7 +309,7 @@
   color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 0.1s, color 0.1s, background 0.1s;
+  transition: border-color var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default);
   &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-alt); }
 }
 
@@ -418,7 +366,7 @@
   outline: none;
   font-family: inherit;
   text-align: center;
-  &:focus { border-color: var(--border-strong); }
+  &:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-subtle); }
 }
 
 // ── Months / Seasonal ─────────────────────────────────────────
@@ -438,7 +386,7 @@
   color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.1s;
+  transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
   &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-hover); }
 }
 
@@ -465,7 +413,7 @@
   color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.1s;
+  transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
   &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-alt); border-style: solid; }
 }
 
@@ -527,7 +475,7 @@
 
   input[type='radio'] {
     cursor: pointer;
-    accent-color: var(--text);
+    accent-color: var(--brand);
     flex-shrink: 0;
   }
 }
@@ -583,7 +531,7 @@
 
   input[type='checkbox'] {
     cursor: pointer;
-    accent-color: var(--text);
+    accent-color: var(--brand);
     width: 15px;
     height: 15px;
     flex-shrink: 0;
@@ -625,7 +573,7 @@
 
   input[type='radio'] {
     cursor: pointer;
-    accent-color: var(--text);
+    accent-color: var(--brand);
     flex-shrink: 0;
   }
 }
@@ -659,11 +607,11 @@
   color: var(--text);
   cursor: pointer;
   user-select: none;
-  transition: border-color 0.1s, background 0.1s;
+  transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default);
 
   input[type='checkbox'] {
     cursor: pointer;
-    accent-color: var(--text);
+    accent-color: var(--brand);
     flex-shrink: 0;
   }
 
@@ -697,7 +645,7 @@
   outline: none;
   font-family: inherit;
   text-align: center;
-  &:focus { border-color: var(--border-strong); }
+  &:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-subtle); }
   &::placeholder { color: var(--text-4); }
 }
 
@@ -721,7 +669,7 @@
   font-family: inherit;
   text-align: center;
   margin: 0 3px;
-  &:focus { border-color: var(--border-strong); }
+  &:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-subtle); }
   &:disabled { opacity: 0.4; }
 }
 
@@ -735,7 +683,7 @@
   outline: none;
   font-family: inherit;
   margin-left: 6px;
-  &:focus { border-color: var(--border-strong); }
+  &:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-subtle); }
 }
 
 // ── Мини-календарь для выбора даты завершения ─────────────────
@@ -812,7 +760,7 @@
   color: var(--text);
   font-family: inherit;
   text-align: center;
-  transition: background 0.1s, border-color 0.1s;
+  transition: background var(--duration-fast) var(--ease-default), border-color var(--duration-fast) var(--ease-default);
 
   &:hover:not(:disabled) {
     background: var(--bg-hover);
@@ -826,46 +774,10 @@
 }
 
 .miniCalCellSelected {
-  background: var(--text) !important;
-  color: var(--bg) !important;
-  font-weight: 600;
-  border-color: var(--text) !important;
+  background: var(--brand) !important;
+  color: var(--text-on-brand) !important;
+  font-weight: var(--weight-semibold);
+  border-color: var(--brand) !important;
 }
 
-// ── Footer ────────────────────────────────────────────────────
-
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border-top: 1px solid var(--border-light);
-  flex-shrink: 0;
-}
-
-.cancelBtn {
-  padding: 0.45rem 1rem;
-  background: none;
-  border: 1px solid var(--border-input);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.1s;
-  &:hover { background: var(--bg-hover); }
-}
-
-.saveBtn {
-  padding: 0.45rem 1.25rem;
-  background: var(--text);
-  border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  color: var(--bg);
-  cursor: pointer;
-  font-family: inherit;
-  font-weight: 500;
-  transition: opacity 0.1s;
-  &:hover { opacity: 0.8; }
-}
+/* .footer/.cancelBtn/.saveBtn → Modal footer slot + <Button> */

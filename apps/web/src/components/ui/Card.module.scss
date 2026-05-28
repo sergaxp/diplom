@@ -1,0 +1,65 @@
+/* ============================================================
+ * Card — поверхность для группировки контента.
+ * Варианты: default (на странице), elevated (модалки/popover), interactive (кликабельная).
+ * Размеры padding'а: sm / md / lg.
+ * ============================================================ */
+
+.card {
+  display: block;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  transition:
+    border-color var(--duration-default) var(--ease-default),
+    background var(--duration-default) var(--ease-default);
+}
+
+/* ── Варианты ───────────────────────────────────────────────── */
+
+.variant-default {
+  /* базовый стиль */
+}
+
+.variant-elevated {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+  border-radius: var(--radius-xl);
+}
+
+.variant-interactive {
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  /* убираем default-button стили если используется как <button> */
+  &[type='button'] { -webkit-appearance: none; }
+
+  &:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-strong);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  &:active { transform: scale(0.995); }
+}
+
+/* ── Padding ────────────────────────────────────────────────── */
+
+.padding-none { padding: 0; }
+.padding-sm   { padding: var(--space-3) var(--space-4); }
+.padding-md   { padding: var(--space-4) var(--space-5); }
+.padding-lg   { padding: var(--space-6) var(--space-8); }
+
+/* ── Цветная полоска ранга/приоритета слева ───────────────────
+ * Через box-shadow inset, чтобы сохранить border-radius.
+ * Цвет передаётся через CSS-переменную --stripe-color. */
+.withStripe {
+  box-shadow: inset 4px 0 0 var(--stripe-color, var(--brand));
+  padding-left: calc(var(--space-5) + 4px) !important;
+
+  &.padding-sm { padding-left: calc(var(--space-4) + 4px) !important; }
+  &.padding-md { padding-left: calc(var(--space-5) + 4px) !important; }
+  &.padding-lg { padding-left: calc(var(--space-8) + 4px) !important; }
+}

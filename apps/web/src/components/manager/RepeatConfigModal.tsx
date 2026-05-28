@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { RepeatConfig, CyclicSegment, WeatherCondition, HolidaySettings } from '../../lib/tasks';
+import { Modal, Button } from '../ui';
 import styles from './RepeatConfigModal.module.scss';
 
 type Mode = 'interval' | 'cyclic' | 'dependency' | 'adaptive';
@@ -390,15 +391,26 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
   })();
 
   return (
-    <div className={styles.overlay} onMouseDown={onClose}>
-      <div className={styles.modal} onMouseDown={e => e.stopPropagation()}>
-
-        {/* Header */}
-        <div className={styles.header}>
-          <h3 className={styles.title}>Настройка повтора</h3>
-          <button type="button" className={styles.closeBtn} onClick={onClose}>✕</button>
-        </div>
-
+    <Modal
+      open
+      onClose={onClose}
+      size="sm"
+      title="Настройка повтора"
+      noPadding
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Отмена</Button>
+          <Button
+            variant="accent"
+            onClick={handleSave}
+            disabled={mode === 'adaptive'}
+            title={mode === 'adaptive' ? 'Адаптивный режим ещё в разработке' : ''}
+          >
+            Сохранить
+          </Button>
+        </>
+      }
+    >
         <div className={styles.body}>
 
           {/* ── Секция: Расписание ── */}
@@ -841,21 +853,6 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
           </div>
 
         </div>
-
-        {/* Footer */}
-        <div className={styles.footer}>
-          <button type="button" className={styles.cancelBtn} onClick={onClose}>Отмена</button>
-          <button
-            type="button"
-            className={styles.saveBtn}
-            onClick={handleSave}
-            disabled={mode === 'adaptive'}
-            title={mode === 'adaptive' ? 'Адаптивный режим ещё в разработке' : ''}
-          >
-            Сохранить
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

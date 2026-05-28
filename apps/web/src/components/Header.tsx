@@ -10,6 +10,7 @@ import { clearAuth } from '../lib/auth';
 import { AvatarFramed } from './AvatarFramed';
 import { NotificationBell } from './NotificationBell';
 import { FeedbackDropdown } from './feedback/FeedbackDropdown';
+import { Button } from './ui';
 import styles from './Header.module.scss';
 
 export function Header() {
@@ -128,7 +129,7 @@ export function Header() {
               )}
             </div>
           ) : (
-            <Link href="/auth" className={styles.loginBtn}>Войти</Link>
+            <Button href="/auth" variant="primary" size="sm">Войти</Button>
           )
         )}
       </div>

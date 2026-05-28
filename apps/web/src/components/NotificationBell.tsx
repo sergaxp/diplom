@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as LucideIcons from 'lucide-react';
 import { Bell } from 'lucide-react';
 import { notificationsApi, NotificationItem } from '../lib/notifications';
+import { Button, EmptyState, Skeleton } from './ui';
 import styles from './NotificationBell.module.scss';
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number; color?: string }>;
@@ -107,24 +108,30 @@ export function NotificationBell() {
           <div className={styles.head}>
             <span className={styles.title}>Уведомления</span>
             {items.length > 0 && (
-              <button
-                type="button"
-                className={styles.clearBtn}
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => clearMut.mutate()}
-                disabled={clearMut.isPending}
+                loading={clearMut.isPending}
               >
                 Очистить
-              </button>
+              </Button>
             )}
           </div>
 
           <div className={styles.list}>
-            {isLoading && <div className={styles.empty}>Загрузка...</div>}
-            {!isLoading && items.length === 0 && (
-              <div className={styles.empty}>
-                <Bell size={28} strokeWidth={1.5} />
-                <span>Пока пусто</span>
+            {isLoading && (
+              <div className={styles.skeletonList}>
+                {[1, 2, 3].map(i => <Skeleton key={i} width="100%" height={56} />)}
               </div>
+            )}
+            {!isLoading && items.length === 0 && (
+              <EmptyState
+                size="sm"
+                icon={<Bell size={36} strokeWidth={1.5} />}
+                title="Тишина"
+                description="Уведомлений пока нет."
+              />
             )}
 
             {items.map(n => {

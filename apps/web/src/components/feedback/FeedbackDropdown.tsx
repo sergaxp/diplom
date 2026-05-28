@@ -5,6 +5,7 @@ import { MessageSquare } from 'lucide-react';
 import { BugReportModal } from './BugReportModal';
 import { FeatureRequestModal } from './FeatureRequestModal';
 import { MyFeedbackModal } from './MyFeedbackModal';
+import { Button } from '../ui';
 import styles from './FeedbackDropdown.module.scss';
 
 type ActiveModal = 'bug' | 'feature' | 'my' | null;
@@ -32,14 +33,17 @@ export function FeedbackDropdown() {
   return (
     <>
       <div className={styles.wrap} ref={wrapRef}>
-        <button
-          className={styles.trigger}
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => setOpen(v => !v)}
           aria-label="Обратная связь"
+          aria-expanded={open}
+          leftIcon={<MessageSquare size={16} />}
+          className={styles.trigger}
         >
-          <MessageSquare size={15} />
           <span className={styles.triggerLabel}>Обратная связь</span>
-        </button>
+        </Button>
 
         {open && (
           <div className={styles.dropdown}>

@@ -1,0 +1,81 @@
+/* ============================================================
+ * Badge — компактный индикатор статуса/метки.
+ * Варианты: neutral, brand, accent, success, error, warning, info
+ *           + rank-1..4 (ранги достижений)
+ * Формы: rounded (default, 4px) | pill (full)
+ * ============================================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  line-height: 1.5;
+  border: 1px solid transparent;
+}
+
+.shape-pill { border-radius: var(--radius-full); }
+
+/* ── Семантические варианты ─────────────────────────────────── */
+.variant-neutral {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
+.variant-brand {
+  background: var(--brand-subtle);
+  color: var(--brand);
+}
+
+.variant-accent {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.variant-success {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+.variant-error {
+  background: var(--error-subtle);
+  color: var(--error);
+}
+
+.variant-warning {
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+
+.variant-info {
+  background: var(--info-subtle);
+  color: var(--info);
+}
+
+/* ── Ранги достижений ───────────────────────────────────────── */
+.variant-rank-1 {
+  background: #8EA69B;
+  color: #1A3028;
+}
+.variant-rank-2 {
+  background: #B04E6E;
+  color: #FAF3E8;
+}
+.variant-rank-3 {
+  background: #7A4288;
+  color: #FAF3E8;
+}
+.variant-rank-4 {
+  background: #D4A83C;
+  color: #3A2804;
+}
+
+/* ── Outline-вариант (бледнее) ──────────────────────────────── */
+.outline {
+  background: transparent;
+  border-color: currentColor;
+}

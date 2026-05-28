@@ -926,9 +926,9 @@ function ChartView({ selectedDate, tasks, onSelect, holidayMap }: ChartProps) {
       {/* Nav row */}
       <div className={styles.chartNavRow}>
         <div className={styles.chartNavLeft}>
-          <button className={styles.navBtn} onClick={() => navigate(-1)}>‹</button>
+          <button className={styles.navBtn} onClick={() => navigate(-1)} aria-label="Назад">‹</button>
           <span className={styles.chartWeekLabel}>{navLabel}</span>
-          <button className={styles.navBtn} onClick={() => navigate(1)}>›</button>
+          <button className={styles.navBtn} onClick={() => navigate(1)} aria-label="Вперёд">›</button>
 
           {/* Month/Year pickers for chart */}
           <div className={styles.chartPickerGroup}>
@@ -1107,7 +1107,7 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
       <div className={styles.head}>
         {view === 'grid' ? (
           <div className={styles.nav}>
-            <button className={styles.navBtn} onClick={prevMonth}>‹</button>
+            <button className={styles.navBtn} onClick={prevMonth} aria-label="Предыдущий месяц">‹</button>
 
             {/* Month · Year – fixed-width group so layout stays stable on month change */}
             <div className={styles.navCenter}>
@@ -1150,14 +1150,14 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
               </div>
             </div>
 
-            <button className={styles.navBtn} onClick={nextMonth}>›</button>
+            <button className={styles.navBtn} onClick={nextMonth} aria-label="Следующий месяц">›</button>
           </div>
         ) : (
           <div className={styles.nav} />
         )}
         <div className={styles.viewToggle}>
-          <button className={[styles.viewBtn, view==='grid'  ? styles.viewBtnActive : ''].join(' ')} onClick={()=>setView('grid')}  title="Сетка">⊞</button>
-          <button className={[styles.viewBtn, view==='chart' ? styles.viewBtnActive : ''].join(' ')} onClick={()=>setView('chart')} title="График">≡</button>
+          <button className={[styles.viewBtn, view==='grid'  ? styles.viewBtnActive : ''].join(' ')} onClick={()=>setView('grid')}  title="Сетка"   aria-label="Вид: сетка"   aria-pressed={view==='grid'}>⊞</button>
+          <button className={[styles.viewBtn, view==='chart' ? styles.viewBtnActive : ''].join(' ')} onClick={()=>setView('chart')} title="График" aria-label="Вид: график" aria-pressed={view==='chart'}>≡</button>
         </div>
       </div>
 

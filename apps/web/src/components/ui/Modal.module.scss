@@ -1,0 +1,107 @@
+/* ============================================================
+ * Modal — единая обёртка для модальных окон.
+ * Overlay + container + header/body/footer слоты.
+ * Анимация: framer-motion (см. Modal.tsx).
+ * ============================================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+/* ── Размеры ───────────────────────────────────────────────── */
+.size-sm  { max-width: 420px; }
+.size-md  { max-width: 560px; }
+.size-lg  { max-width: 720px; }
+.size-xl  { max-width: 900px; }
+
+/* ── Слоты ─────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  gap: var(--space-3);
+}
+
+.title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-6);
+  min-height: 0;
+  /* Flex column позволяет вложенным формам/обёрткам с flex:1
+   * корректно заполнять высоту (как в TaskFormModal). */
+  display: flex;
+  flex-direction: column;
+}
+
+.bodyNoPadding {
+  padding: 0;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+/* ── Mobile: bottom-sheet ──────────────────────────────────── */
+@media (max-width: 640px) {
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal {
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-bottom: none;
+    max-height: 92dvh;
+    max-width: 100% !important;
+
+    /* Drag handle */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 44px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border-default);
+      z-index: 1;
+    }
+  }
+  .header { padding-top: var(--space-5); }
+}

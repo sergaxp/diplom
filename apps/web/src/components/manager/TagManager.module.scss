@@ -1,5 +1,7 @@
+/* TagManager — специфика. Buttons/Input теперь в ui/. */
+
 .root {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
@@ -8,30 +10,38 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0.6rem 0;
+  padding: var(--space-2) 0;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--text-4);
+  color: var(--text-muted);
+  font-family: inherit;
+  transition: color var(--duration-fast) var(--ease-default);
 
-  &:hover { color: var(--text-2); }
+  &:hover { color: var(--brand); }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 }
 
 .chevron {
-  color: var(--text-4);
-  transition: transform .15s;
+  color: var(--text-muted);
+  transition: transform var(--duration-medium) var(--ease-default);
 }
 .chevronOpen { transform: rotate(180deg); }
 
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding-bottom: 0.75rem;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
 }
 
 /* ── Список тегов ── */
@@ -47,12 +57,12 @@
   justify-content: space-between;
   gap: 6px;
   padding: 2px 0;
-  border-radius: 6px;
-  transition: background .1s;
+  border-radius: var(--radius-md);
+  transition: background var(--duration-fast) var(--ease-default);
 }
 
 .tagRowEditing {
-  background: var(--bg-alt);
+  background: var(--brand-subtle);
   padding: 2px 6px;
   margin: 0 -6px;
 }
@@ -61,11 +71,11 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 10px 3px 7px;
-  border-radius: 20px;
+  padding: 3px var(--space-3) 3px var(--space-2);
+  border-radius: var(--radius-full);
   border: 1.5px solid currentColor;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
   min-width: 0;
 }
 
@@ -73,7 +83,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--text);
+  color: var(--text-primary);
 }
 
 .tagDot {
@@ -89,56 +99,31 @@
   flex-shrink: 0;
 }
 
-.tagBtn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.75rem;
-  color: var(--text-4);
-  padding: 3px 5px;
-  border-radius: 3px;
-  line-height: 1;
-  &:hover { background: var(--bg-hover); color: var(--text-2); }
-}
-
 .tagBtnDanger {
-  @extend .tagBtn;
-  &:hover { background: var(--bg-hover); color: var(--text-2); }
+  /* Override hover color to error */
+  &:hover {
+    background: var(--error-subtle) !important;
+    color: var(--error) !important;
+  }
 }
 
 /* ── Форма ── */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background: var(--bg-alt);
-  border: 1px solid var(--border-input);
-  border-radius: 8px;
-  padding: 10px;
+  gap: var(--space-2);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
 }
 
 .formLabel {
-  font-size: 0.68rem;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--text-muted);
-}
-
-.nameInput {
-  width: 100%;
-  padding: 6px 9px;
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
-  background: var(--bg-card);
-  font-size: 0.875rem;
-  color: var(--text);
-  outline: none;
-  box-sizing: border-box;
-  font-family: inherit;
-
-  &:focus { border-color: var(--border-strong); }
-  &::placeholder { color: var(--text-4); }
 }
 
 .iconRow {
@@ -150,11 +135,11 @@
 .colorRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .colorLabel {
-  font-size: 0.775rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   white-space: nowrap;
   flex-shrink: 0;
@@ -170,11 +155,11 @@
   position: relative;
   width: 30px;
   height: 30px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   cursor: pointer;
   flex-shrink: 0;
-  border: 1px solid rgba(0,0,0,.15);
+  border: 1px solid var(--border-default);
 }
 
 .colorInput {
@@ -198,17 +183,18 @@
 
 .hexInput {
   width: 88px;
-  padding: 5px 8px;
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
-  background: var(--bg-card);
-  font-size: 0.825rem;
-  font-family: monospace;
-  color: var(--text);
+  padding: 5px var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
   outline: none;
+  transition: border-color var(--duration-default) var(--ease-default);
 
-  &:focus { border-color: var(--border-strong); }
-  &::placeholder { color: var(--text-4); }
+  &:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-subtle); }
+  &::placeholder { color: var(--text-muted); }
 }
 
 .formActions {
@@ -216,31 +202,4 @@
   gap: 6px;
   justify-content: flex-end;
   margin-top: 2px;
-}
-
-.saveBtn {
-  padding: 5px 13px;
-  background: var(--text);
-  border: none;
-  border-radius: 5px;
-  font-size: 0.8rem;
-  color: var(--bg);
-  cursor: pointer;
-  font-family: inherit;
-  transition: opacity .1s;
-
-  &:hover:not(:disabled) { opacity: .8; }
-  &:disabled { opacity: .4; cursor: default; }
-}
-
-.cancelBtn {
-  padding: 5px 11px;
-  background: none;
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-family: inherit;
-  &:hover { background: var(--bg-hover); }
 }

@@ -1,38 +1,38 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  z-index: 399;
+  z-index: var(--z-overlay);
 }
 
 .popup {
   position: fixed;
-  z-index: 400;
+  z-index: var(--z-popover);
   width: 280px;
-  background: var(--bg);
-  border: 1px solid var(--border-input);
-  border-radius: 10px;
-  box-shadow: 0 8px 28px var(--shadow-lg);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
-.divider { height: 1px; background: var(--border-light); }
+.divider { height: 1px; background: var(--border-subtle); }
 
 // ── 1. Shortcuts ──────────────────────────────────────────────
-.shortcuts { padding: 4px; }
+.shortcuts { padding: var(--space-1); }
 
 .shortcut {
   display: flex; align-items: center; justify-content: space-between;
-  width: 100%; padding: 7px 10px; border: none; background: none;
-  border-radius: 6px; cursor: pointer; font-family: inherit;
-  transition: background 0.1s;
-  &:hover { background: var(--bg-hover); }
+  width: 100%; padding: var(--space-2) var(--space-3); border: none; background: none;
+  border-radius: var(--radius-md); cursor: pointer; font-family: inherit;
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); color: var(--brand); }
 }
-.shortcutActive { background: var(--bg-active); }
-.scLabel { font-size: 0.875rem; color: var(--text); }
-.scRight { font-size: 0.8rem; color: var(--text-muted); }
+.shortcutActive { background: var(--brand-subtle); color: var(--brand); }
+.scLabel { font-size: var(--text-base); color: inherit; }
+.scRight { font-size: var(--text-sm); color: var(--text-muted); font-variant-numeric: tabular-nums; }
 
 // ── 2. Date section ───────────────────────────────────────────
-.dateSection { padding: 8px; }
+.dateSection { padding: var(--space-2); }
 
 .dateRow {
   display: flex;
@@ -53,20 +53,22 @@ $pill-h: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 8px;
-  border: 1px solid var(--border-input);
-  border-radius: 6px;
-  background: var(--bg-alt);
-  font-size: 0.82rem;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+  color: var(--text-primary);
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
-  transition: border-color 0.1s, background 0.1s;
-  &:hover { border-color: var(--border-strong); background: var(--bg-surface); }
+  transition: border-color var(--duration-fast) var(--ease-default),
+              background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { border-color: var(--brand); background: var(--brand-subtle); color: var(--brand); }
 }
-.datePillPlaceholder { color: var(--text-4); font-style: italic; }
+.datePillPlaceholder { color: var(--text-muted); font-style: italic; }
 
 // Контейнер в режиме редактирования
 .datePillWrap {
@@ -78,11 +80,11 @@ $pill-h: 32px;
   display: flex;
   align-items: stretch;
   justify-content: center;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  background: var(--bg-input);
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
   padding: 0 2px;
-  box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.1);
+  box-shadow: 0 0 0 3px var(--brand-subtle);
 }
 
 // Фиксированный размер – только для мультидневного режима
@@ -95,20 +97,19 @@ $pill-h: 32px;
 .segInput {
   border: none;
   background: transparent;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+  color: var(--text-primary);
   font-family: inherit;
   text-align: center;
   outline: none;
   padding: 0 1px;
   width: 2ch;
   min-width: 18px;
-  // Растягивается на всю высоту .datePillWrap
   align-self: stretch;
 
-  &::placeholder { color: var(--text-4); font-size: 0.72rem; }
-  &:focus { background: var(--bg-active); border-radius: 3px; }
+  &::placeholder { color: var(--text-muted); font-size: var(--text-xs); }
+  &:focus { background: var(--brand-subtle); border-radius: 3px; }
 }
 
 .segInputYear {
@@ -118,7 +119,7 @@ $pill-h: 32px;
 
 // Разделитель «.» между сегментами
 .segSep {
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   flex-shrink: 0;
   user-select: none;
@@ -135,28 +136,31 @@ $pill-h: 32px;
   flex-shrink: 0;
 }
 
-.dateSep { font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; }
+.dateSep { font-size: var(--text-sm); color: var(--text-muted); flex-shrink: 0; }
 
 .multiAdd {
   flex-shrink: 0;
   height: $pill-h;
   box-sizing: border-box;
-  padding: 0 8px;
-  border: 1px dashed var(--border-input); border-radius: 5px;
-  background: none; font-size: 0.78rem; color: var(--text-muted);
+  padding: 0 var(--space-2);
+  border: 1px dashed var(--border-default); border-radius: var(--radius-md);
+  background: none; font-size: var(--text-sm); color: var(--text-muted);
   cursor: pointer; font-family: inherit;
   display: flex; align-items: center;
-  transition: border-color 0.1s, color 0.1s;
-  &:hover { border-color: var(--border-strong); color: var(--text); }
+  transition: border-color var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { border-color: var(--brand); color: var(--brand); }
 }
 .multiClear {
   flex-shrink: 0;
   height: $pill-h;
   box-sizing: border-box;
-  background: none; border: none; font-size: 0.65rem;
-  color: var(--text-4); cursor: pointer; padding: 0 5px; border-radius: 3px;
+  background: none; border: none; font-size: 11px;
+  color: var(--text-muted); cursor: pointer; padding: 0 5px; border-radius: var(--radius-sm);
   display: flex; align-items: center;
-  &:hover { color: var(--text-2); background: var(--bg-hover); }
+  transition: color var(--duration-fast) var(--ease-default),
+              background var(--duration-fast) var(--ease-default);
+  &:hover { color: var(--error); background: var(--error-subtle); }
 }
 
 // ── Calendar ──────────────────────────────────────────────────
@@ -168,55 +172,61 @@ $pill-h: 32px;
 }
 
 .calTitleBtn {
-  background: none; border: none; font-size: 0.82rem; font-weight: 600;
-  color: var(--text); cursor: pointer; padding: 3px 8px; border-radius: 5px;
-  font-family: inherit; transition: background 0.1s;
-  &:hover { background: var(--bg-hover); }
+  background: none; border: none; font-size: var(--text-sm); font-weight: var(--weight-semibold);
+  color: var(--text-primary); cursor: pointer; padding: 3px var(--space-2); border-radius: var(--radius-md);
+  font-family: inherit; transition: background var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); color: var(--brand); }
 }
 
 .calNav {
-  background: none; border: none; font-size: 1rem; color: var(--text-muted);
-  cursor: pointer; padding: 2px 4px; border-radius: 3px; line-height: 1;
-  &:hover { background: var(--bg-hover); color: var(--text); }
+  background: none; border: none; font-size: var(--text-base); color: var(--text-muted);
+  cursor: pointer; padding: 2px 4px; border-radius: var(--radius-sm); line-height: 1;
+  transition: color var(--duration-fast) var(--ease-default),
+              background var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); color: var(--brand); }
 }
 
-$wk: 18px; // ширина колонки номера недели
+$wk: 18px;
 
 .calWds {
   display: grid; grid-template-columns: $wk repeat(7, 1fr); margin-bottom: 2px;
 }
 .calWd {
-  text-align: center; font-size: 0.6rem; font-weight: 600;
-  color: var(--text-4); padding: 1px 0;
+  text-align: center; font-size: var(--text-2xs); font-weight: var(--weight-semibold);
+  color: var(--text-muted); padding: 1px 0;
+  text-transform: uppercase; letter-spacing: 0.04em;
 }
 .calWdWeek {
-  font-size: 0.55rem; font-weight: 600; color: var(--text-4);
-  text-align: center; opacity: 0.45; padding: 1px 0;
+  font-size: var(--text-2xs); font-weight: var(--weight-semibold); color: var(--text-muted);
+  text-align: center; opacity: 0.5; padding: 1px 0;
 }
 .calRow { display: grid; grid-template-columns: $wk repeat(7, 1fr); gap: 1px; }
 .calEmpty { display: block; }
 
 .weekNum {
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.55rem; color: var(--text-4); opacity: 0.45;
+  font-size: var(--text-2xs); color: var(--text-muted); opacity: 0.5;
   user-select: none;
+  font-variant-numeric: tabular-nums;
 }
 
 .calCell {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 1px; aspect-ratio: 1; border: none; background: none; border-radius: 4px;
-  font-size: 0.78rem; color: var(--text); cursor: pointer; font-family: inherit;
-  transition: background 0.1s;
-  &:hover { background: var(--bg-hover); }
+  gap: 1px; aspect-ratio: 1; border: none; background: none; border-radius: var(--radius-sm);
+  font-size: var(--text-sm); color: var(--text-primary); cursor: pointer; font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); }
 }
-.calSel     { background: var(--text); color: var(--bg); font-weight: 600;
-              &:hover { background: var(--text-2); } }
-.calEnd     { background: var(--bg-active); border: 1px solid var(--border-strong); font-weight: 600; }
-.calBetween { background: var(--bg-hover); border-radius: 0; }
-.calToday   { border: 1.5px solid var(--text-muted); }
+.calSel     { background: var(--brand); color: var(--text-on-brand); font-weight: var(--weight-semibold);
+              &:hover { background: var(--brand-hover); color: var(--text-on-brand); } }
+.calEnd     { background: var(--brand-subtle); border: 1px solid var(--brand); font-weight: var(--weight-semibold); color: var(--brand); }
+.calBetween { background: var(--brand-subtle); border-radius: 0; }
+.calToday   { border: 1.5px solid var(--accent); color: var(--accent); font-weight: var(--weight-semibold); }
 
-.calHoverSel     { background: var(--bg-active); border: 1px dashed var(--border-input); }
-.calHoverBetween { background: var(--bg-hover); opacity: 0.6; border-radius: 0; }
+.calHoverSel     { background: var(--brand-subtle); border: 1px dashed var(--brand); }
+.calHoverBetween { background: var(--brand-subtle); opacity: 0.6; border-radius: 0; }
 
 .calCell:disabled {
   opacity: 0.22;
@@ -230,61 +240,69 @@ $wk: 18px; // ширина колонки номера недели
 
 // Подсветка вводимой даты в календаре
 .calPreviewed {
-  outline: 2px solid var(--border-strong);
+  outline: 2px solid var(--brand);
   outline-offset: -2px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 // ── 3. Repeat section ─────────────────────────────────────────
-.repeatSection { padding: 4px; }
+.repeatSection { padding: var(--space-1); }
 .repeatRow { display: flex; align-items: center; gap: 4px; }
 
 .repeatToggle {
-  flex: 1; display: flex; align-items: center; padding: 7px 10px;
-  border: none; background: none; border-radius: 6px; font-size: 0.875rem;
+  flex: 1; display: flex; align-items: center; padding: var(--space-2) var(--space-3);
+  border: none; background: none; border-radius: var(--radius-md); font-size: var(--text-base);
   color: var(--text-muted); cursor: pointer; font-family: inherit; text-align: left;
-  transition: background 0.1s, color 0.1s;
-  &:hover { background: var(--bg-hover); color: var(--text); }
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); color: var(--brand); }
 }
-.repeatToggleActive { color: var(--text); font-weight: 500; }
+.repeatToggleActive { color: var(--brand); font-weight: var(--weight-medium); }
 
 .repeatClear {
-  background: none; border: none; font-size: 0.68rem; color: var(--text-4);
-  cursor: pointer; padding: 4px 6px; border-radius: 4px; flex-shrink: 0;
-  &:hover { color: var(--text-2); background: var(--bg-hover); }
+  background: none; border: none; font-size: var(--text-xs); color: var(--text-muted);
+  cursor: pointer; padding: 4px 6px; border-radius: var(--radius-sm); flex-shrink: 0;
+  transition: color var(--duration-fast) var(--ease-default),
+              background var(--duration-fast) var(--ease-default);
+  &:hover { color: var(--error); background: var(--error-subtle); }
 }
 
 .repeatDropdown { display: flex; flex-direction: column; margin-top: 2px; }
-.repeatDivider  { height: 1px; background: var(--border-light); margin: 2px 0; }
+.repeatDivider  { height: 1px; background: var(--border-subtle); margin: 2px 0; }
 
 .repeatItem {
   display: flex; align-items: center; gap: 3px; width: 100%;
-  padding: 7px 10px; border: none; background: none; border-radius: 5px;
-  font-size: 0.875rem; color: var(--text); cursor: pointer; font-family: inherit;
-  text-align: left; transition: background 0.1s;
-  &:hover { background: var(--bg-hover); }
+  padding: var(--space-2) var(--space-3); border: none; background: none; border-radius: var(--radius-md);
+  font-size: var(--text-base); color: var(--text-primary); cursor: pointer; font-family: inherit;
+  text-align: left;
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); color: var(--brand); }
 }
-.repeatItemActive { background: var(--bg-active); }
-.repeatAccent { color: var(--text); }
+.repeatItemActive { background: var(--brand-subtle); color: var(--brand); font-weight: var(--weight-medium); }
+.repeatAccent { color: var(--brand); }
 
 .repeatConfigure {
-  display: block; width: 100%; padding: 7px 10px; border: none; background: none;
-  border-radius: 5px; font-size: 0.875rem; color: var(--text); cursor: pointer;
-  font-family: inherit; text-align: left; transition: background 0.1s;
-  &:hover { background: var(--bg-hover); }
+  display: block; width: 100%; padding: var(--space-2) var(--space-3); border: none; background: none;
+  border-radius: var(--radius-md); font-size: var(--text-base); color: var(--text-primary); cursor: pointer;
+  font-family: inherit; text-align: left;
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); color: var(--brand); }
 }
 
 .repeatUntilRow {
   display: flex; flex-direction: column; gap: 4px;
-  padding: 4px 10px 6px; border-top: 1px solid var(--border-light); margin-top: 2px;
+  padding: 4px var(--space-3) 6px; border-top: 1px solid var(--border-subtle); margin-top: 2px;
 }
 .repeatUntilLabel {
   display: flex; align-items: center; gap: 6px;
-  font-size: 0.8rem; color: var(--text-muted); cursor: pointer;
-  input[type='checkbox'] { cursor: pointer; accent-color: var(--text); }
+  font-size: var(--text-sm); color: var(--text-muted); cursor: pointer;
+  input[type='checkbox'] { cursor: pointer; accent-color: var(--brand); }
 }
 .repeatUntilInput {
-  padding: 4px 8px; background: var(--bg-alt); border: 1px solid var(--border-input);
-  border-radius: 4px; font-size: 0.8rem; color: var(--text); outline: none; font-family: inherit;
-  &:focus { border-color: var(--border-strong); }
+  padding: 4px var(--space-2); background: var(--bg-surface); border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm); font-size: var(--text-sm); color: var(--text-primary); outline: none; font-family: inherit;
+  transition: border-color var(--duration-default) var(--ease-default);
+  &:focus { border-color: var(--brand); }
 }

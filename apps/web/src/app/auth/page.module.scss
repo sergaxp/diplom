@@ -1,222 +1,165 @@
-@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-@keyframes spin    { to { transform: rotate(360deg); } }
+/* ============================================================
+ * /auth — специфика страницы.
+ * Input/Button теперь в ui/, здесь только обёртка и табы.
+ * ============================================================ */
 
-// ── Root ──────────────────────────────────────────────────────
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
 .root {
   position: relative;
   min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
-  padding: 2rem 1rem;
-  font-family: sans-serif;
+  background: var(--bg-base);
+  padding: var(--space-8) var(--space-4);
 }
 
-// Декоративный фон
 .grain {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
   background-image:
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    linear-gradient(var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
   background-size: 40px 40px;
-  opacity: 0.35;
+  opacity: 0.4;
 }
 
-// ── Логотип ───────────────────────────────────────────────────
 .logo {
   position: fixed;
-  top: 1.25rem;
-  left: 1.5rem;
-  z-index: 10;
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
+  top: var(--space-4);
+  left: var(--space-5);
+  z-index: var(--z-sticky);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--brand);
   letter-spacing: 0.04em;
   text-decoration: none;
-  opacity: 0.7;
-  transition: opacity 0.15s;
-  &:hover { opacity: 1; }
+  transition: color var(--duration-fast) var(--ease-default);
+  &:hover { color: var(--brand-hover); }
 }
 
-// ── Карточка ──────────────────────────────────────────────────
+/* ── Card ──────────────────────────────────────────────────── */
 .card {
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: 400px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 2rem 1.75rem;
-  box-shadow: 0 4px 24px var(--shadow-sm);
-  animation: fadeUp 0.35s ease both;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8) var(--space-6);
+  animation: fadeUp var(--duration-slow) var(--ease-out) both;
 }
 
-.cardHeader  { margin-bottom: 1.5rem; }
-.cardTitle   { font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; line-height: 1.2; }
-.cardSubtitle { font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; }
+.cardHeader { margin-bottom: var(--space-6); }
 
-// ── Вкладки ───────────────────────────────────────────────────
+.cardTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-1);
+  line-height: 1.2;
+}
+
+.cardSubtitle {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: var(--leading-normal);
+}
+
+/* ── Tabs ──────────────────────────────────────────────────── */
 .tabs {
   display: flex;
   gap: 0;
-  background: var(--bg-hover);
-  border: 1px solid var(--border-input);
-  border-radius: 6px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   padding: 3px;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 
 .tab {
   flex: 1;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
   font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 400;
+  font-size: var(--text-base);
+  font-weight: var(--weight-regular);
   color: var(--text-muted);
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  &:hover:not(.tabActive) { color: var(--text-2); }
+  transition:
+    background var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
+  &:hover:not(.tabActive) { color: var(--text-primary); }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 }
 
 .tabActive {
-  background: var(--bg);
-  color: var(--text);
-  font-weight: 600;
-  border: 1px solid var(--border-input);
+  background: var(--bg-elevated);
+  color: var(--brand);
+  font-weight: var(--weight-semibold);
+  border: 1px solid var(--border-subtle);
 }
 
-// ── Ошибка сервера ────────────────────────────────────────────
+/* ── Server error ──────────────────────────────────────────── */
 .serverError {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.65rem 0.9rem;
-  background: var(--bg-hover);
-  border: 1px solid var(--border-input);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  color: var(--text-2);
-  margin-bottom: 1.1rem;
-  animation: fadeUp 0.25s ease both;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--error-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--error);
+  margin-bottom: var(--space-4);
+  animation: fadeUp var(--duration-medium) var(--ease-out) both;
+
+  > svg { flex-shrink: 0; }
 }
 
-.errorIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  border: 1.5px solid currentColor;
-  font-size: 0.65rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-// ── Форма ─────────────────────────────────────────────────────
+/* ── Form ──────────────────────────────────────────────────── */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
-  animation: fadeUp 0.25s ease both;
+  gap: var(--space-3);
+  animation: fadeUp var(--duration-medium) var(--ease-out) both;
 }
 
-.field { display: flex; flex-direction: column; gap: 0.35rem; }
-
-.label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.input {
-  padding: 0.55rem 0.75rem;
-  background: var(--bg-alt);
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  color: var(--text);
-  outline: none;
-  width: 100%;
-  transition: border-color 0.12s, background 0.12s;
-
-  &::placeholder { color: var(--text-4); }
-  &:focus { border-color: var(--border-strong); background: var(--bg-surface); }
-}
-
-.inputError {
-  border-color: var(--border-strong);
-  &:focus { border-color: var(--text-2); }
-}
-
-.fieldError {
-  font-size: 0.78rem;
-  color: var(--text-2);
-}
-
-// ── Кнопка ───────────────────────────────────────────────────
-.submitBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0.65rem;
-  margin-top: 0.35rem;
-  background: var(--text);
-  border: none;
-  border-radius: 5px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--bg);
-  cursor: pointer;
-  min-height: 42px;
-  transition: opacity 0.15s;
-
-  &:hover:not(:disabled) { opacity: 0.8; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(0, 0, 0, 0.15);
-  border-top-color: var(--bg);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-
-// ── Подсказка ─────────────────────────────────────────────────
+/* ── Hint ──────────────────────────────────────────────────── */
 .hint {
   text-align: center;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
-  margin-top: 0.2rem;
+  margin-top: var(--space-1);
 }
 
 .hintLink {
   background: none;
   border: none;
-  color: var(--text);
+  color: var(--brand);
   font-family: inherit;
   font-size: inherit;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   padding: 0;
-  transition: opacity 0.15s;
-  &:hover { opacity: 0.65; }
-}
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--duration-fast) var(--ease-default);
+  &:hover { color: var(--brand-hover); }
 
-.blob1, .blob2 { display: none; }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}

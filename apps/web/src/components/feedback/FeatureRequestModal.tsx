@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { X } from 'lucide-react';
 import { feedbackApi } from '../../lib/feedback';
+import { Modal, Button, Input, Textarea } from '../ui';
 import styles from './FeedbackModal.module.scss';
 
 interface Props {
@@ -37,44 +37,44 @@ export function FeatureRequestModal({ onClose }: Props) {
   };
 
   return (
-    <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
-        <div className={styles.header}>
-          <span className={styles.headerTitle}>Заявка на нововведение</span>
-          <button className={styles.closeBtn} onClick={onClose}><X size={16} /></button>
-        </div>
+    <Modal
+      open
+      onClose={onClose}
+      size="sm"
+      title="Заявка на нововведение"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Отмена</Button>
+          <Button
+            type="submit"
+            form="feature-request-form"
+            variant="accent"
+            loading={isPending}
+          >
+            Отправить
+          </Button>
+        </>
+      }
+    >
+      <form id="feature-request-form" className={styles.form} onSubmit={submit}>
+        <Input
+          label={<>Название <span className={styles.required}>*</span></>}
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          placeholder="Что вы хотите добавить?"
+          maxLength={255}
+        />
 
-        <form className={styles.form} onSubmit={submit}>
-          <label className={styles.label}>
-            Название <span className={styles.required}>*</span>
-          </label>
-          <input
-            className={styles.input}
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="Что вы хотите добавить?"
-            maxLength={255}
-          />
+        <Textarea
+          label="Описание"
+          value={desc}
+          onChange={e => setDesc(e.target.value)}
+          placeholder="Подробнее опишите идею: зачем нужна, как должна работать..."
+          rows={6}
+        />
 
-          <label className={styles.label}>Описание</label>
-          <textarea
-            className={styles.textarea}
-            value={desc}
-            onChange={e => setDesc(e.target.value)}
-            placeholder="Подробнее опишите идею: зачем нужна, как должна работать..."
-            rows={6}
-          />
-
-          {error && <p className={styles.error}>{error}</p>}
-
-          <div className={styles.actions}>
-            <button type="button" className={styles.cancelBtn} onClick={onClose}>Отмена</button>
-            <button type="submit" className={styles.submitBtn} disabled={isPending}>
-              {isPending ? 'Отправка...' : 'Отправить'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {error && <p className={styles.error}>{error}</p>}
+      </form>
+    </Modal>
   );
 }

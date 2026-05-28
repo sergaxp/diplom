@@ -3,11 +3,13 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ShoppingBag } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { AvatarFramed } from '../../components/AvatarFramed';
 import { useAuthStore } from '../../store/authStore';
 import { shopApi, ShopItem } from '../../lib/shop';
 import { authApi } from '../../lib/auth';
+import { Button, Card, Badge, Skeleton, EmptyState } from '../../components/ui';
 import styles from './page.module.scss';
 
 export default function ShopPage() {
@@ -28,10 +30,8 @@ export default function ShopPage() {
   const buyMut = useMutation({
     mutationFn: shopApi.buy,
     onSuccess: async (res) => {
-      // Сервер уже автоэкипировал рамку. Обновляем локального пользователя.
       setUser({ ...(user!), ...res.user });
       qc.invalidateQueries({ queryKey: ['shop', 'items'] });
-      // Подтягиваем свежие данные пользователя
       const fresh = await authApi.me().catch(() => null);
       if (fresh) setUser(fresh);
     },
@@ -48,13 +48,13 @@ export default function ShopPage() {
     <div className={styles.root}>
       <Header />
       <div className={styles.body}>
-        <div className={styles.card}>
+        <Card padding="lg" className={styles.card}>
           <div className={styles.head}>
             <h1 className={styles.title}>Магазин</h1>
-            <div className={styles.coinsBadge} title="Ваши монеты">
-              <span className={styles.coinIcon}>●</span>
+            <Badge variant="accent" shape="pill" title="Ваши монеты">
+              <span className={styles.coinIcon} aria-hidden="true">●</span>
               <span className={styles.coinsValue}>{coins}</span>
-            </div>
+            </Badge>
           </div>
 
           <p className={styles.subtitle}>
@@ -64,9 +64,22 @@ export default function ShopPage() {
 
           {errMsg && <div className={styles.error}>{errMsg}</div>}
 
-          {isLoading && <div className={styles.loading}>Загрузка…</div>}
-
-          {!isLoading && (
+          {isLoading ? (
+            <>
+              <h2 className={styles.section}>Рамки для аватара</h2>
+              <div className={styles.grid}>
+                {[1, 2, 3, 4].map(i => (
+                  <Skeleton key={i} width="100%" height={220} />
+                ))}
+              </div>
+            </>
+          ) : frames.length === 0 ? (
+            <EmptyState
+              icon={<ShoppingBag size={48} strokeWidth={1.25} />}
+              title="Магазин пока пуст"
+              description="Загляните позже — новые товары скоро появятся."
+            />
+          ) : (
             <>
               <h2 className={styles.section}>Рамки для аватара</h2>
               <div className={styles.grid}>
@@ -82,24 +95,27 @@ export default function ShopPage() {
               </div>
             </>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );
 }
 
-interface CardProps {
+interface ItemCardProps {
   item: ShopItem;
   user: { avatarUrl: string | null; username: string; displayName: string | null };
   onBuy: () => void;
   busy: boolean;
 }
 
-function ShopItemCard({ item, user, onBuy, busy }: CardProps) {
+function ShopItemCard({ item, user, onBuy, busy }: ItemCardProps) {
   const color = item.meta?.color;
 
   return (
-    <div className={[styles.itemCard, item.owned ? styles.itemCardOwned : ''].join(' ')}>
+    <Card
+      padding="md"
+      className={[styles.itemCard, item.owned ? styles.itemCardOwned : ''].join(' ')}
+    >
       <div className={styles.preview}>
         <AvatarFramed
           avatarUrl={user.avatarUrl}
@@ -115,21 +131,21 @@ function ShopItemCard({ item, user, onBuy, busy }: CardProps) {
       <div className={styles.itemDesc}>{item.description}</div>
       <div className={styles.itemFooter}>
         <span className={styles.itemPrice}>
-          <span className={styles.coinIcon}>●</span> {item.price}
+          <span className={styles.coinIcon} aria-hidden="true">●</span> {item.price}
         </span>
         {item.owned ? (
-          <span className={styles.ownedBadge}>Куплено</span>
+          <Badge variant="success">Куплено</Badge>
         ) : (
-          <button
-            type="button"
-            className={styles.buyBtn}
+          <Button
+            variant="accent"
+            size="sm"
             onClick={onBuy}
-            disabled={busy}
+            loading={busy}
           >
-            {busy ? '...' : 'Купить'}
-          </button>
+            Купить
+          </Button>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

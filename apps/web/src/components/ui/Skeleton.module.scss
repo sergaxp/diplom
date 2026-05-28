@@ -1,0 +1,36 @@
+/* ============================================================
+ * Skeleton — заглушка для загружаемого контента.
+ * Использовать вместо «Загрузка...» текста.
+ * ============================================================ */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-subtle) 0%,
+    var(--bg-surface) 50%,
+    var(--bg-subtle) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-md);
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  display: block;
+}
+
+.circle { border-radius: 50%; }
+.text   { border-radius: var(--radius-sm); height: 12px; }
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+    background: var(--bg-subtle);
+  }
+  @keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.5; }
+  }
+}

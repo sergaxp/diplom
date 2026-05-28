@@ -1,55 +1,9 @@
-// ── Overlay ───────────────────────────────────────────────────
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.42);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-// ── Modal ─────────────────────────────────────────────────────
-.modal {
-  background: var(--bg);
-  border: 1px solid var(--border-input);
-  border-radius: 10px;
-  width: 100%;
-  max-width: 900px;
-  height: min(1000px, 96dvh);
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 18px 50px var(--shadow-lg);
-  overflow: hidden;
-}
-
-// ─── Mobile: fullscreen sheet with drag handle ────────────────
-@media (max-width: 768px) {
-  .overlay {
-    padding: 0;
-    align-items: stretch;
-  }
-  .modal {
-    border-radius: 14px 14px 0 0;
-    height: 100dvh;
-    max-width: 100%;
-    border: none;
-    border-top: 1px solid var(--border);
-    // Drag handle indicator at top
-    &::before {
-      content: '';
-      position: absolute;
-      top: 6px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 44px;
-      height: 4px;
-      border-radius: 2px;
-      background: var(--border-input);
-      z-index: 10;
-    }
-  }
+/* ── Modal chrome override ───────────────────────────────────
+ * Высота модалки задачи фиксированная — нужна большая площадь
+ * для двухколоночного body. Применяется к Modal через className. */
+.taskModalChrome {
+  height: min(1000px, 96dvh) !important;
+  max-width: 900px !important;
 }
 
 // ── Top bar ───────────────────────────────────────────────────
@@ -128,20 +82,23 @@
   padding: 0 0.65rem;
   background: var(--bg-alt);
   border: 1px solid var(--border-input);
-  border-radius: 5px;
-  font-size: 0.85rem;
-  color: var(--text);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
-  transition: border-color 0.1s, background 0.1s;
+  transition: border-color var(--duration-fast) var(--ease-default),
+              background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
 
-  &:hover { border-color: var(--border-strong); background: var(--bg-surface); }
+  &:hover { border-color: var(--brand); background: var(--brand-subtle); color: var(--brand); }
 }
 
 .dateBtnOpen {
-  border-color: var(--border-strong);
-  background: var(--bg-surface);
+  border-color: var(--brand);
+  background: var(--brand-subtle);
+  color: var(--brand);
 }
 
 .dateBtnEnd {
@@ -157,16 +114,7 @@
 
 .closeBtn {
   flex-shrink: 0;
-  background: none;
-  border: none;
-  font-size: 0.85rem;
-  color: var(--text-4);
-  cursor: pointer;
-  padding: 0.25rem 0.4rem;
-  border-radius: 4px;
-  line-height: 1;
-  transition: color 0.1s, background 0.1s;
-  &:hover { color: var(--text-2); background: var(--bg-hover); }
+  margin-left: auto;
 }
 
 // ── Tag button in meta row ─────────────────────────────────────
@@ -186,7 +134,7 @@
   font-family: inherit;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: border-color 0.1s, background 0.1s;
+  transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default);
   &:hover { border-color: var(--border-strong); background: var(--bg-surface); }
 }
 
@@ -204,7 +152,7 @@
 // ── Tag dropdown ───────────────────────────────────────────────
 .tagDropdown {
   position: fixed;
-  z-index: 500;
+  z-index: var(--z-popover);
   min-width: 180px;
   background: var(--bg);
   border: 1px solid var(--border-input);
@@ -235,12 +183,13 @@
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  transition: background 0.1s;
+  transition: background var(--duration-fast) var(--ease-default);
   &:hover { background: var(--bg-hover); }
 }
 
 .tagDropItemActive {
-  background: var(--bg-active);
+  background: var(--brand-subtle);
+  color: var(--brand);
 }
 
 .tagDropDot {
@@ -285,7 +234,7 @@
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  transition: background 0.1s;
+  transition: background var(--duration-fast) var(--ease-default);
   &:hover { background: var(--bg-hover); }
 }
 
@@ -367,7 +316,7 @@
   font-family: inherit;
   text-align: left;
   margin-top: 0.25rem;
-  transition: color 0.1s;
+  transition: color var(--duration-fast) var(--ease-default);
   &:hover { color: var(--text-2); }
 }
 
@@ -393,7 +342,7 @@
   font-family: inherit;
   flex-shrink: 0;
   line-height: 1;
-  transition: color 0.1s;
+  transition: color var(--duration-fast) var(--ease-default);
   &:hover { color: var(--text); }
 }
 
@@ -406,7 +355,7 @@
   letter-spacing: 0.06em;
   cursor: pointer;
   user-select: none;
-  transition: color 0.1s;
+  transition: color var(--duration-fast) var(--ease-default);
   &:hover { color: var(--text); }
 }
 
@@ -433,7 +382,7 @@
   cursor: pointer;
   padding: 0 0.1rem;
   line-height: 1;
-  transition: color 0.1s;
+  transition: color var(--duration-fast) var(--ease-default);
   &:hover { color: var(--text-2); }
 }
 
@@ -464,22 +413,23 @@
   flex-shrink: 0;
   width: 17px;
   height: 17px;
-  border: 1.5px solid var(--border-strong);
-  border-radius: 4px;
-  background: none;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
   cursor: pointer;
-  font-size: 0.65rem;
+  font-size: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--bg);
-  transition: background 0.12s, border-color 0.12s;
-  &:hover { border-color: var(--text-muted); }
+  color: var(--text-on-brand);
+  transition: background var(--duration-fast) var(--ease-default),
+              border-color var(--duration-fast) var(--ease-default);
+  &:hover { border-color: var(--brand); }
 }
 
 .subtaskCheckDone {
-  background: var(--text-2);
-  border-color: var(--text-2);
+  background: var(--brand);
+  border-color: var(--brand);
 }
 
 .subtaskItemInput {
@@ -503,7 +453,7 @@
   padding: 0 0.2rem;
   opacity: 0;
   line-height: 1;
-  transition: opacity 0.1s, color 0.1s;
+  transition: opacity var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
   &:hover { color: var(--text-2); }
 }
 
@@ -665,7 +615,7 @@
   padding: 0;
   font-family: inherit;
   white-space: nowrap;
-  transition: color 0.1s;
+  transition: color var(--duration-fast) var(--ease-default);
   &:hover { color: var(--text); text-decoration: underline; }
 }
 
@@ -685,18 +635,24 @@
 
 .input,
 .select {
-  padding: 0.42rem 0.65rem;
-  background: var(--bg-input);
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
-  font-size: 0.85rem;
-  color: var(--text);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
   outline: none;
   font-family: inherit;
   width: 100%;
-  transition: border-color 0.1s, background 0.1s;
+  transition: border-color var(--duration-default) var(--ease-default),
+              box-shadow var(--duration-default) var(--ease-default);
 
-  &:focus { border-color: var(--border-strong); background: var(--bg-hover); }
+  &:hover { border-color: var(--border-strong); }
+  &:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px var(--brand-subtle);
+  }
+  &::placeholder { color: var(--text-muted); }
 }
 
 .repeatUntil {
@@ -745,59 +701,8 @@
   align-items: center;
 }
 
-.deleteBtn {
-  padding: 0.45rem 1rem;
-  background: none;
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
-  font-size: 0.875rem;
-  color: var(--text-2);
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.1s, border-color 0.1s;
-  &:hover { background: var(--bg-hover); border-color: var(--border-strong); }
-}
-
-.clearBtn {
-  padding: 0.45rem 1rem;
-  background: none;
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.1s;
-  &:hover { background: var(--bg-hover); }
-}
-
-.cancelBtn {
-  padding: 0.45rem 1.1rem;
-  background: none;
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.1s;
-  &:hover { background: var(--bg-hover); }
-}
-
-.submitBtn {
-  padding: 0.45rem 1.3rem;
-  background: var(--text);
-  border: none;
-  border-radius: 5px;
-  font-size: 0.875rem;
-  color: var(--bg);
-  cursor: pointer;
-  font-family: inherit;
-  transition: opacity 0.12s;
-  &:hover:not(:disabled) { opacity: 0.8; }
-  &:disabled { opacity: 0.4; cursor: default; }
-}
-
+/* Footer buttons теперь через <Button> из ui/.
+ * .deleteBtn/.clearBtn/.cancelBtn/.submitBtn удалены. */
 
 // ── Meta dropdown buttons (priority & type) ───────────────────
 .metaBtn {
@@ -816,7 +721,7 @@
   font-family: inherit;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: border-color 0.1s, background 0.1s;
+  transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default);
   &:hover { border-color: var(--border-strong); background: var(--bg-surface); }
 }
 
@@ -834,7 +739,7 @@
 // ── Meta dropdown popup ───────────────────────────────────────
 .metaDropdown {
   position: fixed;
-  z-index: 500;
+  z-index: var(--z-popover);
   min-width: 170px;
   background: var(--bg);
   border: 1px solid var(--border-input);
@@ -857,12 +762,13 @@
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  transition: background 0.1s;
+  transition: background var(--duration-fast) var(--ease-default);
   &:hover { background: var(--bg-hover); }
 }
 
 .metaDropItemActive {
-  background: var(--bg-active);
+  background: var(--brand-subtle);
+  color: var(--brand);
 }
 
 .metaDropDot {
@@ -906,7 +812,7 @@
   color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 0.1s, color 0.1s, background 0.1s;
+  transition: border-color var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default);
   &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-hover); border-style: solid; }
 }
 
@@ -1041,15 +947,17 @@
 }
 
 .linkInputAdd {
-  padding: 6px 12px;
-  background: var(--text);
+  padding: 6px var(--space-3);
+  background: var(--brand);
   border: none;
-  border-radius: 5px;
-  font-size: 0.8rem;
-  color: var(--bg);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-on-brand);
   cursor: pointer;
   font-family: inherit;
-  &:hover:not(:disabled) { opacity: 0.85; }
+  transition: background var(--duration-fast) var(--ease-default);
+  &:hover:not(:disabled) { background: var(--brand-hover); }
 }
 
 .linkInputCancel {
@@ -1071,7 +979,7 @@
   padding: 0.4rem 0.55rem;
   border-radius: 5px;
   border: 1px solid transparent;
-  transition: background 0.1s, border-color 0.1s;
+  transition: background var(--duration-fast) var(--ease-default), border-color var(--duration-fast) var(--ease-default);
   &:hover { background: var(--bg-hover); border-color: var(--border-light); }
 }
 
@@ -1084,21 +992,22 @@
   flex-shrink: 0;
   width: 17px;
   height: 17px;
-  border: 1.5px solid var(--border-strong);
-  border-radius: 4px;
-  background: none;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.65rem;
-  color: var(--bg);
-  &:hover { border-color: var(--text-muted); }
+  font-size: 11px;
+  color: var(--text-on-brand);
+  transition: border-color var(--duration-fast) var(--ease-default);
+  &:hover { border-color: var(--brand); }
 }
 
 .cardCheckDone {
-  background: var(--text-2);
-  border-color: var(--text-2);
+  background: var(--brand);
+  border-color: var(--brand);
 }
 
 .cardMain {
@@ -1207,7 +1116,7 @@
   max-height: 360px;
   object-fit: cover;
   background: var(--bg-alt);
-  transition: opacity 0.12s;
+  transition: opacity var(--duration-fast) var(--ease-default);
 }
 
 .tgMediaPlay {
@@ -1244,7 +1153,7 @@
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: background 0.1s;
+  transition: background var(--duration-fast) var(--ease-default);
   &:hover { background: var(--bg-hover); }
 }
 
@@ -1358,16 +1267,17 @@
 }
 
 .confirmDeleteBtn {
-  padding: 3px 9px;
-  background: var(--text);
+  padding: 3px var(--space-2);
+  background: var(--error);
   border: none;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  color: var(--bg);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: #FFFFFF;
   cursor: pointer;
   font-family: inherit;
-  font-weight: 500;
-  &:hover { opacity: 0.85; }
+  font-weight: var(--weight-medium);
+  transition: filter var(--duration-fast) var(--ease-default);
+  &:hover { filter: brightness(0.88); }
 }
 
 // ── Corner-X delete for Telegram-style media tiles ────────────
@@ -1395,7 +1305,7 @@
   justify-content: center;
   line-height: 1;
   padding: 0;
-  transition: background 0.12s;
+  transition: background var(--duration-fast) var(--ease-default);
   &:hover { background: var(--text-2); }
 }
 

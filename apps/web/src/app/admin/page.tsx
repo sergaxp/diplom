@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import * as LucideIcons from 'lucide-react';
+import { Lock, X as XIcon, Plus, MessageSquare, Bug } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { useAuthStore } from '../../store/authStore';
-import * as LucideIcons from 'lucide-react';
 import { adminApi, AdminUser, GlobalTask } from '../../lib/admin';
 import { IconPicker } from '../../components/IconPicker';
 import {
@@ -14,6 +15,7 @@ import {
   BugReportStatus, FeatureRequestStatus,
   BUG_STATUS_LABEL, FEATURE_STATUS_LABEL,
 } from '../../lib/feedback';
+import { Button, IconButton, Input, Badge, Skeleton, EmptyState } from '../../components/ui';
 import styles from './page.module.scss';
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number; style?: React.CSSProperties }>;
@@ -59,18 +61,31 @@ function AdminSetup({ username }: { username: string }) {
   return (
     <div className={styles.setupWrap}>
       <div className={styles.setupCard}>
-        <div className={styles.setupIcon}>🔐</div>
+        <div className={styles.setupIcon}>
+          <Lock size={48} strokeWidth={1.25} />
+        </div>
         <h2 className={styles.setupTitle}>Настройка администратора</h2>
         <p className={styles.setupDesc}>
           Введите <code>ADMIN_SECRET</code> из <code>.env</code> файла бэкенда.
         </p>
         <form className={styles.setupForm} onSubmit={handlePromote}>
-          <input className={styles.setupInput} type="password" value={secret}
-            placeholder="Секретный ключ" onChange={e => setSecret(e.target.value)} autoFocus />
-          {error && <div className={styles.setupError}>{error}</div>}
-          <button className={styles.setupBtn} type="submit" disabled={busy || !secret.trim()}>
-            {busy ? 'Выдаю права...' : 'Стать администратором'}
-          </button>
+          <Input
+            type="password"
+            value={secret}
+            placeholder="Секретный ключ"
+            onChange={e => setSecret(e.target.value)}
+            autoFocus
+            error={error || undefined}
+          />
+          <Button
+            type="submit"
+            variant="accent"
+            fullWidth
+            loading={busy}
+            disabled={!secret.trim()}
+          >
+            Стать администратором
+          </Button>
         </form>
       </div>
     </div>
@@ -110,18 +125,18 @@ function UserRow({ user, isSelf, onToggleRole, onToggleActive }: {
       </td>
       <td className={styles.tdEmail}>{user.email}</td>
       <td className={styles.tdOnline}>
-        <span className={[styles.onlineDot, styles[`dot_${status}`]].join(' ')} />
+        <span className={[styles.onlineDot, styles[`dot_${status}`]].join(' ')} aria-hidden="true" />
         <span className={styles.onlineLabel}>{STATUS_LABEL[status]}</span>
       </td>
       <td className={styles.tdRole}>
-        <span className={[styles.badge, user.role === 'admin' ? styles.badgeAdmin : styles.badgeUser].join(' ')}>
+        <Badge variant={user.role === 'admin' ? 'brand' : 'neutral'} shape="pill">
           {user.role === 'admin' ? 'Админ' : 'Пользователь'}
-        </span>
+        </Badge>
       </td>
       <td className={styles.tdStatus}>
-        <span className={[styles.badge, user.isActive ? styles.badgeActive : styles.badgeOff].join(' ')}>
+        <Badge variant={user.isActive ? 'success' : 'neutral'} shape="pill">
           {user.isActive ? 'Активен' : 'Отключён'}
-        </span>
+        </Badge>
       </td>
       <td className={styles.tdDate}>
         {new Date(user.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -129,15 +144,21 @@ function UserRow({ user, isSelf, onToggleRole, onToggleActive }: {
       <td className={styles.tdActions}>
         {!isSelf ? (
           <>
-            <button className={styles.actionBtn} onClick={onToggleRole}
-              title={user.role === 'admin' ? 'Снять права' : 'Сделать админом'}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onToggleRole}
+              title={user.role === 'admin' ? 'Снять права' : 'Сделать админом'}
+            >
               {user.role === 'admin' ? '⬇ Юзер' : '⬆ Админ'}
-            </button>
-            <button
-              className={[styles.actionBtn, user.isActive ? styles.actionBtnDanger : styles.actionBtnSuccess].join(' ')}
-              onClick={onToggleActive}>
+            </Button>
+            <Button
+              variant={user.isActive ? 'destructive' : 'primary'}
+              size="sm"
+              onClick={onToggleActive}
+            >
               {user.isActive ? 'Откл' : 'Вкл'}
-            </button>
+            </Button>
           </>
         ) : (
           <span className={styles.selfLabel}>Это вы</span>
@@ -201,62 +222,94 @@ function GlobalEventsSection() {
       <h2 className={styles.sectionTitle}>Глобальные события</h2>
       <p className={styles.sectionDesc}>Отображаются в менеджере задач у всех пользователей.</p>
 
-      {/* Форма создания */}
       <form className={styles.eventForm} onSubmit={handleCreate}>
         <div className={styles.eventRow}>
-          <input className={styles.eventInput} placeholder="Название события *"
-            value={title} onChange={e => setTitle(e.target.value)} maxLength={255} />
-          <input className={styles.eventInput} placeholder="Описание"
-            value={desc} onChange={e => setDesc(e.target.value)} />
+          <Input
+            placeholder="Название события *"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            maxLength={255}
+            wrapClassName={styles.eventInputWrap}
+          />
+          <Input
+            placeholder="Описание"
+            value={desc}
+            onChange={e => setDesc(e.target.value)}
+            wrapClassName={styles.eventInputWrap}
+          />
         </div>
 
-        {/* Иконка */}
         <div className={styles.iconSection}>
           <span className={styles.iconLabel}>Иконка</span>
           <IconPicker value={icon} onChange={setIcon} />
         </div>
 
         <div className={styles.eventRow}>
-          <input className={styles.eventInput} type="date" value={date}
-            onChange={e => setDate(e.target.value)} />
-          <input className={styles.eventInput} type="time" value={time}
-            onChange={e => setTime(e.target.value)} placeholder="Время" />
-          <select className={styles.eventSelect} value={repeat}
-            onChange={e => setRepeat(e.target.value)}>
+          <Input
+            type="date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            wrapClassName={styles.eventInputWrap}
+          />
+          <Input
+            type="time"
+            value={time}
+            onChange={e => setTime(e.target.value)}
+            placeholder="Время"
+            wrapClassName={styles.eventInputWrap}
+          />
+          <select
+            className={styles.eventSelect}
+            value={repeat}
+            onChange={e => setRepeat(e.target.value)}
+          >
             {REPEAT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
-          <button className={styles.eventAddBtn} type="submit" disabled={createMut.isPending}>
-            {createMut.isPending ? '...' : '+ Добавить'}
-          </button>
+          <Button
+            type="submit"
+            variant="accent"
+            loading={createMut.isPending}
+            leftIcon={<Plus size={16} strokeWidth={2} />}
+          >
+            Добавить
+          </Button>
         </div>
         {formError && <div className={styles.eventError}>{formError}</div>}
       </form>
 
-      {/* Список событий */}
-      {events.length === 0
-        ? <div className={styles.eventEmpty}>Глобальных событий пока нет</div>
-        : (
-          <div className={styles.eventList}>
-            {events.map(ev => (
-              <div key={ev.id} className={styles.eventItem}>
-                <div className={styles.eventInfo}>
-                  <span className={styles.eventTitle}>
-                    {(() => { const Ic = Icons[ev.icon ?? '']; return Ic ? <Ic size={15} strokeWidth={1.75} style={{ verticalAlign: 'middle', marginRight: 5 }} /> : (ev.icon || '🌐'); })()}
-                    {ev.title}
-                  </span>
-                  <span className={styles.eventMeta}>
-                    {ev.date}{ev.time ? ` · ${ev.time}` : ''}
-                    {ev.repeat !== 'none' ? ` · ${REPEAT_OPTIONS.find(o => o.value === ev.repeat)?.label}` : ''}
-                  </span>
-                </div>
-                <button className={styles.eventDeleteBtn}
-                  onClick={() => deleteMut.mutate(ev.id)}
-                  disabled={deleteMut.isPending}
-                  title="Удалить событие">✕</button>
+      {events.length === 0 ? (
+        <EmptyState
+          size="sm"
+          title="Глобальных событий пока нет"
+          description="Создайте первое — оно появится у всех пользователей."
+        />
+      ) : (
+        <div className={styles.eventList}>
+          {events.map(ev => (
+            <div key={ev.id} className={styles.eventItem}>
+              <div className={styles.eventInfo}>
+                <span className={styles.eventTitle}>
+                  {(() => { const Ic = Icons[ev.icon ?? '']; return Ic ? <Ic size={16} strokeWidth={1.75} style={{ verticalAlign: 'middle', marginRight: 5 }} /> : (ev.icon || '🌐'); })()}
+                  {ev.title}
+                </span>
+                <span className={styles.eventMeta}>
+                  {ev.date}{ev.time ? ` · ${ev.time}` : ''}
+                  {ev.repeat !== 'none' ? ` · ${REPEAT_OPTIONS.find(o => o.value === ev.repeat)?.label}` : ''}
+                </span>
               </div>
-            ))}
-          </div>
-        )}
+              <IconButton
+                icon={<XIcon size={16} />}
+                aria-label="Удалить событие"
+                variant="ghost"
+                size="sm"
+                onClick={() => deleteMut.mutate(ev.id)}
+                loading={deleteMut.isPending}
+                className={styles.eventDeleteBtn}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -293,20 +346,32 @@ function AdminFeedbackSection() {
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+  const renderLoading = () => (
+    <div className={styles.feedbackList}>
+      {[1, 2, 3].map(i => <Skeleton key={i} width="100%" height={84} />)}
+    </div>
+  );
+
   return (
     <div className={styles.section}>
       <div className={styles.sectionHead}>
         <h2 className={styles.sectionTitle}>Обратная связь</h2>
       </div>
 
-      <div className={styles.feedbackTabs}>
+      <div className={styles.feedbackTabs} role="tablist">
         <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'bugs'}
           className={[styles.feedbackTab, tab === 'bugs' ? styles.feedbackTabActive : ''].join(' ')}
           onClick={() => setTab('bugs')}
         >
           Баги {bugs.length > 0 && <span className={styles.feedbackCount}>{bugs.length}</span>}
         </button>
         <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'features'}
           className={[styles.feedbackTab, tab === 'features' ? styles.feedbackTabActive : ''].join(' ')}
           onClick={() => setTab('features')}
         >
@@ -315,68 +380,86 @@ function AdminFeedbackSection() {
       </div>
 
       {tab === 'bugs' && (
-        bugsLoading ? <div className={styles.loading}>Загрузка...</div> :
-        bugs.length === 0 ? <div className={styles.feedbackEmpty}>Нет баг-репортов</div> :
-        <div className={styles.feedbackList}>
-          {bugs.map((b: BugReport) => (
-            <div key={b.id} className={styles.feedbackItem}>
-              <div className={styles.feedbackItemTop}>
-                <div className={styles.feedbackItemMeta}>
-                  <span className={styles.feedbackItemUser}>@{b.user?.username ?? '—'}</span>
-                  <span className={styles.feedbackItemDate}>{formatDate(b.createdAt)}</span>
+        bugsLoading ? renderLoading() :
+        bugs.length === 0 ? (
+          <EmptyState
+            size="sm"
+            icon={<Bug size={48} strokeWidth={1.25} />}
+            title="Баг-репортов нет"
+            description="Все спокойно — ничего не сломано."
+          />
+        ) : (
+          <div className={styles.feedbackList}>
+            {bugs.map((b: BugReport) => (
+              <div key={b.id} className={styles.feedbackItem}>
+                <div className={styles.feedbackItemTop}>
+                  <div className={styles.feedbackItemMeta}>
+                    <span className={styles.feedbackItemUser}>@{b.user?.username ?? '—'}</span>
+                    <span className={styles.feedbackItemDate}>{formatDate(b.createdAt)}</span>
+                  </div>
+                  <select
+                    className={styles.feedbackSelect}
+                    value={b.status}
+                    onChange={e => bugStatusMut.mutate({ id: b.id, status: e.target.value as BugReportStatus })}
+                    aria-label="Статус бага"
+                  >
+                    {(Object.keys(BUG_STATUS_LABEL) as BugReportStatus[]).map(s => (
+                      <option key={s} value={s}>{BUG_STATUS_LABEL[s]}</option>
+                    ))}
+                  </select>
                 </div>
-                <select
-                  className={styles.feedbackSelect}
-                  value={b.status}
-                  onChange={e => bugStatusMut.mutate({ id: b.id, status: e.target.value as BugReportStatus })}
-                >
-                  {(Object.keys(BUG_STATUS_LABEL) as BugReportStatus[]).map(s => (
-                    <option key={s} value={s}>{BUG_STATUS_LABEL[s]}</option>
-                  ))}
-                </select>
+                <div className={styles.feedbackItemTitle}>{b.title}</div>
+                {b.description && <div className={styles.feedbackItemDesc}>{b.description}</div>}
+                {b.attachmentUrls?.length ? (
+                  <div className={styles.feedbackAttachments}>
+                    {b.attachmentUrls.map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className={styles.feedbackAttachLink}>
+                        Вложение {i + 1}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-              <div className={styles.feedbackItemTitle}>{b.title}</div>
-              {b.description && <div className={styles.feedbackItemDesc}>{b.description}</div>}
-              {b.attachmentUrls?.length ? (
-                <div className={styles.feedbackAttachments}>
-                  {b.attachmentUrls.map((url, i) => (
-                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className={styles.feedbackAttachLink}>
-                      Вложение {i + 1}
-                    </a>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
       )}
 
       {tab === 'features' && (
-        featuresLoading ? <div className={styles.loading}>Загрузка...</div> :
-        features.length === 0 ? <div className={styles.feedbackEmpty}>Нет заявок на нововведения</div> :
-        <div className={styles.feedbackList}>
-          {features.map((f: FeatureRequest) => (
-            <div key={f.id} className={styles.feedbackItem}>
-              <div className={styles.feedbackItemTop}>
-                <div className={styles.feedbackItemMeta}>
-                  <span className={styles.feedbackItemUser}>@{f.user?.username ?? '—'}</span>
-                  <span className={styles.feedbackItemDate}>{formatDate(f.createdAt)}</span>
+        featuresLoading ? renderLoading() :
+        features.length === 0 ? (
+          <EmptyState
+            size="sm"
+            icon={<MessageSquare size={48} strokeWidth={1.25} />}
+            title="Заявок нет"
+            description="Идеи пользователей появятся здесь."
+          />
+        ) : (
+          <div className={styles.feedbackList}>
+            {features.map((f: FeatureRequest) => (
+              <div key={f.id} className={styles.feedbackItem}>
+                <div className={styles.feedbackItemTop}>
+                  <div className={styles.feedbackItemMeta}>
+                    <span className={styles.feedbackItemUser}>@{f.user?.username ?? '—'}</span>
+                    <span className={styles.feedbackItemDate}>{formatDate(f.createdAt)}</span>
+                  </div>
+                  <select
+                    className={styles.feedbackSelect}
+                    value={f.status}
+                    onChange={e => featureStatusMut.mutate({ id: f.id, status: e.target.value as FeatureRequestStatus })}
+                    aria-label="Статус заявки"
+                  >
+                    {(Object.keys(FEATURE_STATUS_LABEL) as FeatureRequestStatus[]).map(s => (
+                      <option key={s} value={s}>{FEATURE_STATUS_LABEL[s]}</option>
+                    ))}
+                  </select>
                 </div>
-                <select
-                  className={styles.feedbackSelect}
-                  value={f.status}
-                  onChange={e => featureStatusMut.mutate({ id: f.id, status: e.target.value as FeatureRequestStatus })}
-                >
-                  {(Object.keys(FEATURE_STATUS_LABEL) as FeatureRequestStatus[]).map(s => (
-                    <option key={s} value={s}>{FEATURE_STATUS_LABEL[s]}</option>
-                  ))}
-                </select>
+                <div className={styles.feedbackItemTitle}>{f.title}</div>
+                {f.description && <div className={styles.feedbackItemDesc}>{f.description}</div>}
               </div>
-              <div className={styles.feedbackItemTitle}>{f.title}</div>
-              {f.description && <div className={styles.feedbackItemDesc}>{f.description}</div>}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
       )}
     </div>
   );
@@ -406,7 +489,7 @@ export default function AdminPage() {
     queryKey: ['admin', 'users', debouncedSearch],
     queryFn: () => adminApi.getUsers(debouncedSearch || undefined),
     enabled: user?.role === 'admin',
-    refetchInterval: 15_000, // обновляем онлайн-статус каждые 15 сек
+    refetchInterval: 15_000,
   });
 
   const updateMut = useMutation({
@@ -433,7 +516,6 @@ export default function AdminPage() {
       <div className={styles.body}>
         <h1 className={styles.title}>Панель администратора</h1>
 
-        {/* Статистика */}
         {stats && (
           <div className={styles.stats}>
             <StatCard label="Всего пользователей" value={stats.totalUsers} />
@@ -442,13 +524,16 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Пользователи */}
         <div className={styles.section}>
           <div className={styles.sectionHead}>
             <h2 className={styles.sectionTitle}>Пользователи</h2>
-            <input className={styles.searchInput} type="text"
+            <Input
+              type="text"
               placeholder="Поиск по имени или email..."
-              value={search} onChange={e => handleSearch(e.target.value)} />
+              value={search}
+              onChange={e => handleSearch(e.target.value)}
+              wrapClassName={styles.searchInputWrap}
+            />
           </div>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
@@ -464,8 +549,16 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {isLoading && <tr><td colSpan={7} className={styles.loading}>Загрузка...</td></tr>}
-                {!isLoading && users.length === 0 && <tr><td colSpan={7} className={styles.loading}>Ничего не найдено</td></tr>}
+                {isLoading && (
+                  <tr><td colSpan={7} className={styles.loading}>
+                    <Skeleton width="100%" height={48} />
+                  </td></tr>
+                )}
+                {!isLoading && users.length === 0 && (
+                  <tr><td colSpan={7}>
+                    <EmptyState size="sm" title="Ничего не найдено" description="Попробуйте другой поиск." />
+                  </td></tr>
+                )}
                 {users.map(u => (
                   <UserRow key={u.id} user={u} isSelf={u.id === user.id}
                     onToggleRole={() => updateMut.mutate({ id: u.id, data: { role: u.role === 'admin' ? 'user' : 'admin' } })}
@@ -477,10 +570,8 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Глобальные события */}
         <GlobalEventsSection />
 
-        {/* Обратная связь */}
         <AdminFeedbackSection />
       </div>
     </div>

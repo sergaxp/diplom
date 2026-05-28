@@ -42,7 +42,6 @@ export function AchievementToast() {
         <span className={styles.xp}>+{current.xp} XP</span>
       </div>
       <button className={styles.close} onClick={pop} aria-label="Закрыть">✕</button>
-      <div className={styles.progress} style={{ animationDuration: `${DISPLAY_MS}ms`, background: rankColor }} />
     </div>
   );
 }

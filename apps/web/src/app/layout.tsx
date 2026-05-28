@@ -1,6 +1,14 @@
 import type { Metadata } from 'next';
+import { Onest } from 'next/font/google';
 import { Providers } from '../providers/Providers';
 import '../styles/globals.scss';
+
+const onest = Onest({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['400', '500', '600'],
+  variable: '--font-onest',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Warmingtea – твоё личное пространство',
@@ -9,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" suppressHydrationWarning>
+    <html lang="ru" className={onest.variable} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

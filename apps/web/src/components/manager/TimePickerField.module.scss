@@ -20,22 +20,24 @@ $pill-h: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 10px;
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
-  background: var(--bg-alt);
-  font-size: 0.85rem;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+  color: var(--text-primary);
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
-  transition: border-color 0.1s, background 0.1s;
-  &:hover { border-color: var(--border-strong); background: var(--bg-surface); }
+  transition: border-color var(--duration-fast) var(--ease-default),
+              background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { border-color: var(--brand); background: var(--brand-subtle); color: var(--brand); }
 }
 
 .pillPlaceholder {
-  color: var(--text-4);
+  color: var(--text-muted);
 }
 
 // ── Segment wrap (bordered, for standalone edit) ──────────────
@@ -44,11 +46,11 @@ $pill-h: 32px;
   box-sizing: border-box;
   display: flex;
   align-items: stretch;
-  border: 1px solid var(--border-strong);
-  border-radius: 5px;
-  background: var(--bg-input);
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
   padding: 0 4px;
-  box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.1);
+  box-shadow: 0 0 0 3px var(--brand-subtle);
 }
 
 // ── Segment wrap inside group (borderless) ────────────────────
@@ -63,9 +65,9 @@ $pill-h: 32px;
 .segInput {
   border: none;
   background: transparent;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+  color: var(--text-primary);
   font-family: inherit;
   text-align: center;
   outline: none;
@@ -74,12 +76,12 @@ $pill-h: 32px;
   min-width: 20px;
   align-self: stretch;
 
-  &::placeholder { color: var(--text-4); font-size: 0.72rem; }
-  &:focus { background: var(--bg-active); border-radius: 3px; }
+  &::placeholder { color: var(--text-muted); font-size: var(--text-xs); }
+  &:focus { background: var(--brand-subtle); border-radius: 3px; }
 }
 
 .segSep {
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   flex-shrink: 0;
   user-select: none;
@@ -91,8 +93,8 @@ $pill-h: 32px;
 
 // ── Separator between start and end ──────────────────────────
 .sep {
-  font-size: 0.82rem;
-  color: var(--text-4);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
   flex-shrink: 0;
   user-select: none;
 }
@@ -103,25 +105,27 @@ $pill-h: 32px;
   align-items: stretch;
   height: $pill-h;
   box-sizing: border-box;
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  background: var(--bg-alt);
-  transition: border-color 0.1s, background 0.1s, box-shadow 0.1s;
-  &:hover { border-color: var(--border-strong); }
+  background: var(--bg-surface);
+  transition: border-color var(--duration-fast) var(--ease-default),
+              background var(--duration-fast) var(--ease-default),
+              box-shadow var(--duration-fast) var(--ease-default);
+  &:hover { border-color: var(--brand); }
 }
 
 .timeGroupActive {
-  border-color: var(--border-strong);
-  background: var(--bg-input);
-  box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.1);
+  border-color: var(--brand);
+  background: var(--bg-surface);
+  box-shadow: 0 0 0 3px var(--brand-subtle);
 }
 
 .groupTimePill {
-  padding: 0 10px;
-  font-size: 0.82rem;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+  color: var(--text-primary);
   cursor: pointer;
   background: none;
   border: none;
@@ -129,20 +133,20 @@ $pill-h: 32px;
   display: flex;
   align-items: center;
   white-space: nowrap;
-  transition: background 0.1s;
-  &:hover { background: rgba(128, 128, 128, 0.07); }
+  transition: background var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); }
 }
 
 .groupDivider {
   width: 1px;
-  background: var(--border-input);
+  background: var(--border-default);
   flex-shrink: 0;
   align-self: stretch;
 }
 
 .groupAddEnd {
-  padding: 0 9px;
-  font-size: 0.78rem;
+  padding: 0 var(--space-2);
+  font-size: var(--text-sm);
   color: var(--text-muted);
   cursor: pointer;
   background: none;
@@ -151,8 +155,9 @@ $pill-h: 32px;
   display: flex;
   align-items: center;
   white-space: nowrap;
-  transition: background 0.1s, color 0.1s;
-  &:hover { background: rgba(128, 128, 128, 0.07); color: var(--text); }
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); color: var(--brand); }
 }
 
 // ── Single clear button ───────────────────────────────────────
@@ -161,34 +166,34 @@ $pill-h: 32px;
   box-sizing: border-box;
   background: none;
   border: none;
-  font-size: 0.6rem;
-  color: var(--text-4);
+  font-size: 11px;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 0 4px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  transition: color 0.1s, background 0.1s;
-  &:hover { color: var(--text-2); background: var(--bg-hover); }
+  transition: color var(--duration-fast) var(--ease-default),
+              background var(--duration-fast) var(--ease-default);
+  &:hover { color: var(--error); background: var(--error-subtle); }
 }
 
 // ── Dropdown ──────────────────────────────────────────────────
 .dropdown {
   position: fixed;
-  z-index: 410;
+  z-index: var(--z-popover);
   width: 165px;
-  background: var(--bg);
-  border: 1px solid var(--border-input);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px var(--shadow-lg);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   max-height: calc(#{$pill-h} * 5 + 8px);
   overflow-y: auto;
   list-style: none;
   margin: 0;
-  padding: 4px;
+  padding: var(--space-1);
   scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  scrollbar-color: var(--border-default) transparent;
 }
 
 .dropItem {
@@ -197,29 +202,31 @@ $pill-h: 32px;
   width: 100%;
   height: $pill-h;
   box-sizing: border-box;
-  padding: 0 10px;
+  padding: 0 var(--space-3);
   border: none;
   background: none;
-  border-radius: 5px;
-  font-size: 0.875rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+  color: var(--text-primary);
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.1s;
-  &:hover { background: var(--bg-hover); }
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--brand-subtle); color: var(--brand); }
 }
 
 .dropItemActive {
-  background: var(--bg-active);
-  font-weight: 600;
+  background: var(--brand-subtle);
+  color: var(--brand);
+  font-weight: var(--weight-semibold);
 }
 
 .dropItemRel {
   margin-left: auto;
-  padding-left: 8px;
-  font-size: 0.7rem;
-  color: var(--text-4);
+  padding-left: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }

@@ -1,60 +1,273 @@
+/* ============================================================
+ * WARMINGTEA DESIGN SYSTEM — global tokens
+ * Источник истины: md/warmingtea-design-system.md (v1.0)
+ *
+ * Все токены — CSS custom properties, чтобы быть доступны
+ * из любого .module.scss без @use/@import.
+ * ============================================================ */
+
+/* ── Базовые brand-токены (не зависят от темы) ─────────────── */
 :root {
-  /* Backgrounds */
-  --bg: #f0f0f0;
-  --bg-surface: #ebebeb;
-  --bg-alt: #e8e8e8;
-  --bg-card: #ffffff;
-  --bg-input: #e8e8e8;
-  --bg-hover: #e0e0e0;
-  --bg-active: #d4d4d4;
+  /* Шрифт (значение задаётся next/font в layout.tsx через --font-onest) */
+  --font-primary: var(--font-onest), 'Onest', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --font-app: var(--font-primary); /* legacy alias */
 
-  /* Text */
-  --text: #1a1a1a;
-  --text-2: #555;
-  --text-muted: #888;
-  --text-4: #aaa;
+  /* ── Бренд: Еловый зелёный (Spruce) ───────────────────────── */
+  --spruce-50:  #E8EFEC;
+  --spruce-100: #C5D5CE;
+  --spruce-200: #93B0A4;
+  --spruce-300: #5F8678;
+  --spruce-400: #3D6557;
+  --spruce-600: #213D34;  /* PRIMARY BRAND */
+  --spruce-700: #182E27;
+  --spruce-900: #0A1612;
 
-  /* Borders */
-  --border: #d4d4d4;
-  --border-light: #e0e0e0;
-  --border-input: #ccc;
-  --border-strong: #999;
+  /* ── Акцент: Чайный янтарь (Amber) ────────────────────────── */
+  --amber-100: #F5E8D6;
+  --amber-400: #E8B87A;
+  --amber-500: #C9914F;   /* PRIMARY ACCENT (CTA) */
+  --amber-600: #B07A38;
 
-  /* Shadows */
+  /* ── Ранги достижений (одни и те же в обеих темах) ────────── */
+  --rank-mist:        #8EA69B;   /* Туман     — Обычное (500 XP) */
+  --rank-lingonberry: #B04E6E;   /* Брусника  — Редкое (1 000 XP) */
+  --rank-plum:        #7A4288;   /* Слива     — Эпическое (2 000 XP) */
+  --rank-amber-gold:  #D4A83C;   /* Янтарь    — Легендарное (4 000 XP) */
+
+  /* Текст на ранговых фонах */
+  --rank-mist-text:        #1A3028;
+  --rank-lingonberry-text: #FAF3E8;
+  --rank-plum-text:        #FAF3E8;
+  --rank-amber-gold-text:  #3A2804;
+
+  /* ── Типографика ──────────────────────────────────────────── */
+  --text-2xs: 10px;  /* плотные таблицы, мелкие метки в календаре */
+  --text-xs: 11px;   /* метки, теги, hex */
+  --text-sm: 13px;   /* вторичный текст, подписи */
+  --text-base: 15px; /* основной UI-текст */
+  --text-md: 17px;   /* название задачи, заголовок карточки */
+  --text-lg: 20px;   /* заголовок секции */
+  --text-xl: 24px;   /* заголовок страницы (h1) */
+  --text-2xl: 32px;  /* большие числа (XP, уровень) */
+  --text-3xl: 48px;  /* hero (редко) */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --leading-tight: 1.3;
+  --leading-normal: 1.5;
+  --leading-loose: 1.6;
+
+  /* ── Отступы (base 8px) ───────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* ── Скругления ───────────────────────────────────────────── */
+  --radius-sm: 4px;    /* badges, pills, теги */
+  --radius-md: 8px;    /* кнопки, инпуты, dropdown */
+  --radius-lg: 12px;   /* карточки */
+  --radius-xl: 16px;   /* модалки */
+  --radius-full: 9999px;
+
+  /* ── Анимации ─────────────────────────────────────────────── */
+  --duration-fast: 100ms;
+  --duration-default: 150ms;
+  --duration-medium: 200ms;
+  --duration-slow: 300ms;
+
+  --ease-default: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in:      cubic-bezier(0.4, 0, 1, 1);
+  --ease-out:     cubic-bezier(0, 0, 0.2, 1);
+
+  /* ── Layout ───────────────────────────────────────────────── */
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 64px;
+
+  /* Ширины контента (используются <PageContainer>) */
+  --container-narrow: 720px;   /* формы, /auth */
+  --container-wide:   1080px;  /* /profile, /settings, /shop */
+  --container-full:   1280px;  /* /manager, /admin */
+
+  /* Брейкпоинты — только 4 (используются в @media) */
+  --bp-mobile-lg: 640px;
+  --bp-tablet:    768px;
+  --bp-desktop:   1024px;
+  --bp-wide:      1280px;
+
+  /* ── Z-index scale ─────────────────────────────────────────
+   * Единственный источник истины для слоёв.
+   * Никогда не использовать z-index с числом напрямую. */
+  --z-dropdown: 10;
+  --z-sticky:   20;
+  --z-overlay:  100;
+  --z-modal:    200;
+  --z-popover:  300;
+  --z-toast:    400;
+  --z-tooltip:  500;
+}
+
+/* ── Светлая тема ───────────────────────────────────────────── */
+:root,
+[data-theme='light'] {
+  /* Фоны.
+   * Контраст: bg-base → surface заметная дельта (~8 пунктов яркости),
+   * чтобы карточки явно отделялись от фона страницы. */
+  --bg-base:     #F2E8D5;  /* фон страницы (тёплый кремовый, чуть темнее) */
+  --bg-surface:  #FBF6EC;  /* фон карточек (явно светлее base) */
+  --bg-elevated: #FFFFFF;  /* модалки, popover (чисто белый) */
+  --bg-subtle:   #E8DCC0;  /* зебра, инпуты, разделители (темнее base) */
+
+  /* Текст.
+   * text-muted затемнён с #7A8A82 до #66756C для контраста ~4:1
+   * на кремовом фоне (ближе к WCAG AA для вторичного текста). */
+  --text-primary:   #182E27;
+  --text-secondary: #4A5C53;
+  --text-muted:     #66756C;  /* placeholder, helper */
+  --text-disabled:  #B3BEB7;  /* недоступные элементы (заметно светлее muted) */
+  --text-on-brand:  #FAF3E8;
+  --text-on-accent: #FAF3E8;
+
+  /* Границы.
+   * border-card — для карточек с явной границей,
+   * border-default — для инпутов/кнопок (чуть светлее),
+   * border-subtle — для лёгких разделителей. */
+  --border-card:    #D0C3A8;  /* НОВЫЙ: карточки, видимая граница */
+  --border-default: #D8CBB0;
+  --border-subtle:  #E5DCC4;
+  --border-strong:  #B8A983;
+
+  /* Бренд */
+  --brand:        var(--spruce-600);   /* #213D34 */
+  --brand-hover:  var(--spruce-700);   /* #182E27 */
+  --brand-subtle: var(--spruce-50);    /* #E8EFEC */
+  --brand-muted:  var(--spruce-300);   /* #5F8678 */
+
+  /* Акцент */
+  --accent:        var(--amber-500);   /* #C9914F */
+  --accent-hover:  var(--amber-600);   /* #B07A38 */
+  --accent-subtle: var(--amber-100);   /* #F5E8D6 */
+
+  /* Семантика */
+  --success:        #3B7A5C;
+  --success-subtle: #E4F0EA;
+  --error:          #B84040;
+  --error-subtle:   #F7E8E8;
+  --warning:        #C9914F;  /* = accent, намеренно */
+  --warning-subtle: var(--amber-100);
+  --info:           #4A7898;
+  --info-subtle:    #E5EEF4;
+
+  /* Color-scheme для нативного UI (скроллбары, форм-элементы) */
+  color-scheme: light;
+}
+
+/* ── Тёмная тема ────────────────────────────────────────────── */
+[data-theme='dark'] {
+  /* Фоны — аналогично разнесены для контраста */
+  --bg-base:     #161A18;  /* фон страницы (темнее) */
+  --bg-surface:  #232826;  /* карточки (явно светлее base) */
+  --bg-elevated: #2D3331;  /* модалки */
+  --bg-subtle:   #1C201E;  /* инпуты, тонкие зоны */
+
+  /* Текст.
+   * text-muted поднят с #6A7570 до #8A938D для контраста ≥4.5:1
+   * на --bg-surface (#232826) — соответствие WCAG AA. */
+  --text-primary:   #E5E2D9;
+  --text-secondary: #A5ADA6;
+  --text-muted:     #8A938D;
+  --text-disabled:  #4A544F;  /* заметно темнее muted */
+  --text-on-brand:  #E5E2D9;
+  --text-on-accent: #1A1F1D;
+
+  /* Границы */
+  --border-card:    #3A413E;  /* НОВЫЙ */
+  --border-default: #2E3432;
+  --border-subtle:  #232826;
+  --border-strong:  #4D5552;
+
+  /* Бренд (светлее для читабельности на тёмном) */
+  --brand:        var(--spruce-300);   /* #5F8678 */
+  --brand-hover:  #72A090;
+  --brand-subtle: #1E2E2A;
+  --brand-muted:  var(--spruce-400);   /* #3D6557 */
+
+  /* Акцент (не меняется) */
+  --accent:        var(--amber-500);   /* #C9914F */
+  --accent-hover:  #D9A560;
+  --accent-subtle: #2A2218;
+
+  /* Семантика */
+  --success:        #5AB886;
+  --success-subtle: #1A2E24;
+  --error:          #D96060;
+  --error-subtle:   #2E1A1A;
+  --warning:        var(--amber-500);
+  --warning-subtle: #2A2218;
+  --info:           #6EA8CC;
+  --info-subtle:    #1A2530;
+
+  color-scheme: dark;
+}
+
+/* ============================================================
+ * LEGACY-АЛИАСЫ
+ * Старые стили (.module.scss) использовали эти имена.
+ * Маппим их на новые токены, чтобы ничего не сломалось.
+ * Постепенно мигрируем компоненты на новые имена.
+ * ============================================================ */
+:root,
+[data-theme='light'],
+[data-theme='dark'] {
+  --bg:         var(--bg-base);
+  --bg-alt:     var(--bg-subtle);
+  --bg-card:    var(--bg-elevated);
+  --bg-input:   var(--bg-subtle);
+  --bg-hover:   var(--bg-elevated);
+  --bg-active:  var(--brand-subtle);
+
+  --text:       var(--text-primary);
+  --text-2:     var(--text-secondary);
+  --text-4:     var(--text-disabled);
+
+  --border:        var(--border-default);
+  --border-light:  var(--border-subtle);
+  --border-input:  var(--border-default);
+
+  /* Старые алиасы */
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+  --surface:    var(--bg-surface);
+}
+
+/* Тени — оставлены для совместимости. Дизайн-док рекомендует
+ * избегать blur > 0; новые компоненты должны использовать
+ * границы и разницу фонов вместо теней. */
+:root,
+[data-theme='light'] {
   --shadow-sm: rgba(0, 0, 0, 0.08);
   --shadow-md: rgba(0, 0, 0, 0.12);
   --shadow-lg: rgba(0, 0, 0, 0.24);
-
-  /* Aliases for legacy usage in settings/admin/profile pages */
-  --background: var(--bg);
-  --foreground: var(--text);
-  --surface: var(--bg-surface);
 }
-
 [data-theme='dark'] {
-  --bg: #171717;
-  --bg-surface: #212121;
-  --bg-alt: #1c1c1c;
-  --bg-card: #1e1e1e;
-  --bg-input: #282828;
-  --bg-hover: #2a2a2a;
-  --bg-active: #333333;
-
-  --text: #e8e8e8;
-  --text-2: #b0b0b0;
-  --text-muted: #888;
-  --text-4: #606060;
-
-  --border: #2e2e2e;
-  --border-light: #242424;
-  --border-input: #383838;
-  --border-strong: #555;
-
   --shadow-sm: rgba(0, 0, 0, 0.3);
   --shadow-md: rgba(0, 0, 0, 0.4);
   --shadow-lg: rgba(0, 0, 0, 0.6);
 }
 
+/* ============================================================
+ * RESET и базовые стили
+ * ============================================================ */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -67,17 +280,54 @@ body {
   overflow-x: hidden;
 }
 
-:root {
-  --font-app: sans-serif;
-}
-
 body {
-  font-family: var(--font-app);
-  background: var(--bg);
-  color: var(--text);
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: normal;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Единый стиль фокуса для доступности */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Числа в табличной форме там, где это уместно */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Плавный кроссфейд цветов при переключении темы.
+ * Класс .theme-transition вешается на <html> только на ~300ms
+ * (см. themeStore.toggle), поэтому hover-переходы не затрагиваются. */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition:
+    background-color var(--duration-medium) var(--ease-default),
+    border-color var(--duration-medium) var(--ease-default),
+    color var(--duration-medium) var(--ease-default) !important;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

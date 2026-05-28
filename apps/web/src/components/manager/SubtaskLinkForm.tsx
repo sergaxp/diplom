@@ -5,6 +5,7 @@ import * as LucideIcons from 'lucide-react';
 import type { SubtaskItem } from '../../lib/tasks';
 import { parseLink } from '../../lib/linkPreview';
 import { storageApi } from '../../lib/storage';
+import { Modal, Button, Input } from '../../components/ui';
 import styles from './SubtaskCreatePopup.module.scss';
 
 interface Props {
@@ -28,7 +29,6 @@ export function SubtaskLinkForm({ onSave, onCancel }: Props) {
 
   const info = parseLink(url);
 
-  // При изменении URL — запускаем debounce для фетча превью
   useEffect(() => {
     if (debounce.current) clearTimeout(debounce.current);
     setFetchedThumb(null);
@@ -46,7 +46,7 @@ export function SubtaskLinkForm({ onSave, onCancel }: Props) {
           setFetchedThumb(preview.thumbnailUrl);
         }
       } catch {
-        // не критично — фоллбэк на parseLink
+        // не критично
       } finally {
         setFetching(false);
       }
@@ -70,57 +70,56 @@ export function SubtaskLinkForm({ onSave, onCancel }: Props) {
   };
 
   return (
-    <div className={styles.overlay} onMouseDown={onCancel}>
-    <div className={styles.card} onMouseDown={e => e.stopPropagation()}>
-    <div className={styles.form} onKeyDown={e => { if (e.key === 'Escape') onCancel(); }}>
-      <input
-        ref={urlRef}
-        className={styles.titleInput}
-        value={url}
-        onChange={e => setUrl(e.target.value)}
-        placeholder="Вставьте ссылку (изображение, YouTube, и т.д.)"
-        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); } if (e.key === 'Escape') onCancel(); }}
-      />
+    <Modal
+      open
+      onClose={onCancel}
+      size="sm"
+      title="Добавить ссылку"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onCancel}>Отмена</Button>
+          <Button variant="accent" onClick={handleSubmit} disabled={!info || fetching}>
+            Добавить ссылку
+          </Button>
+        </>
+      }
+    >
+      <div className={styles.form} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); } }}>
+        <Input
+          ref={urlRef}
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+          placeholder="Вставьте ссылку (изображение, YouTube, и т.д.)"
+        />
 
-      <div className={styles.titleInputWrap}>
-        <input
-          className={styles.descInput}
+        <Input
           value={title}
           onChange={e => { setTitle(e.target.value); setTitleTouched(true); }}
           placeholder={fetching ? 'Загружаем подпись...' : 'Подпись (необязательно)'}
+          suffix={fetching ? <LucideIcons.Loader2 size={14} className={styles.titleLoader} /> : undefined}
         />
-        {fetching && <LucideIcons.Loader2 size={14} className={styles.titleLoader} />}
-      </div>
 
-      {info && (
-        <div className={styles.attachGrid}>
-          <div className={styles.attachItem}>
-            {effectiveThumb ? (
-              <div className={styles.attachMedia} style={{ background: `url(${effectiveThumb}) center/cover no-repeat` }}>
-                {info.type === 'video' && <span className={styles.playBadge}><LucideIcons.Play size={20} strokeWidth={2}/></span>}
+        {info && (
+          <div className={styles.attachGrid}>
+            <div className={styles.attachItem}>
+              {effectiveThumb ? (
+                <div className={styles.attachMedia} style={{ background: `url(${effectiveThumb}) center/cover no-repeat` }}>
+                  {info.type === 'video' && <span className={styles.playBadge}><LucideIcons.Play size={20} strokeWidth={2} /></span>}
+                </div>
+              ) : (
+                <div className={styles.attachFile}>
+                  {info.type === 'image' ? <LucideIcons.Image size={24} strokeWidth={1.5} />
+                 : info.type === 'video' ? <LucideIcons.Video size={24} strokeWidth={1.5} />
+                 :                          <LucideIcons.Link  size={24} strokeWidth={1.5} />}
+                </div>
+              )}
+              <div className={styles.attachName} title={info.url}>
+                {title || info.title || info.url}
               </div>
-            ) : (
-              <div className={styles.attachFile}>
-                {info.type === 'image' ? <LucideIcons.Image size={26} strokeWidth={1.5}/>
-               : info.type === 'video' ? <LucideIcons.Video size={26} strokeWidth={1.5}/>
-               :                          <LucideIcons.Link  size={26} strokeWidth={1.5}/>}
-              </div>
-            )}
-            <div className={styles.attachName} title={info.url}>
-              {title || info.title || info.url}
             </div>
           </div>
-        </div>
-      )}
-
-      <div className={styles.actions}>
-        <button type="button" className={styles.cancelBtn} onClick={onCancel}>Отмена</button>
-        <button type="button" className={styles.submitBtn} onClick={handleSubmit} disabled={!info || fetching}>
-          Добавить ссылку
-        </button>
+        )}
       </div>
-    </div>
-    </div>
-    </div>
+    </Modal>
   );
 }

@@ -2,17 +2,10 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background: var(--bg-base);
 }
 
-.state {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 1rem;
-}
+/* .state → <Skeleton>/<EmptyState> в tsx */
 
 .body {
   flex: 1;
@@ -21,36 +14,36 @@
 // ── Banner ────────────────────────────────────────────────────
 .banner {
   height: 240px;
-  background: var(--bg-surface);
+  background: var(--brand-subtle);
   background-size: cover;
   background-position: center;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .bannerHasImage {
-  background-color: #000;
+  background-color: var(--bg-subtle);
 }
 
 // ── Hero strip (avatar + name + actions) ──────────────────────
 .hero {
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .heroInner {
-  max-width: 1080px;
+  max-width: var(--container-wide);
   margin: 0 auto;
-  padding: 0 24px 18px;
+  padding: 0 var(--space-6) var(--space-5);
   display: flex;
   align-items: flex-end;
-  gap: 18px;
+  gap: var(--space-5);
   position: relative;
 }
 
 .avatarWrap {
   margin-top: -56px;
   border-radius: 50%;
-  background: var(--bg-card);
+  background: var(--bg-elevated);
   padding: 4px;
   flex-shrink: 0;
 }
@@ -68,52 +61,29 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .displayName {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.01em;
 }
 
 .username {
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
-.levelBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--bg-active);
-  color: var(--text-2);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-}
-
-.coinsBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--bg-hover);
-  border: 1px solid var(--border);
-  color: var(--text-2);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
+/* Уровень/монеты теперь через <Badge> из ui/. */
 
 .coinDot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--text-muted);
+  background: var(--accent);
   display: inline-block;
 }
 
@@ -129,20 +99,22 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 10px;
-  border-radius: 999px;
+  padding: 5px var(--space-3);
+  border-radius: var(--radius-md);
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  color: var(--text-2);
-  font-size: 0.78rem;
-  font-weight: 500;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
   text-decoration: none;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  transition: background var(--duration-fast) var(--ease-default),
+              border-color var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
 
   &:hover {
-    border-color: var(--social-color, var(--border-strong));
-    color: var(--social-color, var(--text));
-    background: var(--bg-hover);
+    border-color: var(--social-color, var(--brand));
+    color: var(--social-color, var(--brand));
+    background: var(--bg-subtle);
   }
 }
 
@@ -154,38 +126,21 @@
 .heroActions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   padding-bottom: 4px;
   flex-shrink: 0;
 }
 
-.editBtn {
-  display: inline-block;
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: 1px solid var(--border-strong);
-  color: var(--text);
-  font-size: 0.85rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background 0.15s, color 0.15s;
-  background: transparent;
-
-  &:hover {
-    background: var(--text);
-    color: var(--bg);
-    border-color: var(--text);
-  }
-}
+/* .editBtn → <Button variant="secondary"> в tsx */
 
 // ── Two-column layout ────────────────────────────────────────
 .columns {
-  max-width: 1080px;
+  max-width: var(--container-wide);
   margin: 0 auto;
-  padding: 22px 24px 60px;
+  padding: var(--space-6) var(--space-6) var(--space-16);
   display: grid;
   grid-template-columns: 320px 1fr;
-  gap: 18px;
+  gap: var(--space-5);
   align-items: flex-start;
 }
 
@@ -193,35 +148,30 @@
 .mainCol {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px 18px;
-}
+/* .card → <Card padding="md"> */
 
 .cardTitle {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 10px;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-3);
 }
 
 .bio {
-  font-size: 0.9rem;
-  color: var(--text);
-  line-height: 1.55;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  line-height: var(--leading-normal);
   white-space: pre-wrap;
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
 }
 
 .muted {
   color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1.55;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
   margin: 0;
 }
 
@@ -236,9 +186,9 @@
   li {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: var(--text-2);
-    font-size: 0.82rem;
+    gap: var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
   }
 }
 
@@ -247,32 +197,38 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .xpLevel {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--text);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .xpLabel {
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .xpBar {
-  height: 6px;
-  background: var(--bg-active);
-  border-radius: 99px;
+  height: 10px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-full);
   overflow: hidden;
+  border: 1px solid var(--border-subtle);
 }
 
+// XP-bar — еловый зелёный (рост), янтарь зарезервирован под монеты/CTA
 .xpFill {
   height: 100%;
-  background: var(--text-2);
-  border-radius: 99px;
-  transition: width 0.4s ease;
+  background: var(--brand-muted);
+  border-radius: var(--radius-full);
+  transition: width var(--duration-slow) var(--ease-out);
   min-width: 2px;
 }
 
@@ -280,47 +236,57 @@
 .achHead {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .achCount {
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
 }
 
 .achGroup {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
 
   &:last-child { margin-bottom: 0; }
 }
 
 .achGroupLabel {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .achGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-2);
 }
 
+// Карточка достижения с цветной полоской ранга слева (через box-shadow inset,
+// сохраняем border-radius). Соответствует §8.6 дизайн-дока.
 .achCard {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  padding-left: calc(var(--space-4) + 4px);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
   position: relative;
-  transition: opacity 0.15s;
+  transition: opacity var(--duration-fast) var(--ease-default),
+              border-color var(--duration-fast) var(--ease-default);
+
+  // Цветная полоска ранга 4px слева — задаётся inline-стилем через background
+  // (см. AchievementCard в page.tsx, обновим аналогично)
+  box-shadow: inset 4px 0 0 var(--rank-stripe, var(--text-disabled));
 
   &[data-tooltip]:hover::after {
     content: attr(data-tooltip);
@@ -328,38 +294,38 @@
     bottom: calc(100% + 6px);
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-card);
-    color: var(--text);
-    font-size: 0.72rem;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    font-size: var(--text-xs);
     line-height: 1.4;
-    padding: 5px 9px;
-    border-radius: 6px;
+    padding: 5px var(--space-2);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-default);
     white-space: normal;
-    max-width: 180px;
+    max-width: 220px;
     text-align: center;
-    z-index: 200;
+    z-index: var(--z-tooltip);
     pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,.35);
     word-break: break-word;
   }
 }
 
 .achCardUnlocked {
-  border-color: var(--border);
+  border-color: var(--border-default);
   background: var(--bg-surface);
 }
 
 .achCardLocked {
-  border-color: var(--border-light);
+  border-color: var(--border-subtle);
   background: transparent;
-  opacity: 0.45;
+  opacity: 0.55;
 }
 
 .achIcon {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  background: var(--bg-hover);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
   color: var(--text-muted);
   display: flex;
   align-items: center;
@@ -368,8 +334,8 @@
 }
 
 .achSecretGlyph {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
 }
 
@@ -382,31 +348,34 @@
 }
 
 .achTitle {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .achRank {
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   color: var(--text-muted);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .achCheck {
-  font-size: 0.75rem;
-  color: var(--text-2);
-  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--success);
+  font-weight: var(--weight-semibold);
   flex-shrink: 0;
 }
 
 // ── Responsive ────────────────────────────────────────────────
-@media (max-width: 840px) {
+@media (max-width: 768px) {
   .columns {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: var(--space-4);
   }
 }
 
@@ -414,10 +383,10 @@
   .banner { height: 160px; }
 
   .heroInner {
-    padding: 0 16px 14px;
+    padding: 0 var(--space-4) var(--space-4);
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .avatarWrap {
@@ -428,19 +397,10 @@
     width: 100%;
   }
 
-  .editBtn {
-    flex: 1;
-    text-align: center;
-  }
-
-  .displayName { font-size: 1.25rem; }
+  .displayName { font-size: var(--text-lg); }
 
   .columns {
-    padding: 16px 12px 40px;
-  }
-
-  .card {
-    padding: 14px 14px;
+    padding: var(--space-4) var(--space-3) var(--space-10);
   }
 
   .achGrid {

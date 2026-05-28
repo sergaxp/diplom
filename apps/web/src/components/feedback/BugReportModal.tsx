@@ -2,9 +2,10 @@
 
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, Paperclip, Trash2 } from 'lucide-react';
+import { Paperclip, Trash2 } from 'lucide-react';
 import { feedbackApi } from '../../lib/feedback';
 import { storageApi, UploadedFile } from '../../lib/storage';
+import { Modal, Button, IconButton, Input, Textarea } from '../ui';
 import styles from './FeedbackModal.module.scss';
 
 interface Props {
@@ -64,35 +65,45 @@ export function BugReportModal({ onClose }: Props) {
   };
 
   return (
-    <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
-        <div className={styles.header}>
-          <span className={styles.headerTitle}>Сообщить о баге</span>
-          <button className={styles.closeBtn} onClick={onClose}><X size={16} /></button>
-        </div>
+    <Modal
+      open
+      onClose={onClose}
+      size="sm"
+      title="Сообщить о баге"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Отмена</Button>
+          <Button
+            type="submit"
+            form="bug-report-form"
+            variant="accent"
+            loading={isPending}
+            disabled={uploading}
+          >
+            Отправить
+          </Button>
+        </>
+      }
+    >
+      <form id="bug-report-form" className={styles.form} onSubmit={submit}>
+        <Input
+          label={<>Название проблемы <span className={styles.required}>*</span></>}
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          placeholder="Кратко опишите проблему"
+          maxLength={255}
+        />
 
-        <form className={styles.form} onSubmit={submit}>
-          <label className={styles.label}>
-            Название проблемы <span className={styles.required}>*</span>
-          </label>
-          <input
-            className={styles.input}
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="Кратко опишите проблему"
-            maxLength={255}
-          />
+        <Textarea
+          label="Описание проблемы"
+          value={desc}
+          onChange={e => setDesc(e.target.value)}
+          placeholder="Шаги для воспроизведения, ожидаемое и фактическое поведение..."
+          rows={5}
+        />
 
-          <label className={styles.label}>Описание проблемы</label>
-          <textarea
-            className={styles.textarea}
-            value={desc}
-            onChange={e => setDesc(e.target.value)}
-            placeholder="Шаги для воспроизведения, ожидаемое и фактическое поведение..."
-            rows={5}
-          />
-
-          <label className={styles.label}>Скриншот / видео</label>
+        <div>
+          <span className={styles.label}>Скриншот / видео</span>
           <div className={styles.attachArea}>
             {files.map(f => (
               <div key={f.key} className={styles.attachItem}>
@@ -100,29 +111,30 @@ export function BugReportModal({ onClose }: Props) {
                   <img src={f.url} alt={f.name} className={styles.attachThumb} />
                 ) : (
                   <div className={styles.attachFile}>
-                    <Paperclip size={14} />
+                    <Paperclip size={16} />
                     <span className={styles.attachName}>{f.name}</span>
                   </div>
                 )}
-                <button
-                  type="button"
-                  className={styles.attachRemove}
+                <IconButton
+                  icon={<Trash2 size={12} />}
+                  aria-label="Удалить файл"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => removeFile(f)}
-                  title="Удалить"
-                >
-                  <Trash2 size={12} />
-                </button>
+                  className={styles.attachRemove}
+                />
               </div>
             ))}
-            <button
-              type="button"
-              className={styles.attachBtn}
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<Paperclip size={16} />}
               onClick={() => fileRef.current?.click()}
-              disabled={uploading}
+              loading={uploading}
+              className={styles.attachBtn}
             >
-              <Paperclip size={14} />
-              {uploading ? 'Загрузка...' : 'Прикрепить файл'}
-            </button>
+              Прикрепить файл
+            </Button>
             <input
               ref={fileRef}
               type="file"
@@ -132,17 +144,10 @@ export function BugReportModal({ onClose }: Props) {
               onChange={handleFileChange}
             />
           </div>
+        </div>
 
-          {error && <p className={styles.error}>{error}</p>}
-
-          <div className={styles.actions}>
-            <button type="button" className={styles.cancelBtn} onClick={onClose}>Отмена</button>
-            <button type="submit" className={styles.submitBtn} disabled={isPending || uploading}>
-              {isPending ? 'Отправка...' : 'Отправить'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {error && <p className={styles.error}>{error}</p>}
+      </form>
+    </Modal>
   );
 }

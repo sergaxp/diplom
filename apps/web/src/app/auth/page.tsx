@@ -8,8 +8,10 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { AxiosError } from 'axios';
 import Link from 'next/link';
-import { authApi, saveAuth, hasToken } from '../../lib/auth';
+import { AlertCircle } from 'lucide-react';
+import { authApi, saveAuth } from '../../lib/auth';
 import { useAuthStore } from '../../store/authStore';
+import { Button, Input } from '../../components/ui';
 import styles from './page.module.scss';
 
 // ── Схемы валидации ───────────────────────────────────────────
@@ -20,7 +22,7 @@ const loginSchema = z.object({
 
 const registerSchema = z
   .object({
-    username:        z.string()
+    username: z.string()
       .min(3, 'Минимум 3 символа')
       .max(32, 'Максимум 32 символа')
       .regex(/^[a-zA-Z0-9_-]+$/, 'Только буквы, цифры, _ и -'),
@@ -36,49 +38,27 @@ const registerSchema = z
 type LoginForm    = z.infer<typeof loginSchema>;
 type RegisterForm = z.infer<typeof registerSchema>;
 
-// ── Компонент поля ────────────────────────────────────────────
-function Field({
-  label,
-  error,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }) {
-  return (
-    <div className={styles.field}>
-      <label className={styles.label}>{label}</label>
-      <input
-        className={[styles.input, error ? styles.inputError : ''].join(' ')}
-        {...props}
-      />
-      {error && <p className={styles.fieldError}>{error}</p>}
-    </div>
-  );
-}
-
-// ── Компонент ошибки ──────────────────────────────────────────
 function ServerError({ message }: { message: string }) {
   return (
     <div className={styles.serverError} role="alert">
-      <span className={styles.errorIcon}>!</span>
-      {message}
+      <AlertCircle size={16} aria-hidden="true" />
+      <span>{message}</span>
     </div>
   );
 }
 
-// ── Главный компонент ─────────────────────────────────────────
 export default function AuthPage() {
-  const [tab, setTab]               = useState<'login' | 'register'>('login');
+  const [tab, setTab] = useState<'login' | 'register'>('login');
   const [serverError, setServerError] = useState('');
   const router  = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
   const ready   = useAuthStore((s) => s.ready);
   const user    = useAuthStore((s) => s.user);
 
-  // Если уже залогинен – редирект на главную
   useEffect(() => {
     if (ready && user) router.replace('/');
   }, [ready, user, router]);
 
-  // ── Форма входа ───────────────────────────────────────────
   const {
     register: regLogin,
     handleSubmit: submitLogin,
@@ -93,7 +73,6 @@ export default function AuthPage() {
       setServerError(e.response?.data?.message ?? 'Неверный логин или пароль'),
   });
 
-  // ── Форма регистрации ─────────────────────────────────────
   const {
     register: regRegister,
     handleSubmit: submitRegister,
@@ -116,14 +95,11 @@ export default function AuthPage() {
 
   return (
     <div className={styles.root}>
-      <div className={styles.grain}  aria-hidden />
-      <div className={styles.blob1}  aria-hidden />
-      <div className={styles.blob2}  aria-hidden />
+      <div className={styles.grain} aria-hidden />
 
       <Link href="/" className={styles.logo}>WT</Link>
 
       <div className={styles.card}>
-        {/* Заголовок */}
         <div className={styles.cardHeader}>
           <h1 className={styles.cardTitle}>
             {tab === 'login' ? 'Добро пожаловать' : 'Создать аккаунт'}
@@ -131,19 +107,22 @@ export default function AuthPage() {
           <p className={styles.cardSubtitle}>
             {tab === 'login'
               ? 'Войди в своё личное пространство'
-              : 'Один аккаунт – весь функционал сайта'}
+              : 'Один аккаунт — весь функционал сайта'}
           </p>
         </div>
 
-        {/* Вкладки */}
-        <div className={styles.tabs}>
+        <div className={styles.tabs} role="tablist">
           <button
             type="button"
-            className={[styles.tab, tab === 'login'    ? styles.tabActive : ''].join(' ')}
+            role="tab"
+            aria-selected={tab === 'login'}
+            className={[styles.tab, tab === 'login' ? styles.tabActive : ''].join(' ')}
             onClick={() => switchTab('login')}
           >Вход</button>
           <button
             type="button"
+            role="tab"
+            aria-selected={tab === 'register'}
             className={[styles.tab, tab === 'register' ? styles.tabActive : ''].join(' ')}
             onClick={() => switchTab('register')}
           >Регистрация</button>
@@ -151,14 +130,13 @@ export default function AuthPage() {
 
         {serverError && <ServerError message={serverError} />}
 
-        {/* Форма входа */}
         {tab === 'login' && (
           <form
             className={styles.form}
             onSubmit={submitLogin((v) => { setServerError(''); loginMut.mutate(v); })}
             noValidate
           >
-            <Field
+            <Input
               label="Логин или email"
               type="text"
               placeholder="sergey или sergey@example.com"
@@ -166,7 +144,7 @@ export default function AuthPage() {
               error={loginErrors.identifier?.message}
               {...regLogin('identifier')}
             />
-            <Field
+            <Input
               label="Пароль"
               type="password"
               placeholder="••••••••"
@@ -174,9 +152,9 @@ export default function AuthPage() {
               error={loginErrors.password?.message}
               {...regLogin('password')}
             />
-            <button type="submit" className={styles.submitBtn} disabled={loginMut.isPending}>
-              {loginMut.isPending ? <span className={styles.spinner} /> : 'Войти'}
-            </button>
+            <Button type="submit" variant="accent" size="lg" fullWidth loading={loginMut.isPending}>
+              Войти
+            </Button>
             <p className={styles.hint}>
               Нет аккаунта?{' '}
               <button type="button" className={styles.hintLink} onClick={() => switchTab('register')}>
@@ -186,14 +164,13 @@ export default function AuthPage() {
           </form>
         )}
 
-        {/* Форма регистрации */}
         {tab === 'register' && (
           <form
             className={styles.form}
             onSubmit={submitRegister((v) => { setServerError(''); registerMut.mutate(v); })}
             noValidate
           >
-            <Field
+            <Input
               label="Логин"
               type="text"
               placeholder="только буквы, цифры, _ и -"
@@ -201,7 +178,7 @@ export default function AuthPage() {
               error={registerErrors.username?.message}
               {...regRegister('username')}
             />
-            <Field
+            <Input
               label="Email"
               type="email"
               placeholder="you@example.com"
@@ -209,7 +186,7 @@ export default function AuthPage() {
               error={registerErrors.email?.message}
               {...regRegister('email')}
             />
-            <Field
+            <Input
               label="Пароль"
               type="password"
               placeholder="минимум 8 символов"
@@ -217,7 +194,7 @@ export default function AuthPage() {
               error={registerErrors.password?.message}
               {...regRegister('password')}
             />
-            <Field
+            <Input
               label="Повтор пароля"
               type="password"
               placeholder="••••••••"
@@ -225,9 +202,9 @@ export default function AuthPage() {
               error={registerErrors.confirmPassword?.message}
               {...regRegister('confirmPassword')}
             />
-            <button type="submit" className={styles.submitBtn} disabled={registerMut.isPending}>
-              {registerMut.isPending ? <span className={styles.spinner} /> : 'Создать аккаунт'}
-            </button>
+            <Button type="submit" variant="accent" size="lg" fullWidth loading={registerMut.isPending}>
+              Создать аккаунт
+            </Button>
             <p className={styles.hint}>
               Уже есть аккаунт?{' '}
               <button type="button" className={styles.hintLink} onClick={() => switchTab('login')}>

@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import * as LucideIcons from 'lucide-react';
+import { Pencil, Trash2, X, Clock, Download, File as FileIcon } from 'lucide-react';
 import type { SubtaskItem } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { storageApi } from '../../lib/storage';
+import { Modal, Button, IconButton } from '../../components/ui';
 import styles from './SubtaskViewModal.module.scss';
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
@@ -27,12 +29,12 @@ export function SubtaskViewModal({ item, userTags, onClose, onEdit, onToggle, on
   const [confirmAttIdx, setConfirmAttIdx] = useState<number | null>(null);
 
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (lightbox) setLightbox(null); else onClose(); } };
+    if (!lightbox) return;
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightbox(null); };
     document.addEventListener('keydown', h);
     return () => document.removeEventListener('keydown', h);
-  }, [onClose, lightbox]);
+  }, [lightbox]);
 
-  // Close attachment confirm on outside click
   useEffect(() => {
     if (confirmAttIdx === null) return;
     const h = (e: MouseEvent) => {
@@ -69,120 +71,141 @@ export function SubtaskViewModal({ item, userTags, onClose, onEdit, onToggle, on
 
   return (
     <>
-      <div className={styles.overlay} onMouseDown={onClose}>
-        <div className={styles.modal} onMouseDown={e => e.stopPropagation()}>
-          <div className={styles.head}>
+      <Modal
+        open
+        onClose={onClose}
+        size="md"
+        hideCloseButton
+        header={
+          <div className={styles.headerCustom}>
             <button
               type="button"
               className={[styles.check, item.done ? styles.checkDone : ''].join(' ')}
               onClick={onToggle}
               title={item.done ? 'Снять отметку' : 'Отметить выполненным'}
+              aria-pressed={item.done}
             >
               {item.done && '✓'}
             </button>
 
-            {/* Tag icon before title */}
             {tag && (
               <span className={styles.titleTag} style={{ color: tag.color }} title={tag.name}>
-                {TagIc ? <TagIc size={16} strokeWidth={1.75}/>
-                       : <span className={styles.titleTagDot} style={{ background: tag.color }}/>}
+                {TagIc ? <TagIc size={16} strokeWidth={1.75} />
+                       : <span className={styles.titleTagDot} style={{ background: tag.color }} />}
               </span>
             )}
 
             <h2 className={[styles.title, item.done ? styles.titleDone : ''].join(' ')}>{item.title}</h2>
 
-            {/* Time – top-right corner */}
             {item.time && (
               <span className={styles.timeChip}>
-                <Icons.Clock size={12} strokeWidth={1.75}/> {item.time}
+                <Clock size={12} strokeWidth={1.75} /> {item.time}
               </span>
             )}
 
-            <button type="button" className={styles.editBtn} onClick={onEdit} title="Редактировать">
-              <Icons.Pencil size={14} strokeWidth={1.75}/>
-            </button>
+            <IconButton
+              icon={<Pencil size={16} strokeWidth={1.75} />}
+              aria-label="Редактировать"
+              variant="ghost"
+              size="sm"
+              onClick={onEdit}
+            />
             {confirmDelete ? (
-              <button type="button" className={styles.confirmBtn} onClick={onDelete}>
+              <Button variant="destructive" size="sm" onClick={onDelete}>
                 Удалить
-              </button>
+              </Button>
             ) : (
-              <button type="button" className={styles.delBtn} onClick={() => setConfirmDelete(true)} title="Удалить">
-                <Icons.Trash2 size={14} strokeWidth={1.75}/>
-              </button>
+              <IconButton
+                icon={<Trash2 size={16} strokeWidth={1.75} />}
+                aria-label="Удалить"
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmDelete(true)}
+              />
             )}
-            <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Закрыть">✕</button>
+            <IconButton
+              icon={<X size={20} />}
+              aria-label="Закрыть"
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+            />
           </div>
+        }
+      >
+        {item.description && (
+          <div className={styles.descBlock}>{item.description}</div>
+        )}
 
-          <div className={styles.body}>
-            {item.description && (
-              <div className={styles.descBlock}>{item.description}</div>
-            )}
-
-            {item.attachments && item.attachments.length > 0 && (
-              <>
-                <h3 className={styles.sectionLabel}>Вложения</h3>
-                <div className={styles.attachGrid}>
-                  {item.attachments.map((a, i) => {
-                    const isImg = a.type.startsWith('image/');
-                    const isVid = a.type.startsWith('video/');
-                    return (
-                      <div key={i} className={styles.attachItem}>
-                        {isImg ? (
-                          <button
-                            type="button"
-                            className={styles.attachMediaBtn}
-                            onClick={() => setLightbox(a.url)}
-                            title="Открыть"
+        {item.attachments && item.attachments.length > 0 && (
+          <>
+            <h3 className={styles.sectionLabel}>Вложения</h3>
+            <div className={styles.attachGrid}>
+              {item.attachments.map((a, i) => {
+                const isImg = a.type.startsWith('image/');
+                const isVid = a.type.startsWith('video/');
+                return (
+                  <div key={i} className={styles.attachItem}>
+                    {isImg ? (
+                      <button
+                        type="button"
+                        className={styles.attachMediaBtn}
+                        onClick={() => setLightbox(a.url)}
+                        title="Открыть"
+                      >
+                        <img src={a.url} alt={a.name} className={styles.attachMedia} />
+                      </button>
+                    ) : isVid ? (
+                      <video src={a.url} controls className={styles.attachMedia} />
+                    ) : (
+                      <div className={styles.attachFile}><FileIcon size={32} strokeWidth={1.5} /></div>
+                    )}
+                    <div className={styles.attachInfo}>
+                      <span className={styles.attachName} title={a.name}>{a.name}</span>
+                      <IconButton
+                        icon={<Download size={14} strokeWidth={1.75} />}
+                        aria-label="Скачать"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => download(a.url, a.name)}
+                      />
+                      <span className={styles.deleteWrap} data-att-confirm={i}>
+                        {confirmAttIdx === i && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => removeAttachment(i)}
                           >
-                            <img src={a.url} alt={a.name} className={styles.attachMedia}/>
-                          </button>
-                        ) : isVid ? (
-                          <video src={a.url} controls className={styles.attachMedia}/>
-                        ) : (
-                          <div className={styles.attachFile}><Icons.File size={32} strokeWidth={1.5}/></div>
+                            Удалить
+                          </Button>
                         )}
-                        <div className={styles.attachInfo}>
-                          <span className={styles.attachName} title={a.name}>{a.name}</span>
-                          <button
-                            type="button"
-                            className={styles.attachAction}
-                            onClick={() => download(a.url, a.name)}
-                            title="Скачать"
-                          >
-                            <Icons.Download size={13} strokeWidth={1.75}/>
-                          </button>
-                          <span className={styles.deleteWrap} data-att-confirm={i}>
-                            {confirmAttIdx === i && (
-                              <button
-                                type="button"
-                                className={styles.confirmAttBtn}
-                                onClick={() => removeAttachment(i)}
-                              >Удалить</button>
-                            )}
-                            <button
-                              type="button"
-                              className={styles.attachAction}
-                              onClick={() => setConfirmAttIdx(prev => prev === i ? null : i)}
-                              title="Удалить вложение"
-                            >
-                              <Icons.X size={13} strokeWidth={2}/>
-                            </button>
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+                        <IconButton
+                          icon={<X size={14} strokeWidth={2} />}
+                          aria-label="Удалить вложение"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setConfirmAttIdx(prev => prev === i ? null : i)}
+                        />
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </Modal>
 
       {lightbox && (
-        <div className={styles.lightbox} onMouseDown={() => setLightbox(null)}>
-          <img src={lightbox} className={styles.lightboxImg} onMouseDown={e => e.stopPropagation()}/>
-          <button type="button" className={styles.lightboxClose} onClick={() => setLightbox(null)}>✕</button>
+        <div className={styles.lightbox} onMouseDown={() => setLightbox(null)} role="dialog" aria-label="Просмотр изображения">
+          <img src={lightbox} className={styles.lightboxImg} onMouseDown={e => e.stopPropagation()} alt="" />
+          <IconButton
+            icon={<X size={20} />}
+            aria-label="Закрыть"
+            variant="ghost"
+            className={styles.lightboxClose}
+            onClick={() => setLightbox(null)}
+          />
         </div>
       )}
     </>

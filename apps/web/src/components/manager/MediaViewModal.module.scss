@@ -1,0 +1,93 @@
+/* MediaViewModal — специфика. Wrapper/buttons теперь в ui/. */
+
+.headerCustom {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mediaBody {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  background: var(--bg-subtle);
+  min-height: 240px;
+  max-height: 70dvh;
+  margin: calc(var(--space-5) * -1) calc(var(--space-6) * -1);
+  padding: var(--space-5) var(--space-6);
+}
+
+.fullMedia {
+  max-width: 100%;
+  max-height: 60dvh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  display: block;
+}
+
+.fileBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-8);
+  color: var(--text-muted);
+}
+
+.fileName {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.fileSize {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.linkPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.linkThumb {
+  width: 100%;
+  max-width: 480px;
+  height: 270px;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  border-radius: var(--radius-md);
+  position: relative;
+}
+
+.linkPlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  border-radius: var(--radius-md);
+}

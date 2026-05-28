@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   User as UserIcon, Shield, Settings as SettingsIcon, Palette, Tags as TagsIcon, AlertTriangle,
+  MapPin, Camera,
 } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { AvatarFramed } from '../../components/AvatarFramed';
@@ -17,6 +18,7 @@ import { tagsApi } from '../../lib/tags';
 import { shopApi } from '../../lib/shop';
 import { SOCIAL_PROVIDERS, getSocialIcon } from '../../lib/socials';
 import { TagManager } from '../../components/manager/TagManager';
+import { Button, IconButton, Input, Textarea } from '../../components/ui';
 import styles from './page.module.scss';
 
 type TabId = 'profile' | 'account' | 'manager' | 'appearance' | 'tags';
@@ -57,11 +59,11 @@ async function fetchGeoSuggestions(query: string): Promise<GeoSuggestion[]> {
 }
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: 'profile',    label: 'Профиль',       icon: <UserIcon size={16} strokeWidth={1.75}/> },
-  { id: 'account',    label: 'Аккаунт',       icon: <Shield size={16} strokeWidth={1.75}/> },
-  { id: 'manager',    label: 'Менеджер',      icon: <SettingsIcon size={16} strokeWidth={1.75}/> },
-  { id: 'appearance', label: 'Внешний вид',   icon: <Palette size={16} strokeWidth={1.75}/> },
-  { id: 'tags',       label: 'Теги',          icon: <TagsIcon size={16} strokeWidth={1.75}/> },
+  { id: 'profile',    label: 'Профиль',     icon: <UserIcon size={16} strokeWidth={1.75} /> },
+  { id: 'account',    label: 'Аккаунт',     icon: <Shield size={16} strokeWidth={1.75} /> },
+  { id: 'manager',    label: 'Менеджер',    icon: <SettingsIcon size={16} strokeWidth={1.75} /> },
+  { id: 'appearance', label: 'Внешний вид', icon: <Palette size={16} strokeWidth={1.75} /> },
+  { id: 'tags',       label: 'Теги',        icon: <TagsIcon size={16} strokeWidth={1.75} /> },
 ];
 
 export default function SettingsPage() {
@@ -82,7 +84,6 @@ export default function SettingsPage() {
       <Header />
       <div className={styles.body}>
         <div className={styles.layout}>
-          {/* ── Sidebar ── */}
           <aside className={styles.sidebar}>
             <div className={styles.sidebarHeader}>
               <AvatarFramed
@@ -105,6 +106,7 @@ export default function SettingsPage() {
                   type="button"
                   className={[styles.navItem, tab === t.id ? styles.navItemActive : ''].join(' ')}
                   onClick={() => setTab(t.id)}
+                  aria-current={tab === t.id ? 'page' : undefined}
                 >
                   <span className={styles.navIcon}>{t.icon}</span>
                   <span>{t.label}</span>
@@ -119,7 +121,6 @@ export default function SettingsPage() {
             </div>
           </aside>
 
-          {/* ── Content ── */}
           <main className={styles.content}>
             {tab === 'profile'    && <ProfileTab    user={user} setUser={setUser} />}
             {tab === 'account'    && <AccountTab    user={user} setUser={setUser} onDeleted={() => { logout(); clearAuth(); router.replace('/'); }} />}
@@ -206,6 +207,7 @@ function ProfileTab({ user, setUser }: { user: User; setUser: (u: User | null) =
             className={styles.avatarBtn}
             onClick={() => fileInputRef.current?.click()}
             disabled={avatarMut.isPending}
+            aria-label="Загрузить аватар"
           >
             <AvatarFramed
               avatarUrl={user.avatarUrl}
@@ -214,17 +216,19 @@ function ProfileTab({ user, setUser }: { user: User; setUser: (u: User | null) =
               frameId={user.selectedFrame}
               size={88}
             />
-            <span className={styles.avatarOverlay}>{avatarMut.isPending ? '...' : '📷'}</span>
+            <span className={styles.avatarOverlay}>
+              <Camera size={20} strokeWidth={1.75} />
+            </span>
           </button>
           <div className={styles.avatarMeta}>
-            <button
-              type="button"
-              className={styles.btn}
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => fileInputRef.current?.click()}
-              disabled={avatarMut.isPending}
+              loading={avatarMut.isPending}
             >
               Загрузить фото
-            </button>
+            </Button>
             <span className={styles.hint}>PNG, JPG или GIF · до 5 МБ</span>
           </div>
           <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/gif"
@@ -241,7 +245,7 @@ function ProfileTab({ user, setUser }: { user: User; setUser: (u: User | null) =
           disabled={coverMut.isPending}
         >
           {user.coverUrl
-            ? <img src={user.coverUrl} alt="banner" className={styles.coverImg}/>
+            ? <img src={user.coverUrl} alt="banner" className={styles.coverImg} />
             : <span className={styles.coverPlaceholder}>{coverMut.isPending ? 'Загрузка...' : '+ Загрузить баннер'}</span>}
           {user.coverUrl && <span className={styles.coverOverlay}>{coverMut.isPending ? '...' : 'Изменить'}</span>}
         </button>
@@ -251,57 +255,47 @@ function ProfileTab({ user, setUser }: { user: User; setUser: (u: User | null) =
       </div>
 
       <form className={styles.form} onSubmit={submit}>
-        <div className={styles.field}>
-          <label className={styles.label}>Отображаемое имя</label>
-          <input
-            className={styles.input}
-            type="text"
-            value={form.displayName}
-            maxLength={64}
-            placeholder="Как тебя называть"
-            onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))}
-          />
-        </div>
+        <Input
+          label="Отображаемое имя"
+          type="text"
+          value={form.displayName}
+          maxLength={64}
+          placeholder="Как тебя называть"
+          onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))}
+        />
 
-        <div className={styles.field}>
-          <label className={styles.label}>Имя пользователя</label>
-          <div className={styles.usernameWrap}>
-            <span className={styles.at}>@</span>
-            <input
-              className={styles.usernameInput}
-              type="text"
-              value={form.username}
-              maxLength={32}
-              placeholder="username"
-              onChange={e => setForm(f => ({ ...f, username: e.target.value.replace(/[^a-zA-Z0-9_-]/g, '') }))}
-            />
-          </div>
-        </div>
+        <Input
+          label="Имя пользователя"
+          type="text"
+          value={form.username}
+          maxLength={32}
+          placeholder="username"
+          prefix="@"
+          onChange={e => setForm(f => ({ ...f, username: e.target.value.replace(/[^a-zA-Z0-9_-]/g, '') }))}
+        />
 
-        <div className={styles.field}>
-          <label className={styles.label}>О себе</label>
-          <textarea
-            className={styles.textarea}
-            value={form.bio}
-            maxLength={200}
-            rows={3}
-            placeholder="Расскажи немного о себе"
-            onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
-          />
-          <span className={styles.counter}>{form.bio.length}/200</span>
-        </div>
+        <Textarea
+          label="О себе"
+          value={form.bio}
+          maxLength={200}
+          rows={3}
+          placeholder="Расскажи немного о себе"
+          helper={`${form.bio.length}/200`}
+          onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
+        />
 
         {error && <div className={styles.error}>{error}</div>}
         {saved && <div className={styles.success}>Сохранено</div>}
 
         <div className={styles.actions}>
-          <button
+          <Button
             type="submit"
-            className={[styles.btn, styles.btnPrimary].join(' ')}
-            disabled={profileMut.isPending || !dirty}
+            variant="accent"
+            loading={profileMut.isPending}
+            disabled={!dirty}
           >
-            {profileMut.isPending ? 'Сохранение...' : 'Сохранить изменения'}
-          </button>
+            Сохранить изменения
+          </Button>
         </div>
       </form>
 
@@ -373,11 +367,10 @@ function SocialLinksEditor({ user, setUser }: { user: User; setUser: (u: User | 
           return (
             <div key={p.id} className={styles.socialRow}>
               <span className={styles.socialRowIcon} style={{ color: p.color, background: p.color + '1f' }}>
-                {Ic && <Ic size={14} strokeWidth={2}/>}
+                {Ic && <Ic size={14} strokeWidth={2} />}
               </span>
               <span className={styles.socialRowLabel}>{p.label}</span>
-              <input
-                className={[styles.input, styles.socialRowInput].join(' ')}
+              <Input
                 type="text"
                 value={value}
                 placeholder={p.placeholder ?? ''}
@@ -386,12 +379,13 @@ function SocialLinksEditor({ user, setUser }: { user: User; setUser: (u: User | 
                 onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
               />
               {value && (
-                <button
-                  type="button"
-                  className={styles.socialRowRemove}
+                <IconButton
+                  icon={<span aria-hidden>×</span>}
+                  aria-label="Удалить ссылку"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => removeOne(p.id)}
-                  title="Удалить ссылку"
-                >×</button>
+                />
               )}
             </div>
           );
@@ -456,40 +450,35 @@ function EmailForm({ user, setUser }: { user: User; setUser: (u: User | null) =>
         <span className={styles.sectionDesc}>Текущий: <b>{user.email}</b></span>
       </div>
 
-      <div className={styles.field}>
-        <label className={styles.label}>Новый email</label>
-        <input
-          className={styles.input}
-          type="email"
-          value={newEmail}
-          maxLength={255}
-          placeholder="new@example.com"
-          onChange={e => setNewEmail(e.target.value)}
-        />
-      </div>
+      <Input
+        label="Новый email"
+        type="email"
+        value={newEmail}
+        maxLength={255}
+        placeholder="new@example.com"
+        onChange={e => setNewEmail(e.target.value)}
+      />
 
-      <div className={styles.field}>
-        <label className={styles.label}>Пароль для подтверждения</label>
-        <input
-          className={styles.input}
-          type="password"
-          value={password}
-          autoComplete="current-password"
-          onChange={e => setPassword(e.target.value)}
-        />
-      </div>
+      <Input
+        label="Пароль для подтверждения"
+        type="password"
+        value={password}
+        autoComplete="current-password"
+        onChange={e => setPassword(e.target.value)}
+      />
 
       {error && <div className={styles.error}>{error}</div>}
       {saved && <div className={styles.success}>Email обновлён</div>}
 
       <div className={styles.actions}>
-        <button
+        <Button
           type="submit"
-          className={[styles.btn, styles.btnPrimary].join(' ')}
-          disabled={mut.isPending || !newEmail.trim() || !password}
+          variant="accent"
+          loading={mut.isPending}
+          disabled={!newEmail.trim() || !password}
         >
-          {mut.isPending ? 'Сохранение...' : 'Изменить email'}
-        </button>
+          Изменить email
+        </Button>
       </div>
     </form>
   );
@@ -530,38 +519,42 @@ function PasswordForm() {
         <span className={styles.sectionDesc}>Минимум 8 символов.</span>
       </div>
 
-      <div className={styles.field}>
-        <label className={styles.label}>Текущий пароль</label>
-        <input className={styles.input} type="password" value={currentPassword}
-          autoComplete="current-password"
-          onChange={e => setCurrent(e.target.value)}/>
-      </div>
+      <Input
+        label="Текущий пароль"
+        type="password"
+        value={currentPassword}
+        autoComplete="current-password"
+        onChange={e => setCurrent(e.target.value)}
+      />
 
-      <div className={styles.field}>
-        <label className={styles.label}>Новый пароль</label>
-        <input className={styles.input} type="password" value={newPassword}
-          autoComplete="new-password"
-          onChange={e => setNewPwd(e.target.value)}/>
-      </div>
+      <Input
+        label="Новый пароль"
+        type="password"
+        value={newPassword}
+        autoComplete="new-password"
+        onChange={e => setNewPwd(e.target.value)}
+      />
 
-      <div className={styles.field}>
-        <label className={styles.label}>Подтвердите новый пароль</label>
-        <input className={styles.input} type="password" value={confirmPassword}
-          autoComplete="new-password"
-          onChange={e => setConfirm(e.target.value)}/>
-      </div>
+      <Input
+        label="Подтвердите новый пароль"
+        type="password"
+        value={confirmPassword}
+        autoComplete="new-password"
+        onChange={e => setConfirm(e.target.value)}
+      />
 
       {error && <div className={styles.error}>{error}</div>}
       {saved && <div className={styles.success}>Пароль обновлён</div>}
 
       <div className={styles.actions}>
-        <button
+        <Button
           type="submit"
-          className={[styles.btn, styles.btnPrimary].join(' ')}
-          disabled={mut.isPending || !currentPassword || !newPassword || !confirmPassword}
+          variant="accent"
+          loading={mut.isPending}
+          disabled={!currentPassword || !newPassword || !confirmPassword}
         >
-          {mut.isPending ? 'Сохранение...' : 'Изменить пароль'}
-        </button>
+          Изменить пароль
+        </Button>
       </div>
     </form>
   );
@@ -593,20 +586,19 @@ function DangerZone({ user, onDeleted }: { user: User; onDeleted: () => void }) 
     <div className={[styles.section, styles.dangerSection].join(' ')}>
       <div className={styles.sectionHead}>
         <span className={[styles.sectionTitle, styles.dangerTitle].join(' ')}>
-          <AlertTriangle size={15} strokeWidth={2}/> Опасная зона
+          <AlertTriangle size={16} strokeWidth={2} /> Опасная зона
         </span>
         <span className={styles.sectionDesc}>Удаление аккаунта необратимо.</span>
       </div>
 
       {!confirmOpen ? (
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={[styles.btn, styles.btnDanger].join(' ')}
+          <Button
+            variant="destructive"
             onClick={() => { setConfirmOpen(true); setError(''); }}
           >
             Удалить мой аккаунт
-          </button>
+          </Button>
         </div>
       ) : (
         <form onSubmit={handleDelete}>
@@ -614,48 +606,40 @@ function DangerZone({ user, onDeleted }: { user: User; onDeleted: () => void }) 
             Все ваши задачи, теги, достижения и покупки будут удалены без возможности восстановления.
           </p>
 
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Введите <code className={styles.codeChip}>{user.username}</code> для подтверждения
-            </label>
-            <input
-              className={styles.input}
-              type="text"
-              value={usernameCheck}
-              onChange={e => setUsernameCheck(e.target.value)}
-              autoComplete="off"
-            />
-          </div>
+          <Input
+            label={<>Введите <code className={styles.codeChip}>{user.username}</code> для подтверждения</>}
+            type="text"
+            value={usernameCheck}
+            onChange={e => setUsernameCheck(e.target.value)}
+            autoComplete="off"
+          />
 
-          <div className={styles.field}>
-            <label className={styles.label}>Пароль</label>
-            <input
-              className={styles.input}
-              type="password"
-              value={password}
-              autoComplete="current-password"
-              onChange={e => setPassword(e.target.value)}
-            />
-          </div>
+          <Input
+            label="Пароль"
+            type="password"
+            value={password}
+            autoComplete="current-password"
+            onChange={e => setPassword(e.target.value)}
+          />
 
           {error && <div className={styles.error}>{error}</div>}
 
           <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.btn}
+            <Button
+              variant="secondary"
               onClick={() => { setConfirmOpen(false); setPassword(''); setUsernameCheck(''); setError(''); }}
               disabled={mut.isPending}
             >
               Отмена
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className={[styles.btn, styles.btnDanger].join(' ')}
-              disabled={mut.isPending || !password || usernameCheck !== user.username}
+              variant="destructive"
+              loading={mut.isPending}
+              disabled={!password || usernameCheck !== user.username}
             >
-              {mut.isPending ? 'Удаление...' : 'Удалить навсегда'}
-            </button>
+              Удалить навсегда
+            </Button>
           </div>
         </form>
       )}
@@ -759,8 +743,7 @@ function ManagerTab({ user, setUser }: { user: User; setUser: (u: User | null) =
           <label className={styles.label}>Местоположение</label>
           <div className={styles.locationWrap} ref={locationWrapRef}>
             <div className={styles.locationInputRow}>
-              <input
-                className={styles.input}
+              <Input
                 type="text"
                 value={form.location}
                 maxLength={100}
@@ -768,12 +751,17 @@ function ManagerTab({ user, setUser }: { user: User; setUser: (u: User | null) =
                 autoComplete="off"
                 onChange={e => handleLocationInput(e.target.value)}
                 onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                wrapClassName={styles.locationInputField}
               />
-              <button type="button" className={styles.geoBtn}
-                onClick={handleDetectLocation} disabled={geoLoading}
-                title="Определить автоматически">
-                {geoLoading ? '...' : '📍'}
-              </button>
+              <IconButton
+                icon={<MapPin size={16} strokeWidth={1.75} />}
+                aria-label="Определить местоположение"
+                variant="secondary"
+                size="md"
+                onClick={handleDetectLocation}
+                loading={geoLoading}
+                className={styles.geoBtn}
+              />
             </div>
 
             {(showSuggestions || suggestLoading) && (
@@ -826,9 +814,9 @@ function ManagerTab({ user, setUser }: { user: User; setUser: (u: User | null) =
         {saved && <div className={styles.success}>Сохранено</div>}
 
         <div className={styles.actions}>
-          <button type="submit" className={[styles.btn, styles.btnPrimary].join(' ')} disabled={mut.isPending}>
-            {mut.isPending ? 'Сохранение...' : 'Сохранить'}
-          </button>
+          <Button type="submit" variant="accent" loading={mut.isPending}>
+            Сохранить
+          </Button>
         </div>
       </form>
     </>
@@ -845,7 +833,6 @@ function AppearanceTab({ user, setUser }: { user: User; setUser: (u: User | null
 
   const mut = useMutation({
     mutationFn: (frameId: string | null) => profileApi.update({ selectedFrame: frameId }),
-    // Optimistic update –  рамка применяется немедленно в Header и профиле
     onMutate: (frameId) => {
       const prev = user;
       setUser({ ...user, selectedFrame: frameId });
@@ -875,6 +862,7 @@ function AppearanceTab({ user, setUser }: { user: User; setUser: (u: User | null
             className={[styles.frameOption, !user.selectedFrame ? styles.frameOptionActive : ''].join(' ')}
             onClick={() => mut.mutate(null)}
             disabled={mut.isPending}
+            aria-pressed={!user.selectedFrame}
           >
             <AvatarFramed
               avatarUrl={user.avatarUrl}
@@ -894,6 +882,7 @@ function AppearanceTab({ user, setUser }: { user: User; setUser: (u: User | null
               onClick={() => mut.mutate(f.id)}
               disabled={mut.isPending}
               title={f.title}
+              aria-pressed={user.selectedFrame === f.id}
             >
               <AvatarFramed
                 avatarUrl={user.avatarUrl}
@@ -916,7 +905,6 @@ function AppearanceTab({ user, setUser }: { user: User; setUser: (u: User | null
           )}
         </div>
       </div>
-
     </>
   );
 }

@@ -1,7 +1,7 @@
 .root {
   min-height: 100vh;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--bg-base);
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
 }
@@ -10,49 +10,35 @@
   flex: 1;
   display: flex;
   justify-content: center;
-  padding: 2rem 1.25rem;
+  padding: var(--space-8) var(--space-5);
 }
 
 .card {
   width: 100%;
-  max-width: 880px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.5rem 1.75rem 2rem;
+  max-width: var(--container-wide);
 }
 
 .head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.4rem;
+  gap: var(--space-4);
+  margin-bottom: var(--space-1);
 }
 
 .title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.coinsBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: var(--bg-hover);
-  border: 1px solid var(--border);
-  color: var(--text-2);
-  font-weight: 700;
-  font-size: 0.95rem;
-}
+/* .coinsBadge → <Badge variant="accent" shape="pill"> */
 
 .coinIcon {
-  color: var(--text-muted);
-  font-size: 1rem;
+  color: var(--accent);
+  font-size: var(--text-base);
   line-height: 1;
 }
 
@@ -62,45 +48,43 @@
 
 .subtitle {
   color: var(--text-muted);
-  font-size: 0.875rem;
-  margin: 0 0 1.25rem;
-  line-height: 1.5;
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-5);
+  line-height: var(--leading-normal);
 }
 
 .section {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text);
-  margin: 1.5rem 0 0.5rem;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin: var(--space-6) 0 var(--space-2);
 }
 
 .sectionDesc {
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
-  margin: 0 0 0.85rem;
-  line-height: 1.5;
+  margin: 0 0 var(--space-3);
+  line-height: var(--leading-normal);
 }
-
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .itemCard {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1rem;
-  display: flex;
+  display: flex !important;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: border-color 0.15s, background 0.15s;
+  background: var(--bg-base) !important;
+  transition: border-color var(--duration-default) var(--ease-default),
+              background var(--duration-default) var(--ease-default);
 
   &:hover {
-    border-color: var(--border-strong);
+    border-color: var(--brand) !important;
+    background: var(--bg-elevated) !important;
   }
 }
 
@@ -109,21 +93,21 @@
 }
 
 .preview {
-  margin: 0.25rem 0 0.6rem;
+  margin: var(--space-1) 0 var(--space-2);
 }
 
 .itemTitle {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin-bottom: 0.2rem;
-  color: var(--text);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-1);
+  color: var(--text-primary);
 }
 
 .itemDesc {
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   line-height: 1.35;
-  margin-bottom: 0.85rem;
+  margin-bottom: var(--space-3);
   min-height: 2.4em;
 }
 
@@ -132,60 +116,39 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .itemPrice {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--text);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
 }
 
-.buyBtn {
-  padding: 0.35rem 0.85rem;
-  background: var(--text);
-  color: var(--bg);
-  border: none;
-  border-radius: 5px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-
-  &:hover:not(:disabled) { opacity: 0.85; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-.ownedBadge {
-  font-size: 0.78rem;
-  color: var(--text-2);
-  font-weight: 600;
-  padding: 0.3rem 0.6rem;
-  background: var(--bg-hover);
-  border-radius: 4px;
-}
+/* .buyBtn → <Button variant="accent">, .ownedBadge → <Badge variant="success"> */
 
 .loading,
 .error {
-  padding: 0.75rem 1rem;
-  border-radius: 5px;
-  font-size: 0.875rem;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
 }
 
 .loading { color: var(--text-muted); }
 .error   {
-  color: var(--text-2);
-  background: var(--bg-hover);
-  border: 1px solid var(--border-input);
-  margin-bottom: 1rem;
+  color: var(--error);
+  background: var(--error-subtle);
+  border: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-4);
 }
 
 @media (max-width: 640px) {
-  .body { padding: 1rem 0.75rem; }
-  .card { padding: 1rem; }
-  .title { font-size: 1.25rem; }
-  .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
+  .body { padding: var(--space-4) var(--space-3); }
+  .card { padding: var(--space-4); }
+  .title { font-size: var(--text-lg); }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); }
 }

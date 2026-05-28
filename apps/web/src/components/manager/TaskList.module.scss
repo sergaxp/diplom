@@ -2,9 +2,19 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.25rem;
+  gap: var(--space-6);
+  padding: var(--space-5);
   overflow-y: auto;
+  background: var(--bg-base);
+}
+
+// ── Greeting ──────────────────────────────────────────────────
+.greeting {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin: 0 0 calc(var(--space-3) * -1);
+  letter-spacing: -0.01em;
 }
 
 // ── Clock ─────────────────────────────────────────────────────
@@ -12,52 +22,64 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .clock {
   display: flex;
   align-items: baseline;
-  gap: 0.75rem;
+  gap: var(--space-3);
   cursor: pointer;
   user-select: none;
-  &:hover .clockTime { opacity: 0.75; }
+  // button reset
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  &:hover .clockTime { color: var(--brand); }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
 }
 
 .clockWeather {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .clockTemp {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-2);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .clockTime {
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: var(--text);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
+  transition: color var(--duration-fast) var(--ease-default);
 }
 
 .clockDay {
-  font-size: 1.1rem;
+  font-size: var(--text-md);
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 // ── Section ───────────────────────────────────────────────────
 .section {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .sectionHead {
@@ -66,95 +88,82 @@
   justify-content: space-between;
 }
 
-.sectionLabel {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-4);
+// На мобильных заголовок секции «прилипает» при прокрутке —
+// пользователь не теряет, в какой секции находится.
+@media (max-width: 768px) {
+  .sectionHead {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    background: var(--bg-base);
+    padding: var(--space-2) 0;
+    margin: calc(var(--space-2) * -1) 0;
+  }
 }
 
-.addBtn {
-  width: 22px;
-  height: 22px;
-  border: 1px solid var(--border-input);
-  border-radius: 4px;
-  background: none;
-  font-size: 1.1rem;
-  line-height: 1;
-  cursor: pointer;
+.sectionLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  &:hover { background: var(--bg-hover); }
+}
+
+/* .addBtn/.sortBtn → <IconButton>/<Button>. .empty → <EmptyState>. */
+
+.addBtn {
+  /* Подгоняем IconButton под маленький компактный размер */
+  min-height: 24px !important;
+  width: 24px !important;
+  padding: 4px !important;
 }
 
 .sortBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px 3px 7px;
-  border: 1px solid var(--border-input);
-  border-radius: 4px;
-  background: none;
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-family: inherit;
   align-self: flex-end;
-  transition: border-color 0.12s, color 0.12s, background 0.12s;
-  &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-hover); }
-}
-
-.sortBtnActive {
-  border-color: var(--border-strong);
-  color: var(--text);
-  background: var(--bg-active);
 }
 
 .list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-
-.empty {
-  font-size: 0.85rem;
-  color: var(--text-4);
-  padding: 0.25rem 0;
+  gap: var(--space-1);
 }
 
 // ── Holiday banner ────────────────────────────────────────────
 .holidayBanner {
   display: flex;
   align-items: center;
-  padding: 0.35rem 0.7rem;
-  border-radius: 5px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--text-2);
-  background: var(--bg-hover);
-  border: 1px solid var(--border-input);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--warning);
+  background: var(--warning-subtle);
+  border: 1px solid var(--border-subtle);
 }
 
 // ── Task ──────────────────────────────────────────────────────
 .task {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.6rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   position: relative;
+  transition: background var(--duration-fast) var(--ease-default),
+              border-color var(--duration-fast) var(--ease-default);
+
+  &:hover {
+    border-color: var(--border-default);
+  }
 }
 
+// Локальный stacking — поднять строку с открытым меню над соседними
 .taskMenuOpen {
-  z-index: 100;
+  position: relative;
+  z-index: 5;
 }
 
 .task_done {
@@ -166,36 +175,38 @@
   opacity: 0.45;
 }
 
+// Цветные индикаторы — лёгкая полоска слева через box-shadow inset,
+// чтобы border-radius карточки сохранялся.
 .taskGlobal {
-  border-left: 3px solid var(--text-muted);
-  background: var(--bg-surface);
+  box-shadow: inset 3px 0 0 var(--info);
+  padding-left: calc(var(--space-3) + 3px);
 }
 
 .taskMandatoryDay {
-  border-left: 3px solid var(--border-strong);
-  background: var(--bg-surface);
+  box-shadow: inset 3px 0 0 var(--error);
+  padding-left: calc(var(--space-3) + 3px);
 }
 
 .taskPriorityHigh {
-  border-left: 3px solid var(--text-2);
-  background: var(--bg-surface);
+  box-shadow: inset 3px 0 0 var(--error);
+  padding-left: calc(var(--space-3) + 3px);
 }
 
 .taskPriorityMedium {
-  border-left: 3px solid var(--text-muted);
-  background: var(--bg-surface);
+  box-shadow: inset 3px 0 0 var(--accent);
+  padding-left: calc(var(--space-3) + 3px);
 }
 
 .taskPriorityLow {
-  border-left: 3px solid var(--text-4);
-  background: var(--bg-surface);
+  box-shadow: inset 3px 0 0 var(--brand-muted);
+  padding-left: calc(var(--space-3) + 3px);
 }
 
 .globalIcon {
-  font-size: 1rem;
+  font-size: var(--text-base);
   flex-shrink: 0;
   margin-right: 2px;
-  color: var(--text-muted);
+  color: var(--info);
   display: flex;
   align-items: center;
 }
@@ -212,24 +223,44 @@
 .checkbox {
   width: 20px;
   height: 20px;
-  border: 1.5px solid var(--border-strong);
-  border-radius: 4px;
-  background: var(--bg-input);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.65rem;
-  color: var(--bg);
+  font-size: 11px;
+  color: var(--text-on-brand);
   flex-shrink: 0;
   padding: 0;
-  transition: background 0.1s, border-color 0.1s;
-  &:hover { border-color: var(--text-muted); }
+  position: relative;
+  transition: background var(--duration-fast) var(--ease-default),
+              border-color var(--duration-fast) var(--ease-default);
+  &:hover { border-color: var(--brand); }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  // Расширяем зону тапа до 40px без изменения визуала
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
 }
 
 .checkboxDone {
-  background: var(--text);
-  border-color: var(--text);
+  background: var(--brand);
+  border-color: var(--brand);
+  // Лёгкий «поп» при отметке выполнения
+  animation: checkbox-pop var(--duration-default) var(--ease-out);
+}
+
+@keyframes checkbox-pop {
+  0%   { transform: scale(0.8); }
+  50%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
 
 .checkboxMissed {
@@ -237,77 +268,91 @@
   border-color: var(--text-muted);
 }
 
-// ── Task body ─────────────────────────────────────────────────
+// ── Task body (button reset) ──────────────────────────────────
 .taskBody {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: var(--space-2);
   min-width: 0;
   cursor: pointer;
-  border-radius: 3px;
-  outline: none;
-  &:hover .taskTitle { opacity: 0.75; }
+  border-radius: var(--radius-sm);
+  // button reset
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  color: inherit;
+  transition: opacity var(--duration-fast) var(--ease-default);
+  &:hover .taskTitle { color: var(--brand); }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 }
 
 .taskTime {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
+  font-weight: var(--weight-medium);
 }
 
 .taskText {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 2px;
   min-width: 0;
 }
 
 .taskTitle {
-  font-size: 0.875rem;
-  color: var(--text);
+  font-size: var(--text-base);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color var(--duration-fast) var(--ease-default);
 }
 
 .taskDesc {
-  font-size: 0.72rem;
-  color: var(--text-4);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .repeatBadge {
-  font-size: 0.65rem;
-  color: var(--text-4);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .weatherWarnBadge {
-  font-size: 0.62rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  background: var(--bg-alt);
-  border: 1px solid var(--border-input);
-  border-radius: 4px;
-  padding: 1px 5px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--warning);
+  background: var(--warning-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
   flex-shrink: 0;
   cursor: help;
   white-space: nowrap;
 }
 
 .taskDateBadge {
-  font-size: 0.68rem;
-  color: var(--bg);
-  background: var(--text-muted);
-  border-radius: 3px;
-  padding: 1px 5px;
+  font-size: var(--text-xs);
+  color: var(--text-on-brand);
+  background: var(--brand-muted);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
   flex-shrink: 0;
   white-space: nowrap;
+  font-weight: var(--weight-medium);
 }
 
 .taskTag {
@@ -317,7 +362,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1.5px solid var(--border-input);
+  border: 1.5px solid var(--border-default);
   flex-shrink: 0;
   color: inherit;
 }
@@ -338,45 +383,57 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.9rem;
-  color: var(--text-4);
-  padding: 0 0.25rem;
+  font-size: var(--text-base);
+  color: var(--text-disabled);
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 var(--space-1);
   letter-spacing: 0.08em;
   line-height: 1;
-  &:hover { color: var(--text-2); }
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-fast) var(--ease-default);
+  &:hover { color: var(--text-primary); }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 }
 
 .menu {
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  background: var(--bg);
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
-  padding: 0.3rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
   z-index: 20;
-  min-width: 140px;
-  box-shadow: 0 4px 14px var(--shadow-md);
+  min-width: 160px;
 }
 
 .menuDivider {
   height: 1px;
-  background: var(--border-light);
-  margin: 0.2rem 0;
+  background: var(--border-subtle);
+  margin: var(--space-1) 0;
 }
 
 .menuItem {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 0.4rem 0.6rem;
+  padding: var(--space-2) var(--space-3);
   border: none;
   background: none;
-  font-size: 0.85rem;
-  color: var(--text);
+  font-size: var(--text-base);
+  color: var(--text-primary);
   cursor: pointer;
-  border-radius: 3px;
-  &:hover { background: var(--bg-hover); }
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover {
+    background: var(--brand-subtle);
+    color: var(--brand);
+  }
 }
 
 .menuItemArrow {
@@ -386,8 +443,11 @@
 }
 
 .menuItemDanger {
-  color: var(--text-2);
-  &:hover { background: var(--bg-hover); }
+  color: var(--error);
+  &:hover {
+    background: var(--error-subtle);
+    color: var(--error);
+  }
 }
 
 // ── Postpone submenu ──────────────────────────────────────────
@@ -400,12 +460,11 @@
   right: calc(100% + 2px);
   left: auto;
   top: 0;
-  background: var(--bg);
-  border: 1px solid var(--border-input);
-  border-radius: 5px;
-  padding: 0.3rem;
-  min-width: 140px;
-  box-shadow: 0 4px 14px var(--shadow-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
+  min-width: 160px;
   z-index: 30;
 }
 
@@ -413,29 +472,34 @@
   display: block;
   width: 100%;
   text-align: left;
-  padding: 0.4rem 0.6rem;
+  padding: var(--space-2) var(--space-3);
   border: none;
   background: none;
-  font-size: 0.82rem;
-  color: var(--text);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
   cursor: pointer;
-  border-radius: 3px;
-  &:hover { background: var(--bg-hover); }
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  &:hover {
+    background: var(--brand-subtle);
+    color: var(--brand);
+  }
 }
 
 .submenuDivider {
   height: 1px;
-  background: var(--border-light);
-  margin: 0.2rem 0;
+  background: var(--border-subtle);
+  margin: var(--space-1) 0;
 }
 
 // ─── Mobile ──────────────────────────────────────────────────
 @media (max-width: 768px) {
   .root {
-    padding: 1rem 0.85rem 1.5rem;
-    gap: 1rem;
+    padding: var(--space-4) var(--space-3) var(--space-6);
+    gap: var(--space-4);
   }
   // Big clock at top is already provided by MobileDayStrip – hide the one in TaskList on mobile
   .clockRow { display: none; }
-  .clockTime { font-size: 1.85rem; }
+  .clockTime { font-size: var(--text-xl); }
 }

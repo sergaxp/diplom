@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as LucideIcons from 'lucide-react';
+import { Plus, AlignLeft, CheckCircle2 } from 'lucide-react';
 import { Task, TaskPriority, TaskStatus, toDateStr, getTasksForDate, completionKey } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { TaskFormModal } from './TaskFormModal';
@@ -9,6 +10,7 @@ import { useCurrentWeather, useDayWeather, weatherCodeToInfo } from '../../lib/w
 import { useWeatherShownLock } from '../../lib/weatherLock';
 import { useAuthStore } from '../../store/authStore';
 import { useHolidays, getHolidayName } from '../../lib/holidays';
+import { Button, IconButton, EmptyState } from '../../components/ui';
 import styles from './TaskList.module.scss';
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
@@ -111,6 +113,9 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
 
       {/* Checkbox */}
       <button
+        type="button"
+        role="checkbox"
+        aria-checked={task.status === 'done'}
         className={[
           styles.checkbox,
           task.status === 'done'   ? styles.checkboxDone   : '',
@@ -124,8 +129,8 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
       </button>
 
       {/* Body – кликабельно для открытия редактора */}
-      <div className={styles.taskBody} onClick={() => onEdit(task)} role="button" tabIndex={0}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onEdit(task); }}>
+      <button type="button" className={styles.taskBody} onClick={() => onEdit(task)}
+        aria-label={`Открыть задачу: ${task.title}`}>
         {task.time && <span className={styles.taskTime}>{task.time}</span>}
         <div className={styles.taskText}>
           <span className={styles.taskTitle}>{task.title}</span>
@@ -157,11 +162,17 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
             </span>
           );
         })}
-      </div>
+      </button>
 
       {/* Menu */}
       <div className={styles.menuWrap} ref={menuRef}>
-        <button className={styles.menuBtn} onClick={e => { e.stopPropagation(); setMenuOpen(v => !v); }}>···</button>
+        <button
+          type="button"
+          className={styles.menuBtn}
+          onClick={e => { e.stopPropagation(); setMenuOpen(v => !v); }}
+          aria-label="Меню задачи"
+          aria-expanded={menuOpen}
+        >···</button>
 
         {menuOpen && (
           <div className={styles.menu}>
@@ -317,15 +328,27 @@ export function TaskList({
     ? 'Сегодня'
     : selectedDate.toLocaleDateString('ru', { day: 'numeric', month: 'long' });
 
+  const hour = now.getHours();
+  const greeting =
+    hour < 6  ? 'Доброй ночи'  :
+    hour < 12 ? 'Доброе утро'  :
+    hour < 18 ? 'Добрый день'  : 'Добрый вечер';
+  const firstName = user?.displayName?.trim().split(' ')[0] || user?.username;
+
   return (
     <>
       <div className={styles.root}>
+        {/* Приветствие — только в режиме «сегодня» */}
+        {isToday && firstName && (
+          <p className={styles.greeting}>{greeting}, {firstName}</p>
+        )}
+
         {/* Clock + текущая погода */}
         <div className={styles.clockRow}>
-          <div className={styles.clock} onClick={onGoToToday} title="Вернуться к сегодня" role="button" tabIndex={0}>
+          <button type="button" className={styles.clock} onClick={onGoToToday} title="Вернуться к сегодня" aria-label="Вернуться к сегодня">
             <span className={styles.clockTime}>{pad(now.getHours())}:{pad(now.getMinutes())}</span>
             <span className={styles.clockDay}>{DAY_SHORT[now.getDay()]}</span>
-          </div>
+          </button>
           {currentWeather && (() => {
             const { icon } = weatherCodeToInfo(currentWeather.weatherCode);
             const WeatherIc = Icons[icon];
@@ -344,21 +367,26 @@ export function TaskList({
         <div className={styles.section}>
           <div className={styles.sectionHead}>
             <span className={styles.sectionLabel}>{dateLabel}</span>
-            <button className={styles.addBtn} onClick={() => setCreateOpen(true)} title="Добавить задачу">+</button>
+            <IconButton
+              icon={<Plus size={16} strokeWidth={2} />}
+              aria-label="Добавить задачу"
+              variant="ghost"
+              size="sm"
+              onClick={() => setCreateOpen(true)}
+              className={styles.addBtn}
+            />
           </div>
 
           {hasPriorityTasks && (
-            <button
-              className={[styles.sortBtn, sortByPriority ? styles.sortBtnActive : ''].join(' ')}
+            <Button
+              variant={sortByPriority ? 'primary' : 'secondary'}
+              size="sm"
+              leftIcon={<AlignLeft size={12} strokeWidth={1.75} />}
               onClick={() => setSortByPriority(v => !v)}
+              className={styles.sortBtn}
             >
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-                <line x1="1" y1="3" x2="11" y2="3"/>
-                <line x1="1" y1="6" x2="8"  y2="6"/>
-                <line x1="1" y1="9" x2="5"  y2="9"/>
-              </svg>
               {sortByPriority ? 'По приоритету' : 'По времени'}
-            </button>
+            </Button>
           )}
 
           {holidayName && (
@@ -366,7 +394,22 @@ export function TaskList({
           )}
 
           {sortedDayTasks.length === 0 ? (
-            <p className={styles.empty}>Нет задач на этот день</p>
+            <EmptyState
+              size="sm"
+              icon={<CheckCircle2 size={48} strokeWidth={1.25} />}
+              title={isToday ? 'Сегодня свободно' : 'На этот день нет задач'}
+              description={isToday ? 'Заслуженно. Добавьте новую задачу, если нужно.' : 'Спокойный день. Можете добавить задачу.'}
+              action={
+                <Button
+                  variant="accent"
+                  size="sm"
+                  leftIcon={<Plus size={16} strokeWidth={2} />}
+                  onClick={() => setCreateOpen(true)}
+                >
+                  Добавить задачу
+                </Button>
+              }
+            />
           ) : (
             <ul className={styles.list}>
               {sortedDayTasks.map(t => (

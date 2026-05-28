@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { X, Paperclip } from 'lucide-react';
+import { Paperclip, Bug, MessageSquare } from 'lucide-react';
 import {
   feedbackApi,
   BugReport, FeatureRequest,
   BUG_STATUS_LABEL, FEATURE_STATUS_LABEL,
 } from '../../lib/feedback';
+import { Modal, Skeleton, EmptyState } from '../ui';
 import styles from './FeedbackModal.module.scss';
 
 interface Props {
@@ -44,82 +45,101 @@ export function MyFeedbackModal({ onClose }: Props) {
     queryFn: feedbackApi.getMyFeatureRequests,
   });
 
+  const renderSkeletons = () => (
+    <ul className={styles.list}>
+      {[1, 2, 3].map(i => <li key={i}><Skeleton width="100%" height={84} /></li>)}
+    </ul>
+  );
+
   return (
-    <div className={styles.backdrop} onClick={onClose}>
-      <div className={`${styles.modal} ${styles.modalWide}`} onClick={e => e.stopPropagation()}>
-        <div className={styles.header}>
-          <span className={styles.headerTitle}>Мои обращения</span>
-          <button className={styles.closeBtn} onClick={onClose}><X size={16} /></button>
-        </div>
-
-        <div className={styles.tabs}>
-          <button
-            className={`${styles.tab} ${tab === 'bugs' ? styles.tabActive : ''}`}
-            onClick={() => setTab('bugs')}
-          >
-            Баги {bugs && bugs.length > 0 && <span className={styles.tabCount}>{bugs.length}</span>}
-          </button>
-          <button
-            className={`${styles.tab} ${tab === 'features' ? styles.tabActive : ''}`}
-            onClick={() => setTab('features')}
-          >
-            Нововведения {features && features.length > 0 && <span className={styles.tabCount}>{features.length}</span>}
-          </button>
-        </div>
-
-        <div className={styles.listWrap}>
-          {tab === 'bugs' && (
-            bugsLoading ? (
-              <p className={styles.empty}>Загрузка...</p>
-            ) : !bugs?.length ? (
-              <p className={styles.empty}>Вы ещё не отправляли баг-репорты</p>
-            ) : (
-              <ul className={styles.list}>
-                {bugs.map(b => (
-                  <li key={b.id} className={styles.listItem}>
-                    <div className={styles.listItemTop}>
-                      <span className={styles.listItemTitle}>{b.title}</span>
-                      <BugStatusBadge status={b.status} />
-                    </div>
-                    {b.description && <p className={styles.listItemDesc}>{b.description}</p>}
-                    {b.attachmentUrls?.length ? (
-                      <div className={styles.listItemAttach}>
-                        {b.attachmentUrls.map((url, i) => (
-                          <a key={i} href={url} target="_blank" rel="noopener noreferrer" className={styles.attachLink}>
-                            <Paperclip size={12} /> Вложение {i + 1}
-                          </a>
-                        ))}
-                      </div>
-                    ) : null}
-                    <span className={styles.listItemDate}>{formatDate(b.createdAt)}</span>
-                  </li>
-                ))}
-              </ul>
-            )
-          )}
-
-          {tab === 'features' && (
-            featuresLoading ? (
-              <p className={styles.empty}>Загрузка...</p>
-            ) : !features?.length ? (
-              <p className={styles.empty}>Вы ещё не отправляли заявок на нововведения</p>
-            ) : (
-              <ul className={styles.list}>
-                {features.map(f => (
-                  <li key={f.id} className={styles.listItem}>
-                    <div className={styles.listItemTop}>
-                      <span className={styles.listItemTitle}>{f.title}</span>
-                      <FeatureStatusBadge status={f.status} />
-                    </div>
-                    {f.description && <p className={styles.listItemDesc}>{f.description}</p>}
-                    <span className={styles.listItemDate}>{formatDate(f.createdAt)}</span>
-                  </li>
-                ))}
-              </ul>
-            )
-          )}
-        </div>
+    <Modal
+      open
+      onClose={onClose}
+      size="md"
+      title="Мои обращения"
+      noPadding
+    >
+      <div className={styles.tabs} role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'bugs'}
+          className={`${styles.tab} ${tab === 'bugs' ? styles.tabActive : ''}`}
+          onClick={() => setTab('bugs')}
+        >
+          Баги {bugs && bugs.length > 0 && <span className={styles.tabCount}>{bugs.length}</span>}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'features'}
+          className={`${styles.tab} ${tab === 'features' ? styles.tabActive : ''}`}
+          onClick={() => setTab('features')}
+        >
+          Нововведения {features && features.length > 0 && <span className={styles.tabCount}>{features.length}</span>}
+        </button>
       </div>
-    </div>
+
+      <div className={styles.listWrap}>
+        {tab === 'bugs' && (
+          bugsLoading ? renderSkeletons() :
+          !bugs?.length ? (
+            <EmptyState
+              size="sm"
+              icon={<Bug size={48} strokeWidth={1.25} />}
+              title="Вы ещё не отправляли баг-репорты"
+              description="Если что-то сломалось — сообщите, мы починим."
+            />
+          ) : (
+            <ul className={styles.list}>
+              {bugs.map(b => (
+                <li key={b.id} className={styles.listItem}>
+                  <div className={styles.listItemTop}>
+                    <span className={styles.listItemTitle}>{b.title}</span>
+                    <BugStatusBadge status={b.status} />
+                  </div>
+                  {b.description && <p className={styles.listItemDesc}>{b.description}</p>}
+                  {b.attachmentUrls?.length ? (
+                    <div className={styles.listItemAttach}>
+                      {b.attachmentUrls.map((url, i) => (
+                        <a key={i} href={url} target="_blank" rel="noopener noreferrer" className={styles.attachLink}>
+                          <Paperclip size={12} /> Вложение {i + 1}
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
+                  <span className={styles.listItemDate}>{formatDate(b.createdAt)}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        )}
+
+        {tab === 'features' && (
+          featuresLoading ? renderSkeletons() :
+          !features?.length ? (
+            <EmptyState
+              size="sm"
+              icon={<MessageSquare size={48} strokeWidth={1.25} />}
+              title="Заявок пока нет"
+              description="Поделитесь идеей — что добавить или улучшить."
+            />
+          ) : (
+            <ul className={styles.list}>
+              {features.map(f => (
+                <li key={f.id} className={styles.listItem}>
+                  <div className={styles.listItemTop}>
+                    <span className={styles.listItemTitle}>{f.title}</span>
+                    <FeatureStatusBadge status={f.status} />
+                  </div>
+                  {f.description && <p className={styles.listItemDesc}>{f.description}</p>}
+                  <span className={styles.listItemDate}>{formatDate(f.createdAt)}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        )}
+      </div>
+    </Modal>
   );
 }

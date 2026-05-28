@@ -2,8 +2,10 @@
 
 import { useRef, useState } from 'react';
 import * as LucideIcons from 'lucide-react';
+import { ChevronDown, Pencil, X, Plus } from 'lucide-react';
 import { Tag } from '../../lib/tags';
 import { IconPicker } from '../IconPicker';
+import { Button, IconButton, Input } from '../../components/ui';
 import styles from './TagManager.module.scss';
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
@@ -68,18 +70,22 @@ export function TagManager({ tags, alwaysOpen, onCreate, onDelete, onUpdate }: P
   return (
     <div className={styles.root}>
       {!alwaysOpen && (
-        <button className={styles.toggle} onClick={() => setOpen(v => !v)}>
+        <button
+          className={styles.toggle}
+          onClick={() => setOpen(v => !v)}
+          aria-expanded={open}
+        >
           <span>Теги</span>
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
-            className={[styles.chevron, open ? styles.chevronOpen : ''].join(' ')}>
-            <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <ChevronDown
+            size={14}
+            strokeWidth={1.75}
+            className={[styles.chevron, open ? styles.chevronOpen : ''].join(' ')}
+          />
         </button>
       )}
 
       {open && (
         <div className={styles.panel}>
-          {/* Список тегов */}
           {tags.length > 0 && (
             <div className={styles.list}>
               {tags.map(tag => {
@@ -93,8 +99,24 @@ export function TagManager({ tags, alwaysOpen, onCreate, onDelete, onUpdate }: P
                       <span className={styles.tagName}>{tag.name}</span>
                     </span>
                     <div className={styles.tagActions}>
-                      <button className={styles.tagBtn} onClick={() => startEdit(tag)} title="Изменить">✎</button>
-                      <button className={styles.tagBtnDanger} onClick={() => { onDelete(tag.id); if (editingId === tag.id) resetForm(); }} title="Удалить">✕</button>
+                      <IconButton
+                        icon={<Pencil size={12} strokeWidth={1.75} />}
+                        aria-label="Изменить тег"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => startEdit(tag)}
+                      />
+                      <IconButton
+                        icon={<X size={12} strokeWidth={1.75} />}
+                        aria-label="Удалить тег"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          onDelete(tag.id);
+                          if (editingId === tag.id) resetForm();
+                        }}
+                        className={styles.tagBtnDanger}
+                      />
                     </div>
                   </div>
                 );
@@ -102,25 +124,26 @@ export function TagManager({ tags, alwaysOpen, onCreate, onDelete, onUpdate }: P
             </div>
           )}
 
-          {/* Форма */}
           <div className={styles.form}>
             <div className={styles.formLabel}>{editingId ? 'Изменить тег' : 'Новый тег'}</div>
 
-            <input
+            <Input
               ref={nameRef}
-              className={styles.nameInput}
               placeholder="Название тега"
               value={name}
               maxLength={32}
               onChange={e => setName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') editingId ? handleUpdate() : handleCreate(); }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  if (editingId) handleUpdate(); else handleCreate();
+                }
+              }}
             />
 
             <div className={styles.iconRow}>
               <IconPicker value={icon} onChange={setIcon} />
             </div>
 
-            {/* Цветовой пикер */}
             <div className={styles.colorRow}>
               <label className={styles.colorLabel}>Цвет</label>
               <div className={styles.colorControls}>
@@ -130,6 +153,7 @@ export function TagManager({ tags, alwaysOpen, onCreate, onDelete, onUpdate }: P
                     className={styles.colorInput}
                     value={color}
                     onChange={e => syncColor(e.target.value)}
+                    aria-label="Выбрать цвет"
                   />
                   <span className={styles.colorSwatch} style={{ background: color }} />
                 </div>
@@ -141,6 +165,7 @@ export function TagManager({ tags, alwaysOpen, onCreate, onDelete, onUpdate }: P
                   placeholder="#4F46E5"
                   onChange={e => handleHexInput(e.target.value)}
                   onBlur={() => setHexInput(color)}
+                  aria-label="HEX цвета"
                 />
               </div>
             </div>
@@ -148,13 +173,21 @@ export function TagManager({ tags, alwaysOpen, onCreate, onDelete, onUpdate }: P
             <div className={styles.formActions}>
               {editingId ? (
                 <>
-                  <button className={styles.cancelBtn} onClick={resetForm}>Отмена</button>
-                  <button className={styles.saveBtn} onClick={handleUpdate} disabled={!name.trim()}>Сохранить</button>
+                  <Button variant="secondary" size="sm" onClick={resetForm}>Отмена</Button>
+                  <Button variant="primary" size="sm" onClick={handleUpdate} disabled={!name.trim()}>
+                    Сохранить
+                  </Button>
                 </>
               ) : (
-                <button className={styles.saveBtn} onClick={handleCreate} disabled={!name.trim()}>
-                  + Добавить тег
-                </button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  leftIcon={<Plus size={14} strokeWidth={2} />}
+                  onClick={handleCreate}
+                  disabled={!name.trim()}
+                >
+                  Добавить тег
+                </Button>
               )}
             </div>
           </div>

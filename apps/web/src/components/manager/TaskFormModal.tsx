@@ -15,6 +15,8 @@ import { storageApi } from '../../lib/storage';
 import type { Tag } from '../../lib/tags';
 import { useDayWeather, weatherCodeToInfo } from '../../lib/weather';
 import { useAuthStore } from '../../store/authStore';
+import { Modal, Button, IconButton } from '../../components/ui';
+import { X } from 'lucide-react';
 import styles from './TaskFormModal.module.scss';
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
@@ -903,9 +905,15 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
 
   return (
     <>
-    <div className={styles.overlay} onMouseDown={onClose}>
-      <div className={styles.modal} onMouseDown={e => e.stopPropagation()}>
-
+    <Modal
+      open
+      onClose={onClose}
+      size="xl"
+      noPadding
+      hideCloseButton
+      ariaLabel={isEdit ? 'Редактирование задачи' : 'Новая задача'}
+      className={styles.taskModalChrome}
+    >
         {/* Mobile-only: weather at the very top */}
         <div className={styles.weatherTopMobile}>
           <WeatherWidget date={isEdit ? toDateStr(date) : formDate} />
@@ -926,7 +934,14 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               onChange={e => setTitle(cap(e.target.value))}
               placeholder="Название задачи"
             />
-            <button className={styles.closeBtn} onClick={onClose} type="button" aria-label="Закрыть">✕</button>
+            <IconButton
+              icon={<X size={20} />}
+              aria-label="Закрыть"
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className={styles.closeBtn}
+            />
           </div>
 
           {/* Описание – под названием */}
@@ -1068,35 +1083,33 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
           <div className={styles.footer}>
             <div className={styles.footerLeft}>
               {isEdit && onDelete && (
-                <button
-                  type="button"
-                  className={styles.deleteBtn}
+                <Button
+                  variant="destructive"
+                  size="sm"
                   onClick={() => { onDelete(); onClose(); }}
                 >
                   Удалить
-                </button>
+                </Button>
               )}
               {!isEdit && (
-                <button
-                  type="button"
-                  className={styles.clearBtn}
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={clearForm}
                 >
                   Очистить
-                </button>
+                </Button>
               )}
             </div>
             <div className={styles.footerRight}>
-              <button type="button" className={styles.cancelBtn} onClick={onClose}>Отмена</button>
-              <button type="submit" className={styles.submitBtn} disabled={!title.trim()}>
+              <Button variant="secondary" onClick={onClose}>Отмена</Button>
+              <Button variant="accent" type="submit" disabled={!title.trim()}>
                 {isEdit ? 'Сохранить' : 'Создать'}
-              </button>
+              </Button>
             </div>
           </div>
         </form>
-
-      </div>
-    </div>
+    </Modal>
 
     {priorityDropOpen && priorityDropPos && (
       <div
