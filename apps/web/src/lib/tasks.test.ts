@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   toDateStr,
   completionKey,
+  prevDayStr,
+  isSeriesTask,
   getMultiDayOccurrence,
   checkWeatherCondition,
   checkHolidayCondition,
@@ -1065,5 +1067,80 @@ describe('getTasksForDate – sorting & multiple tasks', () => {
     ];
     const result = getTasksForDate(tasks, d('2026-02-15'));
     expect(result).toHaveLength(3);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+// dayOverrides (правки/удаление отдельных дней серии)
+// ──────────────────────────────────────────────────────────────
+
+describe('prevDayStr', () => {
+  it('returns the previous calendar day', () => {
+    expect(prevDayStr('2026-05-01')).toBe('2026-04-30');
+    expect(prevDayStr('2026-03-01')).toBe('2026-02-28');
+  });
+});
+
+describe('isSeriesTask', () => {
+  it('true for multi-day', () => {
+    expect(isSeriesTask({ endDate: '2026-01-03', repeat: 'none' })).toBe(true);
+  });
+  it('true for repeating', () => {
+    expect(isSeriesTask({ endDate: undefined, repeat: 'daily' })).toBe(true);
+  });
+  it('false for plain single-day', () => {
+    expect(isSeriesTask({ endDate: undefined, repeat: 'none' })).toBe(false);
+  });
+});
+
+describe('getTasksForDate – dayOverrides', () => {
+  it('hides a day marked deleted', () => {
+    const task = makeTask({ date: '2026-01-01', endDate: '2026-01-03',
+      dayOverrides: { '2026-01-02': { deleted: true } } });
+    expect(getTasksForDate([task], d('2026-01-01'))).toHaveLength(1);
+    expect(getTasksForDate([task], d('2026-01-02'))).toHaveLength(0);
+    expect(getTasksForDate([task], d('2026-01-03'))).toHaveLength(1);
+  });
+
+  it('applies per-day title and subtasks override only on that day', () => {
+    const task = makeTask({ date: '2026-01-01', endDate: '2026-01-03',
+      title: 'Базовая',
+      dayOverrides: { '2026-01-02': { title: 'День 2', subtasks: [{ id: 's', title: 'Секция', items: [] }] } } });
+    expect(getTasksForDate([task], d('2026-01-01'))[0].title).toBe('Базовая');
+    const day2 = getTasksForDate([task], d('2026-01-02'))[0];
+    expect(day2.title).toBe('День 2');
+    expect(day2.subtasks).toHaveLength(1);
+    expect(getTasksForDate([task], d('2026-01-03'))[0].title).toBe('Базовая');
+  });
+
+  it('sets occurrenceDate on returned tasks', () => {
+    const task = makeTask({ date: '2026-01-01', endDate: '2026-01-02' });
+    expect(getTasksForDate([task], d('2026-01-02'))[0].occurrenceDate).toBe('2026-01-02');
+  });
+
+  it('skips a deleted occurrence of a repeating task', () => {
+    const task = makeTask({ date: '2026-01-01', repeat: 'daily',
+      dayOverrides: { '2026-01-03': { deleted: true } } });
+    expect(getTasksForDate([task], d('2026-01-03'))).toHaveLength(0);
+    expect(getTasksForDate([task], d('2026-01-04'))).toHaveLength(1);
+  });
+});
+
+describe('getTasksForDate – monthDays schedule (по дням месяца)', () => {
+  const task = makeTask({ date: '2026-01-05', repeat: 'custom', repeatConfig: { monthDays: [5, 15, 25] } });
+  it('matches selected days of the month', () => {
+    expect(getTasksForDate([task], d('2026-01-15'))).toHaveLength(1);
+    expect(getTasksForDate([task], d('2026-01-25'))).toHaveLength(1);
+  });
+  it('recurs into following months on the same day-numbers', () => {
+    expect(getTasksForDate([task], d('2026-02-05'))).toHaveLength(1);
+    expect(getTasksForDate([task], d('2026-03-25'))).toHaveLength(1);
+  });
+  it('does not match non-selected days', () => {
+    expect(getTasksForDate([task], d('2026-01-10'))).toHaveLength(0);
+    expect(getTasksForDate([task], d('2026-02-20'))).toHaveLength(0);
+  });
+  it('does not match before the start date', () => {
+    expect(getTasksForDate([task], d('2026-01-04'))).toHaveLength(0);
   });
 });

@@ -345,36 +345,59 @@ function computeWeekSpans(weekDays: Date[], allTasks: Task[], holidayMap?: Holid
   // Get active tasks for each day
   const colTasks: Task[][] = weekDays.map(d => getTasksForDate(allTasks, d, new Set(), holidayMap));
 
-  // Map task id -> column range
-  const taskRange = new Map<string, { task: Task; min: number; max: number }>();
+  // Колонки, которые задача занимает на этой неделе (deleted-дни уже отфильтрованы
+  // в getTasksForDate). Затем бьём их на непрерывные отрезки — удалённый день
+  // внутри блока разрывает полосу (разрывов может быть несколько).
+  const taskCols = new Map<string, { task: Task; cols: number[] }>();
   for (let ci = 0; ci < 7; ci++) {
     for (const t of colTasks[ci]) {
-      const r = taskRange.get(t.id);
-      if (!r) taskRange.set(t.id, { task: t, min: ci, max: ci });
-      else { r.min = Math.min(r.min, ci); r.max = Math.max(r.max, ci); }
+      const e = taskCols.get(t.id);
+      if (!e) taskCols.set(t.id, { task: t, cols: [ci] });
+      else e.cols.push(ci);
     }
   }
 
-  // Sort: longer spans first
-  const arr = Array.from(taskRange.values());
-  arr.sort((a, b) => (b.max - b.min) - (a.max - a.min) || a.min - b.min);
+  const shiftStr = (base: Date, delta: number) => {
+    const d = new Date(base); d.setDate(d.getDate() + delta); return toDateStr(d);
+  };
+  const dayBefore = shiftStr(weekDays[0], -1);
+  const dayAfter  = shiftStr(weekDays[6], 1);
+  const visibleOn = (t: Task, ds: string) => taskActiveOn(t, ds) && !t.dayOverrides?.[ds]?.deleted;
 
-  // Assign slots
+  // Разбиваем колонки на непрерывные отрезки
+  const entries = Array.from(taskCols.values()).map(({ task, cols }) => {
+    const sorted = [...cols].sort((a, b) => a - b);
+    const runs: Array<[number, number]> = [];
+    let s = sorted[0], p = sorted[0];
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] === p + 1) { p = sorted[i]; }
+      else { runs.push([s, p]); s = sorted[i]; p = sorted[i]; }
+    }
+    runs.push([s, p]);
+    return { task, cols: sorted, runs, min: sorted[0], max: sorted[sorted.length - 1] };
+  });
+
+  // Sort: longer spans first
+  entries.sort((a, b) => (b.max - b.min) - (a.max - a.min) || a.min - b.min);
+
+  // Assign slots (все отрезки одной задачи — на одном слоте/строке)
   const occupied = Array.from({ length: 50 }, () => Array(7).fill(false));
   const spans: SpanItem[] = [];
 
-  for (const { task, min, max } of arr) {
+  for (const { task, cols, runs } of entries) {
     let slot = 0;
     outer: while (true) {
-      for (let c = min; c <= max; c++) { if (occupied[slot][c]) { slot++; continue outer; } }
+      for (const c of cols) { if (occupied[slot][c]) { slot++; continue outer; } }
       break;
     }
-    for (let c = min; c <= max; c++) occupied[slot][c] = true;
-    spans.push({
-      task, startCol: min, endCol: max, slot,
-      continuesLeft: task.date < toDateStr(weekDays[min]),
-      continuesRight: (task.endDate ?? task.date) > toDateStr(weekDays[max]),
-    });
+    for (const c of cols) occupied[slot][c] = true;
+    for (const [rs, re] of runs) {
+      spans.push({
+        task, startCol: rs, endCol: re, slot,
+        continuesLeft:  rs === 0 && visibleOn(task, dayBefore),
+        continuesRight: re === 6 && visibleOn(task, dayAfter),
+      });
+    }
   }
 
   const overflow = Array(7).fill(0);
@@ -674,7 +697,7 @@ function SpanMonthView({ year, month, tasks, selectedDate, onSelect, holidayMap,
             })}
             {/* Spanning task bars */}
             {spans.map(({ task, startCol, endCol, slot, continuesLeft, continuesRight }) => (
-              <div key={task.id}
+              <div key={`${task.id}-${startCol}`}
                 className={[styles.spanBar, TYPE_CLS[task.type] ?? styles.chartTaskNormal].join(' ')}
                 style={{
                   top:   SPAN_HEAD_H + slot * SPAN_SLOT_H,
@@ -752,27 +775,39 @@ function YearView({ year, tasks, selectedDate, onSelect, holidayMap }: YearViewP
           }
         }
 
+        // Разбиваем дни задачи на непрерывные отрезки (удалённый день рвёт полосу)
+        const mStr = `${year}-${String(mi + 1).padStart(2, '0')}`;
+        const arr = Array.from(taskMap.values()).map(({ task, days }) => {
+          const sorted = [...days].sort((a, b) => a - b);
+          const runs: Array<[number, number]> = [];
+          let s = sorted[0], p = sorted[0];
+          for (let i = 1; i < sorted.length; i++) {
+            if (sorted[i] === p + 1) { p = sorted[i]; }
+            else { runs.push([s, p]); s = sorted[i]; p = sorted[i]; }
+          }
+          runs.push([s, p]);
+          return { task, days: sorted, runs };
+        });
         // Sort: longer spans first
-        const arr = Array.from(taskMap.values());
         arr.sort((a, b) => b.days.length - a.days.length || a.days[0] - b.days[0]);
 
-        // Slot assignment
+        // Slot assignment (все отрезки задачи — на одном слоте)
         const occ = Array.from({ length: 20 }, () => Array(32).fill(false));
         const spans: Array<{ task: Task; sd: number; ed: number; slot: number; cL: boolean; cR: boolean }> = [];
-        for (const { task, days } of arr) {
-          const sd = days[0], ed = days[days.length - 1];
+        for (const { task, days, runs } of arr) {
           let slot = 0;
           outer: while (true) {
-            for (let c = sd; c <= ed; c++) { if (occ[slot][c]) { slot++; continue outer; } }
+            for (const c of days) { if (occ[slot][c]) { slot++; continue outer; } }
             break;
           }
-          for (let c = sd; c <= ed; c++) occ[slot][c] = true;
-          const mStr = `${year}-${String(mi + 1).padStart(2, '0')}`;
-          spans.push({
-            task, sd, ed, slot,
-            cL: task.date < `${mStr}-01`,
-            cR: (task.endDate ?? task.date) > `${mStr}-${String(dim).padStart(2, '0')}`,
-          });
+          for (const c of days) occ[slot][c] = true;
+          for (const [rs, re] of runs) {
+            spans.push({
+              task, sd: rs, ed: re, slot,
+              cL: rs === 1   && task.date < `${mStr}-01`,
+              cR: re === dim && (task.endDate ?? task.date) > `${mStr}-${String(dim).padStart(2, '0')}`,
+            });
+          }
         }
 
         const vis  = spans.filter(s => s.slot < YR_MAX_SL);
@@ -832,7 +867,7 @@ function YearView({ year, tasks, selectedDate, onSelect, holidayMap }: YearViewP
                 const tagStyle = taskColorStyle(task);
                 return (
                   <div
-                    key={task.id}
+                    key={`${task.id}-${sd}`}
                     className={[
                       styles.yearBar,
                       !tagStyle ? (TYPE_CLS[task.type] ?? styles.chartTaskNormal) : '',

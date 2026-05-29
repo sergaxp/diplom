@@ -48,7 +48,7 @@ interface TaskItemProps {
   isMandatoryDay?: boolean;
   hidePostpone?: boolean;
   onToggle: (id: string, dateStr: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string, dateStr: string) => void;
   onEdit:   (task: Task) => void;
   onPostpone: (id: string, days: number) => void;
 }
@@ -218,7 +218,7 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
             {!hidePostpone && <div className={styles.menuDivider} />}
             <button
               className={[styles.menuItem, styles.menuItemDanger].join(' ')}
-              onClick={() => { onDelete(task.id); close(); }}
+              onClick={() => { onDelete(task.id, dateStr); close(); }}
             >
               Удалить
             </button>
@@ -237,17 +237,18 @@ interface Props {
   isAdmin: boolean;
   userTags: Tag[];
   onToggle:    (id: string, dateStr: string) => void;
-  onDelete:    (id: string) => void;
+  onDelete:    (id: string, dateStr: string) => void;
   onAdd:       (data: Omit<Task, 'id' | 'status'>) => void;
-  onUpdate:    (id: string, data: Omit<Task, 'id' | 'status'>) => void;
+  onUpdate:    (id: string, data: Omit<Task, 'id' | 'status'>, occDate?: string) => void;
   onPostpone:  (id: string, days: number) => void;
   onGoToToday: () => void;
   onCreateTag?: (name: string, color: string, icon?: string | null) => Promise<Tag>;
+  validateTitle?: (title: string, dateStr: string, endDate?: string, excludeId?: string) => string | null;
 }
 
 export function TaskList({
   selectedDate, tasks, completions, isAdmin, userTags,
-  onToggle, onDelete, onAdd, onUpdate, onPostpone, onGoToToday, onCreateTag,
+  onToggle, onDelete, onAdd, onUpdate, onPostpone, onGoToToday, onCreateTag, validateTitle,
 }: Props) {
   const [now,           setNow]           = useState(new Date());
   const [createOpen,    setCreateOpen]    = useState(false);
@@ -455,6 +456,7 @@ export function TaskList({
           onSave={onAdd}
           onClose={() => setCreateOpen(false)}
           onCreateTag={onCreateTag}
+          validateTitle={validateTitle}
         />
       )}
 
@@ -465,15 +467,16 @@ export function TaskList({
           date={selectedDate}
           isAdmin={isAdmin}
           userTags={userTags}
-          onSave={(data) => onUpdate(editingTask.id, data)}
+          onSave={(data) => onUpdate(editingTask.id, data, editingTask.occurrenceDate)}
           onClose={() => setEditingTask(null)}
-          onDelete={() => { onDelete(editingTask.id); setEditingTask(null); }}
+          onDelete={() => { onDelete(editingTask.id, editingTask.occurrenceDate ?? selectedStr); setEditingTask(null); }}
           onCreateTag={onCreateTag}
           onSectionsLiveUpdate={(sections) => {
             const { id, status, ...rest } = editingTask;
             void id; void status;
-            onUpdate(editingTask.id, { ...rest, subtasks: sections });
+            onUpdate(editingTask.id, { ...rest, subtasks: sections }, editingTask.occurrenceDate);
           }}
+          validateTitle={validateTitle}
         />
       )}
     </>

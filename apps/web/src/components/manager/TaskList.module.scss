@@ -107,7 +107,17 @@
     z-index: var(--z-sticky);
     background: var(--bg-base);
     padding: var(--space-2) 0;
-    margin: calc(var(--space-2) * -1) 0;
+    // Непрозрачная полоса над шапкой перекрывает верхний отступ .root,
+    // чтобы прокручиваемые задачи не «просвечивали» над прилипшей шапкой.
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 100%;
+      height: var(--space-6);
+      background: var(--bg-base);
+    }
   }
 }
 
@@ -512,7 +522,9 @@
 // ─── Mobile ──────────────────────────────────────────────────
 @media (max-width: 768px) {
   .root {
-    padding: var(--space-4) var(--space-3) var(--space-6);
+    // Меньший верхний отступ: прилипающая шапка «Сегодня/+» сидит ближе к
+    // верху (раньше её подтягивал отрицательный margin, который убран).
+    padding: var(--space-2) var(--space-3) var(--space-6);
     gap: var(--space-4);
   }
   // Big clock at top is already provided by MobileDayStrip – hide the one in TaskList on mobile

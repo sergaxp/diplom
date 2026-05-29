@@ -40,10 +40,18 @@
   border: 1px solid var(--border-input);
   border-radius: 8px;
   padding: 3px;
+  // Если вкладки не помещаются (мобильные) — листаем горизонтально
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  &::-webkit-scrollbar { display: none; }
 }
 
 .modeTab {
-  flex: 1;
+  // Растягиваются, чтобы заполнить ширину на десктопе, но не сжимаются —
+  // если не влезают, строка прокручивается, а текст не переносится.
+  flex: 1 0 auto;
+  white-space: nowrap;
   padding: 0.42rem 0.75rem;
   border: none;
   border-radius: 6px;
@@ -378,6 +386,18 @@
 .monthsGrid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.monthDaysBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.monthDaysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   gap: 4px;
 }
 

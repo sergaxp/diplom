@@ -5,7 +5,7 @@ import { RepeatConfig, CyclicSegment, WeatherCondition, HolidaySettings } from '
 import { Modal, Button } from '../ui';
 import styles from './RepeatConfigModal.module.scss';
 
-type Mode = 'interval' | 'cyclic' | 'dependency';
+type Mode = 'interval' | 'cyclic' | 'dependency' | 'monthdays';
 
 const WEEKDAYS = [
   { v: 1, s: 'Пн' }, { v: 2, s: 'Вт' }, { v: 3, s: 'Ср' },
@@ -200,6 +200,15 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
   // Режим «после выполнения»
   const [dependencyDays, setDependencyDays] = useState(7);
 
+  // Режим «по дням месяца» — выбранные числа (1..N текущего месяца)
+  const [monthDays, setMonthDays] = useState<number[]>([]);
+  const daysInSelMonth = (() => {
+    const d = new Date(selectedDate + 'T00:00:00');
+    return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  })();
+  const toggleMonthDay = (n: number) =>
+    setMonthDays(prev => prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n].sort((a, b) => a - b));
+
   // ── Условия ────────────────────────────────────────────────
   const [useHolidays,    setUseHolidays]    = useState(false);
   const [skipHolidays,   setSkipHolidays]   = useState(true);
@@ -244,7 +253,10 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
   useEffect(() => {
     if (!initial) return;
 
-    if (initial.dependencyDays != null && !multiDay) {
+    if (initial.monthDays?.length && !multiDay) {
+      setMode('monthdays');
+      setMonthDays(initial.monthDays);
+    } else if (initial.dependencyDays != null && !multiDay) {
       setMode('dependency');
       setDependencyDays(initial.dependencyDays);
     } else if (initial.cyclicPattern?.length && !multiDay) {
@@ -330,7 +342,11 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
   const handleSave = () => {
     const cfg: RepeatConfig = {};
 
-    if (mode === 'dependency') {
+    if (mode === 'monthdays') {
+      cfg.monthDays = monthDays.length
+        ? [...monthDays].sort((a, b) => a - b)
+        : [new Date(selectedDate + 'T00:00:00').getDate()];
+    } else if (mode === 'dependency') {
       cfg.dependencyDays = Math.max(1, dependencyDays);
     } else if (mode === 'cyclic') {
       cfg.cyclicPattern = cyclicPattern.filter(s => s.active > 0 || s.rest > 0);
@@ -441,6 +457,15 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
                 title={multiDay ? 'Недоступно для многодневных задач' : ''}
               >
                 После выполнения
+              </button>
+              <button
+                type="button"
+                className={`${styles.modeTab} ${mode === 'monthdays' ? styles.modeTabActive : ''} ${multiDay ? styles.modeTabDisabled : ''}`}
+                onClick={() => !multiDay && setMode('monthdays')}
+                disabled={multiDay}
+                title={multiDay ? 'Недоступно для многодневных задач' : ''}
+              >
+                По дням месяца
               </button>
             </div>
 
@@ -586,6 +611,34 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
                   />
                   <span className={styles.depLabel}>{unitLabel('day', dependencyDays)} после выполнения</span>
                 </div>
+              </div>
+            )}
+
+            {/* ── По дням месяца ── */}
+            {mode === 'monthdays' && !multiDay && (
+              <div className={styles.monthDaysBlock}>
+                <div className={styles.depHint}>
+                  Задача будет повторяться в выбранные числа каждого месяца.
+                </div>
+                <div className={styles.monthDaysGrid}>
+                  {Array.from({ length: daysInSelMonth }, (_, i) => i + 1).map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      className={`${styles.monthChip} ${monthDays.includes(n) ? styles.monthChipActive : ''}`}
+                      onClick={() => toggleMonthDay(n)}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                {monthDays.length > 0 && (
+                  <div className={styles.seasonRow}>
+                    <button type="button" className={styles.seasonClearBtn} onClick={() => setMonthDays([])}>
+                      Очистить
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

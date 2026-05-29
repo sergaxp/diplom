@@ -7,7 +7,8 @@ import { Header } from '../../components/Header';
 import { ManagerCalendar } from '../../components/manager/Calendar';
 import { MobileDayStrip } from '../../components/manager/MobileDayStrip';
 import { TaskList } from '../../components/manager/TaskList';
-import { Task, tasksApi, completionKey, toDateStr } from '../../lib/tasks';
+import { Task, DayOverride, tasksApi, completionKey, toDateStr, isSeriesTask, prevDayStr, getTasksForDate } from '../../lib/tasks';
+import { DeleteScopeModal } from '../../components/manager/DeleteScopeModal';
 import { Tag, tagsApi } from '../../lib/tags';
 import { useAuthStore } from '../../store/authStore';
 import { useAchievementStore } from '../../store/achievementStore';
@@ -188,16 +189,120 @@ export default function ManagerPage() {
   const handleCreateTag = (name: string, color: string, icon?: string | null) =>
     createTagMut.mutateAsync({ name, color, icon });
 
+  // Запрос на удаление дня серии (показываем выбор «только этот / и будущие»)
+  const [delReq, setDelReq] = useState<{ id: string; date: string } | null>(null);
+
   // ── Handlers ──────────────────────────────────────────────────
   const handleToggle   = (taskId: string, dateStr: string) =>
     toggleMut.mutate({ taskId, date: dateStr });
 
-  const handleDelete   = (id: string) => deleteMut.mutate(id);
+  const stripRuntime = (t: Task): Omit<Task, 'id' | 'status'> => {
+    const { id: _i, status: _s, occurrenceDate: _o, weatherWarning: _w, ...rest } = t;
+    void _i; void _s; void _o; void _w;
+    return rest;
+  };
+
+  // Удаление: несерийную задачу убираем сразу, для серии — спрашиваем область
+  const requestDelete = (id: string, date: string) => {
+    const base = tasks.find(t => t.id === id);
+    if (!base || !isSeriesTask(base)) { deleteMut.mutate(id); return; }
+    setDelReq({ id, date });
+  };
+
+  const deleteOnlyDay = () => {
+    if (!delReq) return;
+    const base = tasks.find(t => t.id === delReq.id);
+    if (base) {
+      const overrides: Record<string, DayOverride> = { ...(base.dayOverrides ?? {}) };
+      overrides[delReq.date] = { ...(overrides[delReq.date] ?? {}), deleted: true };
+      updateMut.mutate({ id: base.id, data: { ...stripRuntime(base), dayOverrides: overrides } });
+    }
+    setDelReq(null);
+  };
+
+  const deleteThisAndFuture = () => {
+    if (!delReq) return;
+    const base = tasks.find(t => t.id === delReq.id);
+    if (base) {
+      const { date } = delReq;
+      if (date <= base.date) {
+        deleteMut.mutate(base.id);           // удаляем всю серию с самого начала
+      } else {
+        const cutoff = prevDayStr(date);
+        const data = stripRuntime(base);
+        if (base.endDate && base.endDate >= date) data.endDate = cutoff;   // обрезаем блок
+        if (base.repeat && base.repeat !== 'none') data.repeatUntil = cutoff; // стоп повтора
+        if (data.dayOverrides) {
+          const pruned: Record<string, DayOverride> = {};
+          for (const [k, v] of Object.entries(data.dayOverrides)) if (k < date) pruned[k] = v;
+          data.dayOverrides = pruned;
+        }
+        updateMut.mutate({ id: base.id, data });
+      }
+    }
+    setDelReq(null);
+  };
+
+  // Проверка уникальности названия в дне (запрет одинаковых названий в одном дне).
+  // Возвращает текст ошибки или null. Для многодневной — проверяет каждый день диапазона.
+  const validateTitle = (title: string, dateStr: string, endDate?: string, excludeId?: string): string | null => {
+    const norm = (s: string) => s.trim().toLowerCase();
+    const target = norm(title);
+    if (!target) return null;
+    const dates: string[] = [];
+    if (endDate && endDate > dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      const end = new Date(endDate + 'T00:00:00');
+      while (d <= end) { dates.push(toDateStr(d)); d.setDate(d.getDate() + 1); }
+    } else {
+      dates.push(dateStr);
+    }
+    for (const ds of dates) {
+      const dayTasks = getTasksForDate(allTasks, new Date(ds + 'T00:00:00'), completions);
+      if (dayTasks.some(t => !t.isGlobal && t.id !== excludeId && norm(t.title) === target)) {
+        return 'На этот день уже есть задача с таким названием';
+      }
+    }
+    return null;
+  };
+
+  const deleteWholeSeries = () => {
+    if (delReq) deleteMut.mutate(delReq.id);
+    setDelReq(null);
+  };
 
   const handleAdd      = (data: Omit<Task, 'id' | 'status'>) => createMut.mutate(data);
 
-  const handleUpdate   = (id: string, data: Omit<Task, 'id' | 'status'>) =>
+  // occDate задан → правка конкретного дня серии: контент пишем в переопределение дня
+  const handleUpdate   = (id: string, data: Omit<Task, 'id' | 'status'>, occDate?: string) => {
+    const base = tasks.find(t => t.id === id);
+    if (occDate && base && isSeriesTask(base)) {
+      const ov: DayOverride = {
+        ...(base.dayOverrides?.[occDate] ?? {}),
+        title:       data.title,
+        description: data.description,
+        time:        data.time,
+        endTime:     data.endTime,
+        priority:    data.priority,
+        icon:        data.icon ?? null,
+        subtasks:    data.subtasks ?? null,
+      };
+      const overrides = { ...(base.dayOverrides ?? {}), [occDate]: ov };
+      updateMut.mutate({ id, data: {
+        ...stripRuntime(base),
+        // серийные поля можно менять из редактора дня
+        date:         data.date,
+        endDate:      data.endDate,
+        repeat:       data.repeat,
+        repeatConfig: data.repeatConfig,
+        repeatUntil:  data.repeatUntil,
+        tags:         data.tags,
+        dayOverrides: overrides,
+      }});
+      return;
+    }
     updateMut.mutate({ id, data });
+  };
 
   const handlePostpone = (id: string, days: number) => {
     const task = tasks.find(t => t.id === id);
@@ -255,11 +360,12 @@ export default function ManagerPage() {
             userTags={userTags}
             onCreateTag={handleCreateTag}
             onToggle={handleToggle}
-            onDelete={handleDelete}
+            onDelete={requestDelete}
             onAdd={handleAdd}
             onUpdate={handleUpdate}
             onPostpone={handlePostpone}
             onGoToToday={goToToday}
+            validateTitle={validateTitle}
           />
         </div>
         <div className={styles.right}>
@@ -270,6 +376,16 @@ export default function ManagerPage() {
           />
         </div>
       </div>
+
+      <DeleteScopeModal
+        open={!!delReq}
+        taskTitle={delReq ? (tasks.find(t => t.id === delReq.id)?.title ?? '') : ''}
+        dayLabel={delReq ? new Date(delReq.date + 'T00:00:00').toLocaleDateString('ru', { day: 'numeric', month: 'long' }) : ''}
+        onOnlyThis={deleteOnlyDay}
+        onThisAndFuture={deleteThisAndFuture}
+        onWholeSeries={deleteWholeSeries}
+        onClose={() => setDelReq(null)}
+      />
     </div>
   );
 }

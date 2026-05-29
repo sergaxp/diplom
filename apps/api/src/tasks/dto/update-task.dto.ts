@@ -60,4 +60,7 @@ export class UpdateTaskDto {
 
   @IsOptional()
   subtasks?: object[] | null;
+
+  @IsOptional()
+  dayOverrides?: Record<string, object> | null;
 }

@@ -56,6 +56,15 @@ export class Task {
   @Column({ type: 'json', nullable: true, default: null })
   subtasks: object[] | null;
 
+  /**
+   * Переопределения по конкретным дням многодневной/повторяющейся задачи:
+   * { "YYYY-MM-DD": { title?, description?, time?, endTime?, priority?, icon?,
+   *   subtasks?, deleted? } }. Позволяет редактировать/удалять отдельный день
+   * и хранить подзадачи конкретного дня, не разбивая задачу на строки.
+   */
+  @Column({ type: 'json', nullable: true, default: null })
+  dayOverrides: Record<string, object> | null;
+
   @ManyToMany(() => Tag, tag => tag.tasks, { eager: false, cascade: false })
   @JoinTable({
     name: 'task_tags',

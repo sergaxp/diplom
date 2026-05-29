@@ -40,6 +40,7 @@ export interface RepeatConfig {
   endAfter?: number;
   cyclicPattern?: CyclicSegment[];
   dependencyDays?: number;             // «через N дней после выполнения»
+  monthDays?: number[];                // 1..31 – конкретные числа месяца (расписание «по дням месяца»)
   months?: number[];                   // 1..12 – сезонный фильтр
   conditionScope?: 'perDay' | 'whole'; // для многодневных: проверять каждый день или весь блок
   weatherCondition?: WeatherCondition;
@@ -84,6 +85,22 @@ export interface SubtaskSection {
   items: SubtaskItem[];
 }
 
+/**
+ * Переопределение одного дня многодневной/повторяющейся задачи.
+ * Позволяет редактировать день и держать подзадачи дня отдельно,
+ * не разбивая задачу на строки. `deleted` скрывает конкретный день.
+ */
+export interface DayOverride {
+  deleted?: boolean;
+  title?: string;
+  description?: string;
+  time?: string;
+  endTime?: string;
+  priority?: TaskPriority;
+  icon?: string | null;
+  subtasks?: SubtaskSection[] | null;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -102,6 +119,10 @@ export interface Task {
   icon?: string | null;
   tags?: Tag[];
   subtasks?: SubtaskSection[] | null;
+  /** Переопределения по дням (для многодневных/повторяющихся задач) */
+  dayOverrides?: Record<string, DayOverride> | null;
+  /** Runtime-only: дата конкретного вхождения, к которому относится этот объект (YYYY-MM-DD) */
+  occurrenceDate?: string;
   /** Runtime-only: текст предупреждения о погоде (когда показано с допуском или после ухудшения) */
   weatherWarning?: string;
 }
@@ -112,6 +133,21 @@ export function toDateStr(d: Date): string {
 
 export function completionKey(taskId: string, dateStr: string) {
   return `${taskId}__${dateStr}`;
+}
+
+/** YYYY-MM-DD на день раньше переданной даты */
+export function prevDayStr(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  return toDateStr(d);
+}
+
+/**
+ * «Серия» — многодневная или повторяющаяся задача. Для неё доступны операции
+ * над конкретным днём: «только этот день» / «этот и все будущие».
+ */
+export function isSeriesTask(task: Pick<Task, 'endDate' | 'repeat'>): boolean {
+  return (!!task.endDate && task.endDate > '') || (!!task.repeat && task.repeat !== 'none');
 }
 
 /** Кол-во дней в указанном месяце (month: 0..11) */
@@ -415,6 +451,11 @@ function evaluateCustomRepeat(
   if (diffMs < 0) return false;
   const diffDays = Math.round(diffMs / 86_400_000);
 
+  // Расписание «по дням месяца»: задача в выбранные числа (каждый месяц)
+  if (cfg.monthDays && cfg.monthDays.length > 0) {
+    return cfg.monthDays.includes(date.getDate());
+  }
+
   if (cfg.cyclicPattern && cfg.cyclicPattern.length > 0) {
     return evaluateCyclicPattern(cfg.cyclicPattern, diffDays);
   }
@@ -474,6 +515,17 @@ function getOccurrenceIndex(
     case 'yearly':  return date.getFullYear() - taskStart.getFullYear() + 1;
     case 'custom': {
       if (!cfg) return 0;
+
+      // По дням месяца: индекс = число подходящих дней от старта до этой даты
+      if (cfg.monthDays?.length) {
+        let count = 0;
+        const d = new Date(taskStart);
+        for (let i = 0; i <= diffDays; i++) {
+          if (cfg.monthDays.includes(d.getDate())) count++;
+          d.setDate(d.getDate() + 1);
+        }
+        return count;
+      }
 
       // Зависимый режим: индекс = число выполнений до этой даты + (этот день не выполнение ? 1 : 0)
       if (cfg.dependencyDays != null) {
@@ -559,6 +611,10 @@ export function getTasksForDate(
   for (const task of allTasks) {
     let isMatch = false;
 
+    // Переопределение этого дня: если день помечен удалённым — пропускаем
+    const dayOv = task.dayOverrides?.[dateStr];
+    if (dayOv?.deleted) continue;
+
     if (task.endDate) {
       if (task.date <= dateStr && task.endDate >= dateStr) {
         isMatch = true;
@@ -567,6 +623,9 @@ export function getTasksForDate(
       }
     } else if (task.date === dateStr) {
       isMatch = true;
+      // Расписание «по дням месяца»: стартовый день виден, только если он выбран
+      const md = task.repeat === 'custom' ? task.repeatConfig?.monthDays : undefined;
+      if (md && md.length > 0 && !md.includes(date.getDate())) isMatch = false;
     } else if (task.date < dateStr && task.repeat !== 'none') {
       if (task.repeatUntil && dateStr > task.repeatUntil) continue;
       const taskDate = new Date(task.date + 'T00:00:00');
@@ -669,7 +728,17 @@ export function getTasksForDate(
       if (isMatch) {
         const key = completionKey(task.id, dateStr);
         const status: TaskStatus = completions.has(key) ? 'done' : 'pending';
-        const out: Task = { ...task, status };
+        const out: Task = { ...task, status, occurrenceDate: dateStr };
+        // Применяем переопределение дня поверх базовой задачи
+        if (dayOv) {
+          if (dayOv.title)                  out.title       = dayOv.title;
+          if (dayOv.description !== undefined) out.description = dayOv.description;
+          if (dayOv.time        !== undefined) out.time        = dayOv.time;
+          if (dayOv.endTime     !== undefined) out.endTime     = dayOv.endTime;
+          if (dayOv.priority)               out.priority    = dayOv.priority;
+          if (dayOv.icon        !== undefined) out.icon        = dayOv.icon;
+          if (dayOv.subtasks    !== undefined) out.subtasks    = dayOv.subtasks;
+        }
         if (weatherWarning) out.weatherWarning = weatherWarning;
         result.push(out);
         continue;
@@ -694,6 +763,7 @@ interface ApiTask {
   icon: string | null;
   tags?: Tag[];
   subtasks?: object[] | null;
+  dayOverrides?: Record<string, object> | null;
 }
 
 function fromApi(t: ApiTask): Task {
@@ -712,6 +782,7 @@ function fromApi(t: ApiTask): Task {
     icon: t.icon ?? null,
     tags: t.tags ?? [],
     subtasks: (t.subtasks ?? null) as SubtaskSection[] | null,
+    dayOverrides: (t.dayOverrides ?? null) as Record<string, DayOverride> | null,
     status: 'pending',
   };
 }
@@ -751,6 +822,7 @@ export const tasksApi = {
       icon:         p.icon         ?? null,
       tagIds:       p.tags?.map(t => t.id) ?? [],
       subtasks:     p.subtasks     ?? null,
+      dayOverrides: p.dayOverrides ?? null,
     }).then(r => ({ task: fromApi(r.data), newAchievements: r.data.newAchievements ?? [] })),
 
   update: (id: string, p: Payload): Promise<Task> =>
@@ -769,6 +841,7 @@ export const tasksApi = {
       icon:         p.icon         ?? null,
       tagIds:       p.tags?.map(t => t.id) ?? [],
       subtasks:     p.subtasks     ?? null,
+      dayOverrides: p.dayOverrides ?? null,
     }).then(r => fromApi(r.data)),
 
   delete: (id: string): Promise<void> =>

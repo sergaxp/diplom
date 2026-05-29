@@ -639,9 +639,11 @@ interface Props {
   /** When set (edit mode), section changes (add/delete subtask, add attachment, etc.)
    *  immediately persist to the server, independent of the form's Save button. */
   onSectionsLiveUpdate?: (sections: SubtaskSection[]) => void;
+  /** Проверка уникальности названия в дне. Возвращает текст ошибки или null. */
+  validateTitle?: (title: string, dateStr: string, endDate?: string, excludeId?: string) => string | null;
 }
 
-export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, onDelete, onCreateTag, onSectionsLiveUpdate }: Props) {
+export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, onDelete, onCreateTag, onSectionsLiveUpdate, validateTitle }: Props) {
   const isEdit      = !!task;
   const initialDate = useMemo(() => toDateStr(date), [date]);
   const draft       = useMemo(() => (!isEdit ? loadDraft(initialDate) : null), [isEdit, initialDate]);
@@ -649,6 +651,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   const makeDefaultSections = (): SubtaskSection[] => [{ id: uid(), title: 'Основное', items: [] }];
 
   const [title,         setTitle]         = useState(task?.title       ?? draft?.title       ?? '');
+  const [titleError,    setTitleError]    = useState('');
   const [description,   setDescription]   = useState(task?.description ?? draft?.description ?? '');
   const [formDate,      setFormDate]      = useState(task?.date        ?? initialDate);
   const [time,          setTime]          = useState(task?.time        ?? draft?.time        ?? '');
@@ -886,6 +889,12 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
 
     const resolvedEndDate = multiDay && endDate && endDate > formDate ? endDate : undefined;
 
+    // Запрет одинаковых названий в одном дне
+    if (validateTitle) {
+      const err = validateTitle(trimmed, formDate, resolvedEndDate, task?.id);
+      if (err) { setTitleError(err); return; }
+    }
+
     onSave({
       title:       trimmed,
       description: description.trim() || undefined,
@@ -936,7 +945,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               ref={titleRef}
               className={styles.titleInput}
               value={title}
-              onChange={e => setTitle(cap(e.target.value))}
+              onChange={e => { setTitle(cap(e.target.value)); if (titleError) setTitleError(''); }}
               placeholder="Название задачи"
               rows={1}
               autoComplete="off"
@@ -963,6 +972,12 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
             autoCorrect="off"
             rows={2}
           />
+
+          {titleError && (
+            <p style={{ color: 'var(--error)', fontSize: 'var(--text-sm)', margin: '0.25rem 0 0' }}>
+              {titleError}
+            </p>
+          )}
 
           {/* Мета-поля: дата, время, приоритет – под описанием */}
           <div className={styles.metaRow}>
