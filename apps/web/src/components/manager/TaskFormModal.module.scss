@@ -39,6 +39,16 @@
   font-weight: 600;
   color: var(--text);
   font-family: inherit;
+  // Однострочная textarea: без переноса/растягивания, как обычный input
+  resize: none;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+  line-height: 1.4;
+  height: 1.6rem;
+  padding: 0;
 
   &::placeholder { color: var(--text-4); font-weight: 400; }
 }

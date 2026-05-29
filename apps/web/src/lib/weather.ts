@@ -130,9 +130,22 @@ function collectMonth(
   });
 }
 
+// fetch с таймаутом — иначе зависший на мобильной сети запрос держал бы
+// бесконечную «Загрузку прогноза…». По таймауту запрос прерывается,
+// react-query повторит/покажет ошибку вместо вечного спиннера.
+async function fetchWithTimeout(url: string, ms = 8000): Promise<Response> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function fetchJsonSafe(url: string) {
   try {
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url);
     return res.ok ? await res.json() : null;
   } catch { return null; }
 }
@@ -207,7 +220,7 @@ async function fetchDayWeatherData(
     });
   }
 
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
   if (!res.ok) throw new Error(`Weather API ${res.status}`);
   const json = await res.json();
 
@@ -239,7 +252,7 @@ async function fetchCurrentWeatherData(
     current: 'temperature_2m,apparent_temperature,weathercode,wind_speed_10m,relative_humidity_2m',
   });
 
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
   if (!res.ok) throw new Error(`Weather API ${res.status}`);
   const json = await res.json();
   if (!json.current) return null;

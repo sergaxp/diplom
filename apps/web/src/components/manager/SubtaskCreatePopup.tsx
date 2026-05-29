@@ -39,7 +39,7 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
   const addedKeysRef   = useRef<string[]>([]);
   const removedKeysRef = useRef<string[]>([]);
 
-  const titleRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
   const fileRef  = useRef<HTMLInputElement>(null);
   const tagBtnRef  = useRef<HTMLButtonElement>(null);
   const tagDropRef = useRef<HTMLDivElement>(null);
@@ -151,11 +151,12 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
       }
     >
       <div className={styles.form}>
-        <Input
+        <Textarea
           ref={titleRef}
           value={title}
           onChange={e => setTitle(cap(e.target.value))}
           placeholder="Название подзадачи"
+          rows={1}
           autoComplete="off"
           autoCorrect="off"
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}

@@ -33,6 +33,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(pro
     wrapClassName,
     id: idProp,
     disabled,
+    // По умолчанию отключаем автозаполнение браузера — иначе над клавиатурой
+    // на мобильных всплывает панель «ключ/карта/адрес». Поля логина/пароля
+    // (на /auth) передают свой autoComplete и переопределяют это.
+    autoComplete = 'off',
     ...rest
   } = props;
 
@@ -68,6 +72,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(pro
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : helperId}
           required={required}
+          autoComplete={autoComplete}
           {...rest}
         />
         {suffix && <span className={styles.suffix}>{suffix}</span>}
@@ -104,6 +109,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
     wrapClassName,
     id: idProp,
     disabled,
+    // По умолчанию отключаем автозаполнение браузера — иначе над клавиатурой
+    // на мобильных всплывает панель «ключ/карта/адрес». Поля логина/пароля
+    // (на /auth) передают свой autoComplete и переопределяют это.
+    autoComplete = 'off',
     ...rest
   } = props;
 
@@ -138,6 +147,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : helperId}
           required={required}
+          autoComplete={autoComplete}
           {...rest}
         />
       </div>

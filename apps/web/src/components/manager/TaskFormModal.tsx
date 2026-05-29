@@ -688,7 +688,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   });
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
-  const titleRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => { titleRef.current?.focus(); }, []);
 
@@ -929,14 +929,19 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
                 <TagIcon size={20} strokeWidth={1.75} />
               </span>
             )}
-            <input
+            {/* textarea (1 строка) вместо input: мобильные браузеры (напр. Yandex)
+                игнорируют autocomplete=off у input и показывают панель автозаполнения
+                над клавиатурой; у textarea её нет. */}
+            <textarea
               ref={titleRef}
               className={styles.titleInput}
               value={title}
               onChange={e => setTitle(cap(e.target.value))}
               placeholder="Название задачи"
+              rows={1}
               autoComplete="off"
               autoCorrect="off"
+              onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
             />
             <IconButton
               icon={<X size={20} />}
