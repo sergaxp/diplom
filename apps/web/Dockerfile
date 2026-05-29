@@ -3,9 +3,13 @@ RUN corepack enable && corepack prepare pnpm@10 --activate
 
 WORKDIR /app
 
-# NEXT_PUBLIC_API_URL встраивается в JS на этапе билда
-ARG NEXT_PUBLIC_API_URL=https://diplom.warmingtea.su/api
+# NEXT_PUBLIC_* встраиваются в JS на этапе билда
+ARG NEXT_PUBLIC_API_URL=https://manager.warmingtea.su/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# Google OAuth client id (публичный). Если пуст — кнопка Google скрыта
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
 COPY . .
 

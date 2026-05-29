@@ -22,8 +22,13 @@ export class User {
   @Column({ type: 'varchar', unique: true, length: 255 })
   email: string;
 
-  @Column({ type: 'varchar', select: false })
-  password: string;
+  // nullable: у пользователей, вошедших через Google, пароля нет
+  @Column({ type: 'varchar', select: false, nullable: true, default: null })
+  password: string | null;
+
+  // Google OAuth: id аккаунта Google (sub). null — обычная регистрация
+  @Column({ type: 'varchar', nullable: true, default: null })
+  googleId: string | null;
 
   // Для всех nullable полей – явно указываем type: 'varchar'
   // иначе TypeORM видит тип как "Object" из-за string | null

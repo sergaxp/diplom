@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { OAuth2Client } from 'google-auth-library';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
@@ -21,14 +22,98 @@ export interface AuthResponse {
   tokens: TokenPair;
 }
 
+export interface GoogleAuthResult {
+  // Либо сразу вход (существующий/привязанный аккаунт)…
+  user?: Omit<User, 'password'>;
+  tokens?: TokenPair;
+  // …либо новый пользователь — нужно выбрать логин
+  needsUsername?: boolean;
+  signupToken?: string;
+  suggestedName?: string;
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+
+  private readonly googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
+
+  // ── Вход/регистрация через Google ──────────────────────────
+  async googleAuth(idToken: string): Promise<GoogleAuthResult> {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) throw new InternalServerErrorException('Google-вход не настроен');
+
+    let payload;
+    try {
+      const ticket = await this.googleClient.verifyIdToken({ idToken, audience: clientId });
+      payload = ticket.getPayload();
+    } catch {
+      throw new UnauthorizedException('Недействительный токен Google');
+    }
+    if (!payload?.sub || !payload.email) {
+      throw new UnauthorizedException('Google не вернул данные аккаунта');
+    }
+    const googleId = payload.sub;
+    const email = payload.email.toLowerCase();
+
+    // 1) Уже входил через Google
+    let user = await this.usersService.findByGoogleId(googleId);
+    // 2) Есть аккаунт с таким email — привязываем Google к нему
+    if (!user) {
+      const byEmail = await this.usersService.findByEmail(email);
+      if (byEmail) user = await this.usersService.linkGoogle(byEmail.id, googleId);
+    }
+
+    if (user) {
+      if (!user.isActive) throw new UnauthorizedException('Аккаунт деактивирован');
+      await this.usersService.updateLastSeen(user.id);
+      await this.usersService.grantDailyBonusIfDue(user.id);
+      const fresh = await this.usersService.findById(user.id);
+      return { user: this.stripPassword(fresh), tokens: this.generateTokens(fresh) };
+    }
+
+    // 3) Новый пользователь — просим выбрать логин (аккаунт пока не создаём)
+    const signupToken = this.jwtService.sign(
+      { googleId, email, name: payload.name ?? '', picture: payload.picture ?? '', purpose: 'google-signup' },
+      { secret: this.signupSecret(), expiresIn: 900 },
+    );
+    return { needsUsername: true, signupToken, suggestedName: payload.name ?? '' };
+  }
+
+  // ── Завершение регистрации через Google (выбран логин) ─────
+  async googleComplete(signupToken: string, username: string): Promise<AuthResponse> {
+    let data: { googleId: string; email: string; name?: string; picture?: string; purpose: string };
+    try {
+      data = this.jwtService.verify(signupToken, { secret: this.signupSecret() });
+    } catch {
+      throw new UnauthorizedException('Сессия регистрации истекла — войдите через Google заново');
+    }
+    if (data.purpose !== 'google-signup') throw new UnauthorizedException('Недействительный токен');
+
+    // На случай гонки: аккаунт мог быть уже создан/привязан
+    const already = await this.usersService.findByGoogleId(data.googleId);
+    if (already) {
+      return { user: this.stripPassword(already), tokens: this.generateTokens(already) };
+    }
+
+    const user = await this.usersService.createGoogleUser({
+      username: username.trim(),
+      email: data.email,
+      googleId: data.googleId,
+      displayName: data.name || null,
+      avatarUrl: data.picture || null,
+    });
+    return { user: this.stripPassword(user), tokens: this.generateTokens(user) };
+  }
+
+  private signupSecret(): string {
+    return (process.env.JWT_SECRET ?? 'fallback-dev-secret') + '_gsignup';
+  }
 
   // ── Регистрация ─────────────────────────────────────────────
   async register(createUserDto: CreateUserDto): Promise<AuthResponse> {
@@ -60,8 +145,11 @@ export class AuthService {
       throw new UnauthorizedException('Аккаунт деактивирован');
     }
 
-    const userWithPwd = user as User & { password: string };
-    const valid = await bcrypt.compare(password, userWithPwd.password);
+    const userWithPwd = user as User & { password: string | null };
+    // У Google-аккаунтов пароля нет — вход по паролю для них недоступен
+    const valid = userWithPwd.password
+      ? await bcrypt.compare(password, userWithPwd.password)
+      : false;
     if (!valid) {
       throw new UnauthorizedException('Неверный логин или пароль');
     }

@@ -135,6 +135,24 @@
   animation: fadeUp var(--duration-medium) var(--ease-out) both;
 }
 
+/* ── Разделитель «или» перед входом через Google ───────────── */
+.orDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+  }
+}
+
 /* ── Hint ──────────────────────────────────────────────────── */
 .hint {
   text-align: center;

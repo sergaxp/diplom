@@ -65,6 +65,50 @@ export class UsersService {
     return saved;
   }
 
+  // ── Google OAuth ───────────────────────────────────────────
+  findByGoogleId(googleId: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { googleId } });
+  }
+
+  findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { email } });
+  }
+
+  /** Привязать Google-аккаунт к существующему пользователю */
+  async linkGoogle(userId: string, googleId: string): Promise<User> {
+    await this.usersRepository.update(userId, { googleId, isEmailVerified: true });
+    return this.findById(userId);
+  }
+
+  /** Создать пользователя из Google-профиля (без пароля). username уже проверен. */
+  async createGoogleUser(data: {
+    username: string; email: string; googleId: string;
+    displayName?: string | null; avatarUrl?: string | null;
+  }): Promise<User> {
+    const taken = await this.usersRepository.findOne({
+      where: [{ username: data.username }, { email: data.email }],
+    });
+    if (taken) {
+      throw new ConflictException(
+        taken.username === data.username
+          ? 'Пользователь с таким логином уже существует'
+          : 'Пользователь с таким email уже существует',
+      );
+    }
+    const user = this.usersRepository.create({
+      username:        data.username,
+      email:           data.email,
+      googleId:        data.googleId,
+      password:        null,
+      displayName:     data.displayName ?? null,
+      avatarUrl:       data.avatarUrl ?? null,
+      isEmailVerified: true,
+    });
+    const saved = await this.usersRepository.save(user);
+    this.logger.log(`Google-пользователь создан: ${saved.username} (${saved.id})`);
+    return saved;
+  }
+
   // ── Найти по ID ────────────────────────────────────────────
   async findById(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
@@ -226,7 +270,9 @@ export class UsersService {
       .getOne();
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    const valid = await bcrypt.compare(dto.currentPassword, user.password);
+    const valid = user.password
+      ? await bcrypt.compare(dto.currentPassword, user.password)
+      : false;
     if (!valid) throw new UnauthorizedException('Неверный текущий пароль');
 
     const hashed = await bcrypt.hash(dto.newPassword, 12);
@@ -242,7 +288,7 @@ export class UsersService {
       .getOne();
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    const valid = await bcrypt.compare(dto.password, user.password);
+    const valid = user.password ? await bcrypt.compare(dto.password, user.password) : false;
     if (!valid) throw new UnauthorizedException('Неверный пароль');
 
     if (user.email === dto.newEmail) {
@@ -268,7 +314,7 @@ export class UsersService {
       .getOne();
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    const valid = await bcrypt.compare(password, user.password);
+    const valid = user.password ? await bcrypt.compare(password, user.password) : false;
     if (!valid) throw new UnauthorizedException('Неверный пароль');
 
     await this.purgeUser(id);

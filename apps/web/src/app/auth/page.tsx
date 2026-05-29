@@ -12,7 +12,13 @@ import { AlertCircle } from 'lucide-react';
 import { authApi, saveAuth } from '../../lib/auth';
 import { useAuthStore } from '../../store/authStore';
 import { Button, Input } from '../../components/ui';
+import { GoogleSignInButton } from '../../components/GoogleSignInButton';
 import styles from './page.module.scss';
+
+const USERNAME_RE = /^[a-zA-Z0-9_-]+$/;
+/** Подсказать логин из имени/строки: оставляем только разрешённые символы */
+const sanitizeUsername = (s: string) =>
+  s.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32);
 
 // ── Схемы валидации ───────────────────────────────────────────
 const loginSchema = z.object({
@@ -88,6 +94,48 @@ export default function AuthPage() {
       setServerError(e.response?.data?.message ?? 'Ошибка регистрации'),
   });
 
+  // ── Google ────────────────────────────────────────────────
+  // Шаг выбора логина для нового Google-пользователя
+  const [googleSignup, setGoogleSignup] = useState<{ signupToken: string } | null>(null);
+  const [gUsername, setGUsername] = useState('');
+  const [gUsernameErr, setGUsernameErr] = useState('');
+
+  const googleMut = useMutation({
+    mutationFn: (idToken: string) => authApi.google(idToken),
+    onSuccess: (data) => {
+      if (data.tokens && data.user) {
+        saveAuth({ user: data.user, tokens: data.tokens });
+        setUser(data.user);
+        router.push('/');
+      } else if (data.needsUsername && data.signupToken) {
+        setServerError('');
+        setGUsername(sanitizeUsername(data.suggestedName ?? ''));
+        setGoogleSignup({ signupToken: data.signupToken });
+      }
+    },
+    onError: (e: AxiosError<{ message: string }>) =>
+      setServerError(e.response?.data?.message ?? 'Не удалось войти через Google'),
+  });
+
+  const googleCompleteMut = useMutation({
+    mutationFn: (body: { signupToken: string; username: string }) => authApi.googleComplete(body),
+    onSuccess: (data) => { saveAuth(data); setUser(data.user); router.push('/'); },
+    onError: (e: AxiosError<{ message: string }>) =>
+      setGUsernameErr(e.response?.data?.message ?? 'Не удалось завершить регистрацию'),
+  });
+
+  const submitGoogleUsername = (e: React.FormEvent) => {
+    e.preventDefault();
+    const u = gUsername.trim();
+    if (u.length < 3 || u.length > 32 || !USERNAME_RE.test(u)) {
+      setGUsernameErr('Логин: 3–32 символа, только буквы, цифры, _ и -');
+      return;
+    }
+    if (!googleSignup) return;
+    setGUsernameErr('');
+    googleCompleteMut.mutate({ signupToken: googleSignup.signupToken, username: u });
+  };
+
   const switchTab = (t: typeof tab) => {
     setTab(t); setServerError('');
     resetLogin(); resetRegister();
@@ -100,6 +148,34 @@ export default function AuthPage() {
       <Link href="/" className={styles.logo}>WT</Link>
 
       <div className={styles.card}>
+        {googleSignup ? (
+          <>
+            <div className={styles.cardHeader}>
+              <h1 className={styles.cardTitle}>Почти готово</h1>
+              <p className={styles.cardSubtitle}>Придумайте логин — он будет виден в вашем профиле</p>
+            </div>
+            <form className={styles.form} onSubmit={submitGoogleUsername} noValidate>
+              <Input
+                label="Логин"
+                type="text"
+                placeholder="только буквы, цифры, _ и -"
+                autoComplete="off"
+                value={gUsername}
+                onChange={(e) => { setGUsername(e.target.value); if (gUsernameErr) setGUsernameErr(''); }}
+                error={gUsernameErr || undefined}
+              />
+              <Button type="submit" variant="accent" size="lg" fullWidth loading={googleCompleteMut.isPending}>
+                Завершить
+              </Button>
+              <p className={styles.hint}>
+                <button type="button" className={styles.hintLink} onClick={() => { setGoogleSignup(null); setServerError(''); }}>
+                  Назад ко входу
+                </button>
+              </p>
+            </form>
+          </>
+        ) : (
+          <>
         <div className={styles.cardHeader}>
           <h1 className={styles.cardTitle}>
             {tab === 'login' ? 'Добро пожаловать' : 'Создать аккаунт'}
@@ -212,6 +288,11 @@ export default function AuthPage() {
               </button>
             </p>
           </form>
+        )}
+
+        <div className={styles.orDivider}><span>или</span></div>
+        <GoogleSignInButton onCredential={(t) => { setServerError(''); googleMut.mutate(t); }} />
+          </>
         )}
       </div>
     </div>

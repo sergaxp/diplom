@@ -27,12 +27,29 @@ export interface AuthResult {
   tokens: { accessToken: string; refreshToken: string };
 }
 
+/** Ответ /auth/google: либо вход (user+tokens), либо нужно выбрать логин */
+export interface GoogleAuthResult {
+  user?: User;
+  tokens?: { accessToken: string; refreshToken: string };
+  needsUsername?: boolean;
+  signupToken?: string;
+  suggestedName?: string;
+}
+
 export const authApi = {
   register: (body: { username: string; email: string; password: string }) =>
     api.post<AuthResult>('/auth/register', body).then((r) => r.data),
 
   login: (body: { identifier: string; password: string }) =>
     api.post<AuthResult>('/auth/login', body).then((r) => r.data),
+
+  // Вход через Google: отправляем id_token, полученный от Google Identity Services
+  google: (idToken: string) =>
+    api.post<GoogleAuthResult>('/auth/google', { idToken }).then((r) => r.data),
+
+  // Завершение регистрации через Google (выбран логin)
+  googleComplete: (body: { signupToken: string; username: string }) =>
+    api.post<AuthResult>('/auth/google/complete', body).then((r) => r.data),
 
   // /users/me возвращает полный объект из БД (включая displayName, bio, avatarUrl)
   me: () =>

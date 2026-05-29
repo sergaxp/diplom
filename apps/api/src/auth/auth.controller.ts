@@ -9,9 +9,10 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { AuthService, AuthResponse, TokenPair } from './auth.service';
+import { AuthService, AuthResponse, TokenPair, GoogleAuthResult } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { GoogleCompleteDto } from './dto/google-complete.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 
@@ -31,6 +32,20 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
     return this.authService.login(loginDto);
+  }
+
+  // POST /auth/google – вход/регистрация по Google id_token
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  async google(@Body('idToken') idToken: string): Promise<GoogleAuthResult> {
+    return this.authService.googleAuth(idToken);
+  }
+
+  // POST /auth/google/complete – завершение регистрации (выбран логин)
+  @Post('google/complete')
+  @HttpCode(HttpStatus.OK)
+  async googleComplete(@Body() dto: GoogleCompleteDto): Promise<AuthResponse> {
+    return this.authService.googleComplete(dto.signupToken, dto.username);
   }
 
   // POST /auth/refresh
