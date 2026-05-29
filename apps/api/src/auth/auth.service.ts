@@ -44,22 +44,41 @@ export class AuthService {
   ) {}
 
   // ── Вход/регистрация через Google ──────────────────────────
-  async googleAuth(idToken: string): Promise<GoogleAuthResult> {
+  // Принимаем access_token (OAuth token flow от кастомной кнопки на фронте).
+  async googleAuth(accessToken: string): Promise<GoogleAuthResult> {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     if (!clientId) throw new InternalServerErrorException('Google-вход не настроен');
+    if (!accessToken) throw new UnauthorizedException('Не передан токен Google');
 
-    let payload;
+    // 1) Проверяем токен и что он выдан именно нашему приложению
+    let info: { aud?: string; sub?: string; email?: string };
     try {
-      const ticket = await this.googleClient.verifyIdToken({ idToken, audience: clientId });
-      payload = ticket.getPayload();
+      info = await this.googleClient.getTokenInfo(accessToken);
     } catch {
       throw new UnauthorizedException('Недействительный токен Google');
     }
-    if (!payload?.sub || !payload.email) {
+    if (info.aud !== clientId) {
+      throw new UnauthorizedException('Токен выдан другому приложению');
+    }
+    const googleId = info.sub;
+    const email = info.email?.toLowerCase();
+    if (!googleId || !email) {
       throw new UnauthorizedException('Google не вернул данные аккаунта');
     }
-    const googleId = payload.sub;
-    const email = payload.email.toLowerCase();
+
+    // 2) Профиль (имя/аватар) — необязательно
+    let name = '';
+    let picture = '';
+    try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const u = (await res.json()) as { name?: string; picture?: string };
+        name = u.name ?? '';
+        picture = u.picture ?? '';
+      }
+    } catch { /* профиль необязателен */ }
 
     // 1) Уже входил через Google
     let user = await this.usersService.findByGoogleId(googleId);
@@ -79,10 +98,10 @@ export class AuthService {
 
     // 3) Новый пользователь — просим выбрать логин (аккаунт пока не создаём)
     const signupToken = this.jwtService.sign(
-      { googleId, email, name: payload.name ?? '', picture: payload.picture ?? '', purpose: 'google-signup' },
+      { googleId, email, name, picture, purpose: 'google-signup' },
       { secret: this.signupSecret(), expiresIn: 900 },
     );
-    return { needsUsername: true, signupToken, suggestedName: payload.name ?? '' };
+    return { needsUsername: true, signupToken, suggestedName: name };
   }
 
   // ── Завершение регистрации через Google (выбран логин) ─────

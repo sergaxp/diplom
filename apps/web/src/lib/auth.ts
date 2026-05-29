@@ -43,9 +43,9 @@ export const authApi = {
   login: (body: { identifier: string; password: string }) =>
     api.post<AuthResult>('/auth/login', body).then((r) => r.data),
 
-  // Вход через Google: отправляем id_token, полученный от Google Identity Services
-  google: (idToken: string) =>
-    api.post<GoogleAuthResult>('/auth/google', { idToken }).then((r) => r.data),
+  // Вход через Google: отправляем access_token, полученный от Google OAuth token client
+  google: (accessToken: string) =>
+    api.post<GoogleAuthResult>('/auth/google', { accessToken }).then((r) => r.data),
 
   // Завершение регистрации через Google (выбран логin)
   googleComplete: (body: { signupToken: string; username: string }) =>

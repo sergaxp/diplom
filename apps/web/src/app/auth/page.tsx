@@ -101,7 +101,7 @@ export default function AuthPage() {
   const [gUsernameErr, setGUsernameErr] = useState('');
 
   const googleMut = useMutation({
-    mutationFn: (idToken: string) => authApi.google(idToken),
+    mutationFn: (accessToken: string) => authApi.google(accessToken),
     onSuccess: (data) => {
       if (data.tokens && data.user) {
         saveAuth({ user: data.user, tokens: data.tokens });
@@ -145,7 +145,7 @@ export default function AuthPage() {
     <div className={styles.root}>
       <div className={styles.grain} aria-hidden />
 
-      <Link href="/" className={styles.logo}>WT</Link>
+      <Link href="/welcome" className={styles.logo}>WT</Link>
 
       <div className={styles.card}>
         {googleSignup ? (
@@ -291,7 +291,10 @@ export default function AuthPage() {
         )}
 
         <div className={styles.orDivider}><span>или</span></div>
-        <GoogleSignInButton onCredential={(t) => { setServerError(''); googleMut.mutate(t); }} />
+        <GoogleSignInButton
+          disabled={googleMut.isPending}
+          onToken={(t) => { setServerError(''); googleMut.mutate(t); }}
+        />
           </>
         )}
       </div>

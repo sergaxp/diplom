@@ -34,11 +34,11 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  // POST /auth/google – вход/регистрация по Google id_token
+  // POST /auth/google – вход/регистрация по Google access_token
   @Post('google')
   @HttpCode(HttpStatus.OK)
-  async google(@Body('idToken') idToken: string): Promise<GoogleAuthResult> {
-    return this.authService.googleAuth(idToken);
+  async google(@Body('accessToken') accessToken: string): Promise<GoogleAuthResult> {
+    return this.authService.googleAuth(accessToken);
   }
 
   // POST /auth/google/complete – завершение регистрации (выбран логин)

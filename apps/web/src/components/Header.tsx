@@ -34,12 +34,12 @@ export function Header() {
     clearAuth();
     useAuthStore.getState().logout();
     setMenuOpen(false);
-    router.push('/');
+    router.push('/welcome');
   };
 
   return (
     <header className={styles.header}>
-      <Link href="/manager" className={styles.logo}>WT</Link>
+      <Link href="/" className={styles.logo}>WT</Link>
       <div className={styles.right}>
         {ready && user && <FeedbackDropdown />}
 
@@ -85,14 +85,14 @@ export function Header() {
                   </div>
                   <div className={styles.dropdownDivider} />
                   <Link
-                    href={`/profile/${user.username}`}
+                    href={`/u/${user.username}`}
                     className={styles.dropdownLink}
                     onClick={() => setMenuOpen(false)}
                   >
                     Мой профиль
                   </Link>
                   <Link
-                    href="/manager"
+                    href="/"
                     className={styles.dropdownLink}
                     onClick={() => setMenuOpen(false)}
                   >

@@ -115,7 +115,7 @@ export default function SettingsPage() {
             </nav>
 
             <div className={styles.sidebarFooter}>
-              <Link href={`/profile/${user.username}`} className={styles.sidebarLink}>
+              <Link href={`/u/${user.username}`} className={styles.sidebarLink}>
                 ← Вернуться в профиль
               </Link>
             </div>
@@ -123,7 +123,7 @@ export default function SettingsPage() {
 
           <main className={styles.content}>
             {tab === 'profile'    && <ProfileTab    user={user} setUser={setUser} />}
-            {tab === 'account'    && <AccountTab    user={user} setUser={setUser} onDeleted={() => { logout(); clearAuth(); router.replace('/'); }} />}
+            {tab === 'account'    && <AccountTab    user={user} setUser={setUser} onDeleted={() => { logout(); clearAuth(); router.replace('/welcome'); }} />}
             {tab === 'manager'    && <ManagerTab    user={user} setUser={setUser} />}
             {tab === 'appearance' && <AppearanceTab user={user} setUser={setUser} />}
             {tab === 'tags'       && <TagsTab user={user} qc={qc} />}

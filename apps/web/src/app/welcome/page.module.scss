@@ -1,0 +1,269 @@
+/* ============================================================
+ * Лендинг — специфичные стили.
+ * Cards, PageContainer, Buttons вынесены в ui/.
+ * Здесь только композиция и hero-типографика.
+ * ============================================================ */
+
+.root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Preview image (theme-aware) ────────────────────────────── */
+.previewWrap {
+  width: 100%;
+  margin: var(--space-6) 0;
+  display: flex;
+  justify-content: center;
+}
+
+.preview {
+  width: 100%;
+  height: auto;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-card);
+  background: var(--bg-surface);
+  display: block;
+}
+
+.previewLight { display: block; }
+.previewDark  { display: none; }
+
+[data-theme='dark'] {
+  .previewLight { display: none; }
+  .previewDark  { display: block; }
+}
+
+/* ── Hero ───────────────────────────────────────────────────── */
+.hero {
+  text-align: center;
+  padding: var(--space-12) var(--space-6) var(--space-12);
+}
+
+.heroTitle {
+  font-size: clamp(32px, 5.5vw, 48px);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 var(--space-4);
+  color: var(--text-primary);
+}
+
+.heroAccent {
+  color: var(--brand);
+  font-weight: var(--weight-semibold);
+}
+
+.heroSubtitle {
+  font-size: clamp(var(--text-base), 2vw, var(--text-md));
+  color: var(--text-secondary);
+  line-height: var(--leading-loose);
+  max-width: 580px;
+  margin: 0 auto var(--space-6);
+}
+
+.heroCta {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-10);
+}
+
+/* ── Stats ──────────────────────────────────────────────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+
+.statCard {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.statLabel,
+.statLabelLive {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: var(--weight-semibold);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+.statValue {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+.statHint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* ── Features ───────────────────────────────────────────────── */
+.features {
+  padding: var(--space-12) var(--space-6);
+}
+
+.sectionTitle {
+  font-size: clamp(var(--text-lg), 3vw, var(--text-xl));
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-8);
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+
+.featureCard {
+  display: flex !important;
+  flex-direction: column;
+  transition:
+    border-color var(--duration-default) var(--ease-default),
+    background var(--duration-default) var(--ease-default);
+
+  &:hover {
+    border-color: var(--brand) !important;
+    background: var(--bg-elevated) !important;
+  }
+}
+
+.featureIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--brand-subtle);
+  color: var(--brand);
+  margin-bottom: var(--space-3);
+}
+
+.featureTitle {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.featureText {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+}
+
+/* ── Steps ──────────────────────────────────────────────────── */
+.steps {
+  padding: var(--space-4) var(--space-6) var(--space-12);
+}
+
+.stepList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.step {
+  display: flex !important;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.stepNum {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--text-on-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-md);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.stepTitle {
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.stepText {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+}
+
+/* ── Footer CTA ─────────────────────────────────────────────── */
+.footerCta {
+  text-align: center;
+  background: var(--brand-subtle) !important;
+  border-color: var(--brand) !important;
+  margin: var(--space-6) var(--space-6) var(--space-12);
+}
+
+.footerCtaTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-2);
+  color: var(--text-primary);
+}
+
+.footerCtaText {
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  margin: 0 0 var(--space-4);
+  line-height: var(--leading-normal);
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .hero { padding: var(--space-8) var(--space-4); }
+  .features { padding: var(--space-8) var(--space-4); }
+  .steps { padding: var(--space-2) var(--space-4) var(--space-8); }
+  .footerCta { margin: var(--space-4) var(--space-4) var(--space-8); }
+}
