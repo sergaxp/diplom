@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toDateStr } from './tasks';
 
@@ -54,14 +55,21 @@ export function weatherCodeToInfo(code: number): { label: string; icon: string }
 // ── Геокодинг города ─────────────────────────────────────────
 interface GeoResult { lat: number; lon: number; timezone: string }
 
+// Кэш геокодинга города — иначе каждый запрос погоды (а их теперь
+// несколько на месяц) повторно ходил в сеть за координатами.
+const geocodeCache = new Map<string, GeoResult | null>();
+
 async function geocodeCity(city: string): Promise<GeoResult | null> {
+  const key = city.trim().toLowerCase();
+  if (geocodeCache.has(key)) return geocodeCache.get(key)!;
   const params = new URLSearchParams({ name: city, count: '1', language: 'ru', format: 'json' });
   const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?${params}`);
   if (!res.ok) return null;
   const json = await res.json();
   const r = json.results?.[0];
-  if (!r) return null;
-  return { lat: r.latitude, lon: r.longitude, timezone: r.timezone ?? DEFAULT_TZ };
+  const result = r ? { lat: r.latitude, lon: r.longitude, timezone: r.timezone ?? DEFAULT_TZ } : null;
+  geocodeCache.set(key, result);
+  return result;
 }
 
 // ── Обратный геокодинг (Nominatim) ───────────────────────────
@@ -80,94 +88,93 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string |
 }
 
 // ── Погода за месяц (для календаря) ──────────────────────────
-async function fetchWeatherForMonth(
-  year: number, month: number, lat: number, lon: number, tz: string,
-): Promise<Map<string, DayWeather>> {
+// Источник делится на два независимых запроса (forecast и archive),
+// чтобы быстрый forecast показывал ближние дни сразу, не дожидаясь
+// медленного архивного API (ERA5).
+
+const MONTH_DAILY = 'temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum';
+
+function monthBounds(year: number, month: number) {
   const today      = new Date(); today.setHours(0, 0, 0, 0);
   const monthStart = new Date(year, month, 1);
   const lastDay    = new Date(year, month + 1, 0).getDate();
   const monthEnd   = new Date(year, month, lastDay);
-
-  const start = toDateStr(monthStart);
-  const end   = toDateStr(monthEnd);
-
-  // Месяц целиком слишком далеко в будущем — прогноза нет
-  const daysToStart = Math.round((monthStart.getTime() - today.getTime()) / 86_400_000);
-  if (daysToStart > 16) return new Map();
-
-  const commonParams = {
-    latitude: String(lat), longitude: String(lon),
-    daily: 'temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum', timezone: tz,
+  return {
+    today, monthStart, monthEnd,
+    start: toDateStr(monthStart), end: toDateStr(monthEnd),
   };
+}
 
+function collectMonth(
+  json: { daily?: Record<string, (number | null)[] | string[]> },
+  start: string, end: string, map: Map<string, DayWeather>,
+) {
+  const daily = json?.daily;
+  const times = daily?.time as string[] | undefined;
+  if (!times) return;
+  const tMax = daily!.temperature_2m_max as (number | null)[];
+  const tMin = daily!.temperature_2m_min as (number | null)[];
+  const wc   = daily!.weathercode as (number | null)[] | undefined;
+  const pr   = daily!.precipitation_sum as (number | null)[] | undefined;
+  times.forEach((date, i) => {
+    const max = tMax?.[i];
+    if (date >= start && date <= end && max != null) {
+      map.set(date, {
+        date,
+        tempMax: Math.round(max),
+        tempMin: Math.round(tMin[i] as number),
+        weatherCode: wc?.[i] ?? undefined,
+        precipSum: pr?.[i] != null ? Math.round((pr[i] as number) * 10) / 10 : undefined,
+      });
+    }
+  });
+}
+
+async function fetchJsonSafe(url: string) {
+  try {
+    const res = await fetch(url);
+    return res.ok ? await res.json() : null;
+  } catch { return null; }
+}
+
+// Быстрая часть: сегодня + будущее (+ небольшой запас прошлого).
+async function fetchMonthForecast(
+  year: number, month: number, lat: number, lon: number, tz: string,
+): Promise<Map<string, DayWeather>> {
+  const { today, monthStart, monthEnd, start, end } = monthBounds(year, month);
   const map = new Map<string, DayWeather>();
+  // Прогноз покрывает только настоящее/будущее; целиком прошлый месяц — пропускаем
+  if (monthEnd < today) return map;
+  if (Math.round((monthStart.getTime() - today.getTime()) / 86_400_000) > 16) return map;
 
-  const collect = (json: { daily?: Record<string, (number | null)[] | string[]> }) => {
-    const daily = json?.daily;
-    const times = daily?.time as string[] | undefined;
-    if (!times) return;
-    const tMax = daily!.temperature_2m_max as (number | null)[];
-    const tMin = daily!.temperature_2m_min as (number | null)[];
-    const wc   = daily!.weathercode as (number | null)[] | undefined;
-    const pr   = daily!.precipitation_sum as (number | null)[] | undefined;
-    times.forEach((date, i) => {
-      const max = tMax?.[i];
-      if (date >= start && date <= end && max != null) {
-        map.set(date, {
-          date,
-          tempMax: Math.round(max),
-          tempMin: Math.round(tMin[i] as number),
-          weatherCode: wc?.[i] ?? undefined,
-          precipSum: pr?.[i] != null ? Math.round((pr[i] as number) * 10) / 10 : undefined,
-        });
-      }
-    });
-  };
+  const pastDays     = monthStart < today ? 7 : 0;
+  const forecastDays = Math.min(16, Math.max(1,
+    Math.round((monthEnd.getTime() - today.getTime()) / 86_400_000) + 1));
+  const url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
+    latitude: String(lat), longitude: String(lon), daily: MONTH_DAILY, timezone: tz,
+    past_days: String(pastDays), forecast_days: String(forecastDays),
+  });
+  const json = await fetchJsonSafe(url);
+  if (json) collectMonth(json, start, end, map);
+  return map;
+}
 
+// Медленная часть: историческая глубина месяца (ERA5).
+async function fetchMonthArchive(
+  year: number, month: number, lat: number, lon: number, tz: string,
+): Promise<Map<string, DayWeather>> {
+  const { today, monthStart, monthEnd, start, end } = monthBounds(year, month);
+  const map = new Map<string, DayWeather>();
   const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  if (monthStart > yesterday) return map; // у месяца нет прошлой части
 
-  const fetchJson = async (url: string) => {
-    try {
-      const res = await fetch(url);
-      return res.ok ? await res.json() : null;
-    } catch { return null; /* частичные данные допустимы */ }
-  };
-
-  // Оба запроса идут ПАРАЛЛЕЛЬНО — иначе суммарная задержка archive+forecast
-  // делала загрузку календаря заметно медленной.
-  let archiveUrl: string | null = null;
-  let forecastUrl: string | null = null;
-
-  // 1) Историческая часть месяца — архивный API (ERA5).
-  //    Forecast API отдаёт прошлое надёжно лишь ~3 недели назад (дальше — null),
-  //    поэтому глубину истории всегда берём из архива.
-  if (monthStart <= yesterday) {
-    const archEnd = monthEnd <= yesterday ? end : toDateStr(yesterday);
-    archiveUrl = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({
-      ...commonParams, start_date: start, end_date: archEnd,
-    });
-  }
-
-  // 2) Сегодня + будущее (и небольшой запас прошлого, чтобы закрыть возможную
-  //    задержку архива за последние дни) — forecast API.
-  if (monthEnd >= today) {
-    const pastDays     = monthStart < today ? 7 : 0;
-    const forecastDays = Math.min(16, Math.max(1,
-      Math.round((monthEnd.getTime() - today.getTime()) / 86_400_000) + 1));
-    forecastUrl = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
-      ...commonParams, past_days: String(pastDays), forecast_days: String(forecastDays),
-    });
-  }
-
-  const [archiveJson, forecastJson] = await Promise.all([
-    archiveUrl  ? fetchJson(archiveUrl)  : Promise.resolve(null),
-    forecastUrl ? fetchJson(forecastUrl) : Promise.resolve(null),
-  ]);
-
-  // Архив — для истории, forecast поверх него для последних дней/будущего.
-  if (archiveJson)  collect(archiveJson);
-  if (forecastJson) collect(forecastJson);
-
+  const archEnd = monthEnd <= yesterday ? end : toDateStr(yesterday);
+  const url = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({
+    latitude: String(lat), longitude: String(lon), daily: MONTH_DAILY, timezone: tz,
+    start_date: start, end_date: archEnd,
+  });
+  const json = await fetchJsonSafe(url);
+  if (json) collectMonth(json, start, end, map);
   return map;
 }
 
@@ -269,20 +276,70 @@ async function resolveCoords(
 }
 
 // ── Хук: погода за месяц ─────────────────────────────────────
+// Два независимых запроса: forecast (быстрый, ближние дни) и archive
+// (медленный, история). Карта собирается из обоих и обновляется по мере
+// готовности каждого — поэтому ближние дни показывают температуру сразу,
+// а не ждут медленный архив (раньше всё ждало Promise.all и держало t°).
 export function useMonthWeather(year: number, month: number, locationData?: LocationData) {
   const locKey = locationData?.lat != null
     ? `${locationData.lat},${locationData.lon}`
     : (locationData?.name ?? '');
 
-  return useQuery({
-    queryKey: ['weather', year, month, locKey],
+  const forecastQ = useQuery({
+    queryKey: ['weather', 'month-fc', year, month, locKey],
     queryFn: async () => {
       const { lat, lon, tz } = await resolveCoords(locationData);
-      return fetchWeatherForMonth(year, month, lat, lon, tz);
+      return fetchMonthForecast(year, month, lat, lon, tz);
     },
     staleTime: 1000 * 60 * 60,
     retry: 1,
   });
+
+  const archiveQ = useQuery({
+    queryKey: ['weather', 'month-arch', year, month, locKey],
+    queryFn: async () => {
+      const { lat, lon, tz } = await resolveCoords(locationData);
+      return fetchMonthArchive(year, month, lat, lon, tz);
+    },
+    staleTime: 1000 * 60 * 60 * 6,
+    retry: 1,
+  });
+
+  const data = useMemo(() => {
+    const m = new Map<string, DayWeather>();
+    archiveQ.data?.forEach((v, k) => m.set(k, v));
+    forecastQ.data?.forEach((v, k) => m.set(k, v)); // forecast приоритетнее для ближних дней
+    return m;
+  }, [archiveQ.data, forecastQ.data]);
+
+  return {
+    data,
+    isLoading: forecastQ.isLoading || archiveQ.isLoading,
+    isError: forecastQ.isError && archiveQ.isError,
+  };
+}
+
+// ── Хук: погода для календаря (месяц + соседние) ─────────────
+// Грузит предыдущий, текущий и следующий месяцы и объединяет их.
+// Это покрывает дни соседних месяцев на границах (мобильная лента,
+// сетка) и «прогревает» кеш — переход на соседний месяц мгновенный.
+export function useCalendarWeather(year: number, month: number, locationData?: LocationData) {
+  const prev = new Date(year, month - 1, 1);
+  const next = new Date(year, month + 1, 1);
+
+  const wPrev = useMonthWeather(prev.getFullYear(), prev.getMonth(), locationData);
+  const wCur  = useMonthWeather(year, month, locationData);
+  const wNext = useMonthWeather(next.getFullYear(), next.getMonth(), locationData);
+
+  const data = useMemo(() => {
+    const m = new Map<string, DayWeather>();
+    wPrev.data.forEach((v, k) => m.set(k, v));
+    wCur.data.forEach((v, k) => m.set(k, v));
+    wNext.data.forEach((v, k) => m.set(k, v));
+    return m;
+  }, [wPrev.data, wCur.data, wNext.data]);
+
+  return { data, isLoading: wCur.isLoading };
 }
 
 // ── Хук: детальная погода на день ────────────────────────────

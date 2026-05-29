@@ -180,7 +180,11 @@
   cursor: pointer;
   font-family: inherit;
   transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
-  &:hover { border-color: var(--border-strong); background: var(--bg-hover); color: var(--text); }
+  // Только устройства с реальным наведением — иначе на тач «залипает» hover
+  // и перекрывает .wdBtnActive у только что выбранного дня.
+  @media (hover: hover) {
+    &:hover { border-color: var(--border-strong); background: var(--bg-hover); color: var(--text); }
+  }
 }
 
 .wdBtnActive {
@@ -387,13 +391,15 @@
   cursor: pointer;
   font-family: inherit;
   transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
-  &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-hover); }
+  @media (hover: hover) {
+    &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-hover); }
+  }
 }
 
 .monthChipActive {
-  border-color: var(--border-strong);
-  background: var(--bg-active);
-  color: var(--text);
+  border-color: var(--brand);
+  background: var(--brand-subtle);
+  color: var(--brand);
   font-weight: 600;
 }
 
@@ -414,7 +420,9 @@
   cursor: pointer;
   font-family: inherit;
   transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
-  &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-alt); border-style: solid; }
+  @media (hover: hover) {
+    &:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-alt); border-style: solid; }
+  }
 }
 
 .seasonClearBtn {

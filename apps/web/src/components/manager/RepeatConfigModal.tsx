@@ -5,7 +5,7 @@ import { RepeatConfig, CyclicSegment, WeatherCondition, HolidaySettings } from '
 import { Modal, Button } from '../ui';
 import styles from './RepeatConfigModal.module.scss';
 
-type Mode = 'interval' | 'cyclic' | 'dependency' | 'adaptive';
+type Mode = 'interval' | 'cyclic' | 'dependency';
 
 const WEEKDAYS = [
   { v: 1, s: 'Пн' }, { v: 2, s: 'Вт' }, { v: 3, s: 'Ср' },
@@ -230,7 +230,7 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
 
   // ── Если включён multiDay – заблокировать cyclic / dependency ──
   useEffect(() => {
-    if (multiDay && mode !== 'interval' && mode !== 'adaptive') setMode('interval');
+    if (multiDay && mode !== 'interval') setMode('interval');
   }, [multiDay, mode]);
 
   // ── При multiDay подтягиваем every до безопасного минимума ──
@@ -403,8 +403,6 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
           <Button
             variant="accent"
             onClick={handleSave}
-            disabled={mode === 'adaptive'}
-            title={mode === 'adaptive' ? 'Адаптивный режим ещё в разработке' : ''}
           >
             Сохранить
           </Button>
@@ -443,14 +441,6 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
                 title={multiDay ? 'Недоступно для многодневных задач' : ''}
               >
                 После выполнения
-              </button>
-              <button
-                type="button"
-                className={`${styles.modeTab} ${mode === 'adaptive' ? styles.modeTabActive : ''}`}
-                onClick={() => setMode('adaptive')}
-                title="Адаптивный режим – в разработке"
-              >
-                Адаптивный <span className={styles.modeTabBadge}>скоро</span>
               </button>
             </div>
 
@@ -574,20 +564,6 @@ export function RepeatConfigModal({ initial, selectedDate, taskEndDate, multiDay
                 {cyclicPreview && (
                   <div className={styles.cyclicPreview}>{cyclicPreview}</div>
                 )}
-              </div>
-            )}
-
-            {/* ── Адаптивный (заглушка, недоступна) ── */}
-            {mode === 'adaptive' && (
-              <div className={styles.adaptiveBlock}>
-                <div className={styles.adaptiveBadgeRow}>
-                  <span className={styles.adaptiveBadge}>В разработке</span>
-                </div>
-                <div className={styles.cyclicHint}>
-                  Система будет анализировать, в какие дни недели и время вы обычно
-                  выполняете задачу, и сама подстроит расписание под ваши реальные
-                  привычки. Появится в следующем обновлении.
-                </div>
               </div>
             )}
 

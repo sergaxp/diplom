@@ -269,8 +269,10 @@ export function TaskList({
   const showHolidays = user?.showHolidays !== false;
   const { data: holData } = useHolidays(selectedDate.getFullYear(), showHolidays);
   const holidayEntry = holData?.find(e => e.date === toDateStr(selectedDate));
-  const holidayName  = showHolidays && holidayEntry?.type === 'holiday'
-    ? (holidayEntry.name || getHolidayName(holidayEntry.date)) : null;
+  const holidayName  = !showHolidays ? null
+    : holidayEntry?.type === 'holiday'  ? (holidayEntry.name || getHolidayName(holidayEntry.date))
+    : holidayEntry?.type === 'shortday' ? (holidayEntry.name || 'Сокращённый день')
+    : null;
 
   const selectedStr = toDateStr(selectedDate);
 

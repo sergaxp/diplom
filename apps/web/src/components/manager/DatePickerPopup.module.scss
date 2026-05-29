@@ -109,10 +109,11 @@ $pill-h: 32px;
   box-shadow: 0 0 0 3px var(--brand-subtle);
 }
 
-// Фиксированный размер – только для мультидневного режима
+// Мультидневный режим: оба поля растягиваются поровну на всю ширину строки
 .datePillFixed {
-  flex: none;
-  width: 110px;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
 }
 
 // Независимый input-сегмент (ДД / ММ / ГГГГ)
@@ -150,12 +151,13 @@ $pill-h: 32px;
 }
 
 
-// Обёртка двух пилюль в мультидневном режиме
+// Обёртка двух пилюль в мультидневном режиме — растягивается на всю строку
 .datePillPair {
   display: flex;
   align-items: center;
   gap: 4px;
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .dateSep { font-size: var(--text-sm); color: var(--text-muted); flex-shrink: 0; }

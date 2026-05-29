@@ -89,7 +89,7 @@ function applyTransfers(year: number, map: Map<string, HolidayEntry>): void {
 const LS_KEY = (year: number) => `wt_holidays_${year}`;
 const CACHE_TTL  = 30 * 24 * 60 * 60 * 1000;
 /** Увеличить при изменении формата/логики кеша – инвалидирует старые записи */
-const CACHE_VER  = 5;
+const CACHE_VER  = 6;
 
 function readCache(year: number): HolidayEntry[] | null {
   try {
@@ -127,8 +127,10 @@ async function fetchHolidays(year: number): Promise<HolidayEntry[]> {
     const apiData: HolidayEntry[] = await api.get(`/holidays/${year}`).then(r => r.data);
     if (Array.isArray(apiData)) {
       for (const e of apiData) {
+        // Рабочие субботы (workday) больше не показываем в календаре
+        if (e.type === 'workday') continue;
         const existing = map.get(e.date);
-        if (e.type === 'shortday' || e.type === 'workday') {
+        if (e.type === 'shortday') {
           // Не перезаписываем BUILTIN праздники (Jan 9 – Новогодние каникулы, и т.д.)
           if (!existing || existing.type !== 'holiday') {
             map.set(e.date, e);

@@ -935,6 +935,8 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               value={title}
               onChange={e => setTitle(cap(e.target.value))}
               placeholder="Название задачи"
+              autoComplete="off"
+              autoCorrect="off"
             />
             <IconButton
               icon={<X size={20} />}
@@ -952,6 +954,8 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
             value={description}
             onChange={e => setDescription(cap(e.target.value))}
             placeholder="Описание задачи"
+            autoComplete="off"
+            autoCorrect="off"
             rows={2}
           />
 

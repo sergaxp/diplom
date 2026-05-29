@@ -156,12 +156,16 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
           value={title}
           onChange={e => setTitle(cap(e.target.value))}
           placeholder="Название подзадачи"
+          autoComplete="off"
+          autoCorrect="off"
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
         />
         <Textarea
           value={description}
           onChange={e => setDescription(cap(e.target.value))}
           placeholder="Описание подзадачи"
+          autoComplete="off"
+          autoCorrect="off"
           rows={2}
         />
 

@@ -8,7 +8,7 @@ import { useHolidays, HolidayMap, getHolidayColor, getHolidayName } from '../../
 
 type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number; color?: string }>;
 const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
-import { useMonthWeather } from '../../lib/weather';
+import { useCalendarWeather } from '../../lib/weather';
 import { useAuthStore } from '../../store/authStore';
 import styles from './Calendar.module.scss';
 
@@ -1029,7 +1029,7 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
   const today = new Date(); today.setHours(0,0,0,0);
 
   const { user } = useAuthStore();
-  const { data: weather } = useMonthWeather(viewYear, viewMonth, {
+  const { data: weather } = useCalendarWeather(viewYear, viewMonth, {
     lat:  user?.locationLat,
     lon:  user?.locationLon,
     name: user?.location,

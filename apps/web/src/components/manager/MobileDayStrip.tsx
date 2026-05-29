@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Task, toDateStr, getTasksForDate } from '../../lib/tasks';
-import { useMonthWeather, useCurrentWeather } from '../../lib/weather';
+import { useCalendarWeather, useCurrentWeather } from '../../lib/weather';
 import { useAuthStore } from '../../store/authStore';
 import { useHolidays, HolidayMap } from '../../lib/holidays';
 import styles from './MobileDayStrip.module.scss';
@@ -62,7 +62,7 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
 
   const { user: u } = useAuthStore();
   const location = { lat: u?.locationLat, lon: u?.locationLon, name: u?.location };
-  const { data: weather } = useMonthWeather(selectedDate.getFullYear(), selectedDate.getMonth(), location);
+  const { data: weather } = useCalendarWeather(selectedDate.getFullYear(), selectedDate.getMonth(), location);
   const { data: currentWeather } = useCurrentWeather(location);
 
   // Month picker state
@@ -141,17 +141,22 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
   const todayStr = toDateStr(today);
   const selStr   = toDateStr(selectedDate);
 
-  // Центрируем выбранный день в ленте: при первом показе мгновенно,
-  // далее — плавной анимацией (выбор дня/возврат к «сегодня»).
-  useEffect(() => {
+  // Центрируем произвольный день в ленте.
+  const scrollToDate = useCallback((ds: string, behavior: ScrollBehavior) => {
     const c = stripRef.current;
-    if (!c || expanded) return;
-    const el = c.querySelector<HTMLElement>(`[data-date="${selStr}"]`);
+    if (!c) return;
+    const el = c.querySelector<HTMLElement>(`[data-date="${ds}"]`);
     if (!el) return;
     const left = el.offsetLeft - (c.clientWidth - el.clientWidth) / 2;
-    c.scrollTo({ left, behavior: didInitScroll.current ? 'smooth' : 'auto' });
+    c.scrollTo({ left, behavior });
+  }, []);
+
+  // Центрируем выбранный день: при первом показе мгновенно, далее — плавно.
+  useEffect(() => {
+    if (expanded) return;
+    scrollToDate(selStr, didInitScroll.current ? 'smooth' : 'auto');
     didInitScroll.current = true;
-  }, [selStr, expanded]);
+  }, [selStr, expanded, scrollToDate]);
 
   // Month grid cells
   const monthCells = useMemo(
@@ -171,10 +176,9 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
     const dow       = d.getDay();
     const hol       = holidayMap.get(ds);
     const isWeekend = dow === 0 || dow === 6;
-    const isWorkday = hol?.type === 'workday';
+    // Праздники и их переносы — красные, как выходные; сокращённый день — янтарный
     const numColor  = hol?.type === 'shortday' ? '#f59e0b'
-                    : hol?.type === 'workday'  ? '#3b82f6'
-                    : (isWeekend && !isWorkday) ? '#ef4444'
+                    : (isWeekend || hol?.type === 'holiday') ? '#ef4444'
                     : undefined;
     const weekDayName = WEEKDAYS[(dow + 6) % 7];
 
@@ -294,10 +298,8 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
               const dow       = d.getDay();
               const hol       = holidayMap.get(ds);
               const isWeekend = dow === 0 || dow === 6;
-              const isWorkday = hol?.type === 'workday';
               const numColor  = hol?.type === 'shortday' ? '#f59e0b'
-                              : hol?.type === 'workday'  ? '#3b82f6'
-                              : (isWeekend && !isWorkday) ? '#ef4444'
+                              : (isWeekend || hol?.type === 'holiday') ? '#ef4444'
                               : undefined;
               return (
                 <button
@@ -333,7 +335,7 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
         <button
           type="button"
           className={styles.timeNow}
-          onClick={onGoToToday}
+          onClick={() => { onGoToToday(); scrollToDate(todayStr, 'smooth'); }}
           title="Вернуться к сегодня"
         >
           {String(now.getHours()).padStart(2,'0')}:{String(now.getMinutes()).padStart(2,'0')} {DAY_SHORT[now.getDay()]}

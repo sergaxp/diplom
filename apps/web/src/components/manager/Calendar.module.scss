@@ -257,6 +257,8 @@
   color: var(--text-primary);
   cursor: pointer;
   font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: background var(--duration-fast) var(--ease-default),
               border-color var(--duration-fast) var(--ease-default);
   &:hover {
@@ -274,8 +276,14 @@
 .navCenter {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 10.8rem;
+  justify-content: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+  // Фиксированная ширина под самый длинный месяц («Сентябрь»),
+  // чтобы стрелки ‹ › не «прыгали» при смене месяца. Текст внутри
+  // центрируется и подстраивается, не перенося каретку на 2-ю строку.
+  width: 13rem;
+  flex-shrink: 0;
 }
 
 .navSep {
@@ -283,6 +291,9 @@
   font-size: var(--text-base);
   flex-shrink: 0;
 }
+
+// Стрелки месяца не сжимаются и не сдвигаются при смене названия месяца
+.nav .navBtn { flex-shrink: 0; }
 
 .picker {
   position: absolute;
