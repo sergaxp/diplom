@@ -85,10 +85,15 @@ export function Modal({
       ).filter(n => n.offsetParent !== null);
     };
 
-    // Первый фокус — на первый интерактивный элемент или сам диалог
+    // Первый фокус. На тач-устройствах НЕ фокусируем первый input — иначе при
+    // открытии модалки сразу всплывает клавиатура. Фокусируем сам диалог
+    // (для трапа фокуса/Esc). На десктопе — первый интерактивный элемент.
     const t = setTimeout(() => {
+      const finePointer =
+        typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches;
       const items = focusables();
-      (items[0] ?? dialogRef.current)?.focus();
+      const target = finePointer ? (items[0] ?? dialogRef.current) : dialogRef.current;
+      target?.focus();
     }, 0);
 
     const onKeyDown = (e: KeyboardEvent) => {

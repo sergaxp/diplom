@@ -978,6 +978,8 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
             autoComplete="off"
             autoCorrect="off"
             rows={2}
+            // Enter закрывает клавиатуру (перенос строки — через Shift+Enter)
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.blur(); } }}
           />
 
           {titleError && (
