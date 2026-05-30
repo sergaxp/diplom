@@ -693,7 +693,14 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
 
   const titleRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => { titleRef.current?.focus(); }, []);
+  useEffect(() => {
+    // Автофокус только на устройствах с «точным» указателем (десктоп).
+    // На тач-устройствах не фокусируем — иначе при открытии задачи сразу
+    // лезет клавиатура; пользователь сам нажмёт на поле для редактирования.
+    if (typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches) {
+      titleRef.current?.focus();
+    }
+  }, []);
 
   // Sync sections when items are deleted externally (e.g., from another device)
   const prevTaskSubtasksRef = useRef<SubtaskSection[] | undefined>(task?.subtasks);
@@ -950,7 +957,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               rows={1}
               autoComplete="off"
               autoCorrect="off"
-              onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }}
             />
             <IconButton
               icon={<X size={20} />}
