@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { api } from './api';
 import { toDateStr } from './tasks';
 
 export interface DayWeather {
@@ -130,24 +131,17 @@ function collectMonth(
   });
 }
 
-// fetch с таймаутом — иначе зависший на мобильной сети запрос держал бы
-// бесконечную «Загрузку прогноза…». По таймауту запрос прерывается,
-// react-query повторит/покажет ошибку вместо вечного спиннера.
-async function fetchWithTimeout(url: string, ms = 10000): Promise<Response> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), ms);
-  try {
-    return await fetch(url, { signal: ctrl.signal });
-  } finally {
-    clearTimeout(t);
-  }
+// Погода идёт через наш бэкенд (/weather/*): он ходит в open-meteo быстро
+// и кэширует. Браузеры пользователей (особенно из РФ) ходят туда медленно.
+type WeatherParams = Record<string, string | number | undefined>;
+
+async function apiGet(path: string, params: WeatherParams) {
+  return api.get(path, { params }).then((r) => r.data);
 }
 
-async function fetchJsonSafe(url: string) {
-  try {
-    const res = await fetchWithTimeout(url);
-    return res.ok ? await res.json() : null;
-  } catch { return null; }
+// Для частичных данных (месяц): ошибка одного источника не валит всё.
+async function apiGetSafe(path: string, params: WeatherParams) {
+  try { return await apiGet(path, params); } catch { return null; }
 }
 
 // Быстрая часть: сегодня + будущее (+ небольшой запас прошлого).
@@ -164,11 +158,9 @@ async function fetchMonthForecast(
   // Всегда берём полный горизонт прогноза (16 дней) — он покрывает и конец
   // текущего месяца, и начало следующего (для границы в ленте), одним запросом.
   const forecastDays = 16;
-  const url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
-    latitude: String(lat), longitude: String(lon), daily: MONTH_DAILY, timezone: tz,
-    past_days: String(pastDays), forecast_days: String(forecastDays),
+  const json = await apiGetSafe('/weather/forecast', {
+    lat, lon, tz, daily: MONTH_DAILY, past_days: pastDays, forecast_days: forecastDays,
   });
-  const json = await fetchJsonSafe(url);
   // Без клипа по месяцу: собираем все дни прогноза (в т.ч. начало следующего
   // месяца) — чтобы лента на границе месяца показывала погоду без доп. запросов.
   if (json) collectMonth(json, '0000-00-00', '9999-99-99', map);
@@ -185,11 +177,9 @@ async function fetchMonthArchive(
   if (monthStart > yesterday) return map; // у месяца нет прошлой части
 
   const archEnd = monthEnd <= yesterday ? end : toDateStr(yesterday);
-  const url = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({
-    latitude: String(lat), longitude: String(lon), daily: MONTH_DAILY, timezone: tz,
-    start_date: start, end_date: archEnd,
+  const json = await apiGetSafe('/weather/archive', {
+    lat, lon, tz, daily: MONTH_DAILY, start_date: start, end_date: archEnd,
   });
-  const json = await fetchJsonSafe(url);
   if (json) collectMonth(json, start, end, map);
   return map;
 }
@@ -204,28 +194,18 @@ async function fetchDayWeatherData(
 
   const daily = 'temperature_2m_max,temperature_2m_min,apparent_temperature_max,weathercode,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max';
 
-  let url: string;
+  let json;
   if (daysDiff > 15) {
     // forecast_days максимум 16 (сегодня…сегодня+15), дальше прогноза нет
     return null;
   } else if (daysDiff < -14) {
     // Forecast API надёжно отдаёт прошлое лишь ~3 недели назад — глубже берём архив (ERA5)
-    url = 'https://archive-api.open-meteo.com/v1/archive?' + new URLSearchParams({
-      latitude: String(lat), longitude: String(lon), timezone: tz,
-      start_date: date, end_date: date, daily,
-    });
+    json = await apiGet('/weather/archive', { lat, lon, tz, daily, start_date: date, end_date: date });
   } else {
     const pastDays     = Math.max(0, -daysDiff);
     const forecastDays = Math.min(16, Math.max(1, daysDiff + 1));
-    url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
-      latitude: String(lat), longitude: String(lon), timezone: tz,
-      past_days: String(pastDays), forecast_days: String(forecastDays), daily,
-    });
+    json = await apiGet('/weather/forecast', { lat, lon, tz, daily, past_days: pastDays, forecast_days: forecastDays });
   }
-
-  const res = await fetchWithTimeout(url);
-  if (!res.ok) throw new Error(`Weather API ${res.status}`);
-  const json = await res.json();
 
   const idx = (json.daily.time as string[]).indexOf(date);
   if (idx === -1) return null;
@@ -250,14 +230,10 @@ async function fetchDayWeatherData(
 async function fetchCurrentWeatherData(
   lat: number, lon: number, tz: string,
 ): Promise<CurrentWeather | null> {
-  const url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
-    latitude: String(lat), longitude: String(lon), timezone: tz,
+  const json = await apiGet('/weather/forecast', {
+    lat, lon, tz,
     current: 'temperature_2m,apparent_temperature,weathercode,wind_speed_10m,relative_humidity_2m',
   });
-
-  const res = await fetchWithTimeout(url);
-  if (!res.ok) throw new Error(`Weather API ${res.status}`);
-  const json = await res.json();
   if (!json.current) return null;
 
   return {

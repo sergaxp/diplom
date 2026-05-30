@@ -17,6 +17,7 @@ import { Tag } from './tags/entities/tag.entity';
 import { UserAchievement } from './achievements/entities/user-achievement.entity';
 import { HolidayCache } from './holidays/entities/holiday-cache.entity';
 import { HolidaysModule } from './holidays/holidays.module';
+import { WeatherModule } from './weather/weather.module';
 import { StorageModule } from './storage/storage.module';
 import { ShopModule } from './shop/shop.module';
 import { UserInventory } from './shop/entities/user-inventory.entity';
@@ -55,6 +56,7 @@ import { FeatureRequest } from './feedback/entities/feature-request.entity';
     TagsModule,
     AchievementsModule,
     HolidaysModule,
+    WeatherModule,
     StorageModule,
     ShopModule,
     NotificationsModule,
