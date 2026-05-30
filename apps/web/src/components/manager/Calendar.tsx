@@ -1215,9 +1215,6 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
               const isWeekend = dow === 0 || dow === 6;
               const isWorkday = hol?.type === 'workday';
               const isOff     = (isWeekend && !isWorkday) || hol?.type === 'holiday';
-              const numColor  = hol?.type === 'shortday' ? 'var(--cal-shortday)'
-                              : hol?.type === 'workday'  ? 'var(--cal-workday)'
-                              : undefined;
               const cellTitle = hol?.type === 'holiday'  ? (hol.name || getHolidayName(ds))
                               : hol?.type === 'shortday' ? 'Сокращённый день'
                               : hol?.type === 'workday'  ? 'Рабочая суббота'
@@ -1234,7 +1231,7 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
                   onClick={() => handleDayClick(day)}
                   title={cellTitle}
                 >
-                  <span className={styles.dayNum} style={numColor ? { color: numColor } : undefined}>{day}</span>
+                  <span className={styles.dayNum}>{day}</span>
                   <span className={styles.temp}>{tempMax != null ? (tempMax > 0 ? `+${tempMax}` : tempMax) + '°' : 't°'}</span>
                   {hol && (
                     <span className={styles.holBadge} style={{ background: getHolidayColor(hol.type) }}>

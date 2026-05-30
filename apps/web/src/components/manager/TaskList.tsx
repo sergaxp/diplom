@@ -57,6 +57,18 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
   const [menuOpen,     setMenuOpen]     = useState(false);
   const [postponeOpen, setPostponeOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const postponeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearPostponeTimer = () => {
+    if (postponeTimer.current) { clearTimeout(postponeTimer.current); postponeTimer.current = null; }
+  };
+  // Открываем сразу, а закрываем с задержкой — чтобы успеть «дотянуться» курсором
+  // до подменю через зазор (раньше оно исчезало по пути).
+  const openPostpone = () => { clearPostponeTimer(); setPostponeOpen(true); };
+  const schedulePostponeClose = () => {
+    clearPostponeTimer();
+    postponeTimer.current = setTimeout(() => setPostponeOpen(false), 35);
+  };
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
@@ -66,10 +78,14 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
       }
     };
     document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
+    return () => { document.removeEventListener('mousedown', h); clearPostponeTimer(); };
   }, []);
 
-  const close = () => { setMenuOpen(false); setPostponeOpen(false); };
+  const close = () => { clearPostponeTimer(); setMenuOpen(false); setPostponeOpen(false); };
+
+  // Быстрый перенос (на день/3/неделю/месяц) — только для обычных одиночных задач:
+  // не для обязательных и не для многодневных.
+  const showQuickPostpone = task.type !== 'mandatory' && !task.endDate;
 
   if (task.isGlobal) {
     return (
@@ -180,8 +196,8 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
             {!hidePostpone && (
               <div
                 className={styles.postponeItem}
-                onMouseEnter={() => setPostponeOpen(true)}
-                onMouseLeave={() => setPostponeOpen(false)}
+                onMouseEnter={openPostpone}
+                onMouseLeave={schedulePostponeClose}
               >
                 <button className={[styles.menuItem, styles.menuItemArrow].join(' ')}>
                   Перенести <span>›</span>
@@ -189,7 +205,7 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
 
                 {postponeOpen && (
                   <div className={styles.submenu}>
-                    {task.type !== 'mandatory' && [
+                    {showQuickPostpone && [
                       { label: 'На день',   days: 1  },
                       { label: 'На 3 дня',  days: 3  },
                       { label: 'На неделю', days: 7  },
@@ -203,7 +219,7 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
                         {label}
                       </button>
                     ))}
-                    {task.type !== 'mandatory' && <div className={styles.submenuDivider} />}
+                    {showQuickPostpone && <div className={styles.submenuDivider} />}
                     <button
                       className={styles.submenuItem}
                       onClick={() => { onEdit(task); close(); }}
