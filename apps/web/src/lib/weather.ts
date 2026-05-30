@@ -133,7 +133,7 @@ function collectMonth(
 // fetch с таймаутом — иначе зависший на мобильной сети запрос держал бы
 // бесконечную «Загрузку прогноза…». По таймауту запрос прерывается,
 // react-query повторит/покажет ошибку вместо вечного спиннера.
-async function fetchWithTimeout(url: string, ms = 8000): Promise<Response> {
+async function fetchWithTimeout(url: string, ms = 10000): Promise<Response> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
   try {
@@ -161,14 +161,17 @@ async function fetchMonthForecast(
   if (Math.round((monthStart.getTime() - today.getTime()) / 86_400_000) > 16) return map;
 
   const pastDays     = monthStart < today ? 7 : 0;
-  const forecastDays = Math.min(16, Math.max(1,
-    Math.round((monthEnd.getTime() - today.getTime()) / 86_400_000) + 1));
+  // Всегда берём полный горизонт прогноза (16 дней) — он покрывает и конец
+  // текущего месяца, и начало следующего (для границы в ленте), одним запросом.
+  const forecastDays = 16;
   const url = 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({
     latitude: String(lat), longitude: String(lon), daily: MONTH_DAILY, timezone: tz,
     past_days: String(pastDays), forecast_days: String(forecastDays),
   });
   const json = await fetchJsonSafe(url);
-  if (json) collectMonth(json, start, end, map);
+  // Без клипа по месяцу: собираем все дни прогноза (в т.ч. начало следующего
+  // месяца) — чтобы лента на границе месяца показывала погоду без доп. запросов.
+  if (json) collectMonth(json, '0000-00-00', '9999-99-99', map);
   return map;
 }
 
@@ -332,27 +335,13 @@ export function useMonthWeather(year: number, month: number, locationData?: Loca
   };
 }
 
-// ── Хук: погода для календаря (месяц + соседние) ─────────────
-// Грузит предыдущий, текущий и следующий месяцы и объединяет их.
-// Это покрывает дни соседних месяцев на границах (мобильная лента,
-// сетка) и «прогревает» кеш — переход на соседний месяц мгновенный.
+// ── Хук: погода для календаря (один месяц) ───────────────────
+// Раньше грузил 3 месяца (×2 источника = до 6 запросов) — на мобильной сети
+// это вставало в очередь и отваливалось по таймауту. Теперь только текущий
+// месяц (2 запроса), а прогноз собирается на все 16 дней вперёд (включая
+// начало следующего месяца), поэтому граница месяца в ленте всё равно покрыта.
 export function useCalendarWeather(year: number, month: number, locationData?: LocationData) {
-  const prev = new Date(year, month - 1, 1);
-  const next = new Date(year, month + 1, 1);
-
-  const wPrev = useMonthWeather(prev.getFullYear(), prev.getMonth(), locationData);
-  const wCur  = useMonthWeather(year, month, locationData);
-  const wNext = useMonthWeather(next.getFullYear(), next.getMonth(), locationData);
-
-  const data = useMemo(() => {
-    const m = new Map<string, DayWeather>();
-    wPrev.data.forEach((v, k) => m.set(k, v));
-    wCur.data.forEach((v, k) => m.set(k, v));
-    wNext.data.forEach((v, k) => m.set(k, v));
-    return m;
-  }, [wPrev.data, wCur.data, wNext.data]);
-
-  return { data, isLoading: wCur.isLoading };
+  return useMonthWeather(year, month, locationData);
 }
 
 // ── Хук: детальная погода на день ────────────────────────────
