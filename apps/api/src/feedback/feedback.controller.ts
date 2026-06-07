@@ -1,10 +1,17 @@
 import {
-  Controller, Get, Post,
-  Body, Request, UseGuards,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FeedbackService } from './feedback.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+@ApiTags('feedback')
+@ApiBearerAuth()
 @Controller('feedback')
 @UseGuards(JwtAuthGuard)
 export class FeedbackController {
@@ -15,7 +22,8 @@ export class FeedbackController {
   @Post('bugs')
   createBugReport(
     @Request() req: { user: { id: string } },
-    @Body() body: {
+    @Body()
+    body: {
       title: string;
       description?: string;
       attachmentUrls?: string[];

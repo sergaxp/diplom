@@ -10,7 +10,7 @@ interface JwtPayload {
   role: UserRole;
 }
 
-interface JwtUser {
+export interface JwtUser {
   id: string;
   username: string;
   role: UserRole;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * Хранилище ключей `${taskId}__${dateStr}` для задач с погодными условиями,
@@ -54,22 +54,16 @@ function saveLock(set: Set<string>): void {
  * новое состояние записывается в localStorage.
  */
 export function useWeatherShownLock(): Set<string> {
-  const lockRef = useRef<Set<string> | null>(null);
-  const sizeRef = useRef<number>(0);
-
-  if (lockRef.current === null) {
-    lockRef.current = loadLock();
-    sizeRef.current = lockRef.current.size;
-  }
+  const [lock] = useState<Set<string>>(() => loadLock());
+  const sizeRef = useRef<number>(lock.size);
 
   // После каждого рендера: если размер вырос – сохранить
   useEffect(() => {
-    if (!lockRef.current) return;
-    if (lockRef.current.size !== sizeRef.current) {
-      saveLock(lockRef.current);
-      sizeRef.current = lockRef.current.size;
+    if (lock.size !== sizeRef.current) {
+      saveLock(lock);
+      sizeRef.current = lock.size;
     }
   });
 
-  return lockRef.current;
+  return lock;
 }

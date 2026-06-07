@@ -38,7 +38,10 @@ export class ShopService {
   }
 
   /** Купить товар. Списывает монеты, добавляет в инвентарь и автоматически экипирует рамку. */
-  async buy(userId: string, itemId: string): Promise<{ user: User; itemId: string }> {
+  async buy(
+    userId: string,
+    itemId: string,
+  ): Promise<{ user: User; itemId: string }> {
     const item = SHOP_ITEM_MAP.get(itemId);
     if (!item) throw new NotFoundException('Товар не найден');
 
@@ -46,7 +49,9 @@ export class ShopService {
       const user = await em.findOne(User, { where: { id: userId } });
       if (!user) throw new NotFoundException('Пользователь не найден');
 
-      const already = await em.findOne(UserInventory, { where: { userId, itemId } });
+      const already = await em.findOne(UserInventory, {
+        where: { userId, itemId },
+      });
       if (already) throw new ConflictException('Товар уже куплен');
 
       if (user.coins < item.price) {
@@ -62,14 +67,18 @@ export class ShopService {
       await em.save(em.create(UserInventory, { userId, itemId }));
 
       // Уведомление о покупке (вне транзакции –  некритично если упадёт)
-      await this.notifications.create({
-        userId,
-        kind:  'purchase',
-        title: `Куплено: ${item.title}`,
-        body:  `Списано ${item.price} монет`,
-        icon:  'ShoppingBag',
-        color: '#a855f7',
-      }).catch(() => { /* ignore */ });
+      await this.notifications
+        .create({
+          userId,
+          kind: 'purchase',
+          title: `Куплено: ${item.title}`,
+          body: `Списано ${item.price} монет`,
+          icon: 'ShoppingBag',
+          color: '#a855f7',
+        })
+        .catch(() => {
+          /* ignore */
+        });
 
       return { user, itemId };
     });

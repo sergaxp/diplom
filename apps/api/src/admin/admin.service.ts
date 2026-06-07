@@ -30,9 +30,10 @@ export interface CreateGlobalTaskDto {
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectRepository(User)       private readonly userRepo: Repository<User>,
-    @InjectRepository(Task)       private readonly taskRepo: Repository<Task>,
-    @InjectRepository(GlobalTask) private readonly globalTaskRepo: Repository<GlobalTask>,
+    @InjectRepository(User) private readonly userRepo: Repository<User>,
+    @InjectRepository(Task) private readonly taskRepo: Repository<Task>,
+    @InjectRepository(GlobalTask)
+    private readonly globalTaskRepo: Repository<GlobalTask>,
     private readonly usersService: UsersService,
   ) {}
 
@@ -51,24 +52,36 @@ export class AdminService {
     const qb = this.userRepo
       .createQueryBuilder('u')
       .select([
-        'u.id', 'u.username', 'u.email', 'u.displayName',
-        'u.avatarUrl', 'u.role', 'u.isActive', 'u.createdAt', 'u.lastSeenAt',
+        'u.id',
+        'u.username',
+        'u.email',
+        'u.displayName',
+        'u.avatarUrl',
+        'u.role',
+        'u.isActive',
+        'u.createdAt',
+        'u.lastSeenAt',
       ])
       .orderBy('u.createdAt', 'DESC');
 
     if (search?.trim()) {
-      qb.where('u.username ILIKE :q OR u.email ILIKE :q', { q: `%${search.trim()}%` });
+      qb.where('u.username ILIKE :q OR u.email ILIKE :q', {
+        q: `%${search.trim()}%`,
+      });
     }
 
     return qb.getMany();
   }
 
   // ── Изменить роль / активность ─────────────────────────────
-  async updateUser(id: string, data: AdminUpdateUserDto): Promise<Partial<User>> {
+  async updateUser(
+    id: string,
+    data: AdminUpdateUserDto,
+  ): Promise<Partial<User>> {
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    if (data.role     !== undefined) user.role     = data.role;
+    if (data.role !== undefined) user.role = data.role;
     if (data.isActive !== undefined) user.isActive = data.isActive;
 
     const saved = await this.userRepo.save(user);
@@ -98,16 +111,19 @@ export class AdminService {
     return this.globalTaskRepo.find({ order: { date: 'ASC' } });
   }
 
-  async createGlobalTask(dto: CreateGlobalTaskDto, adminId: string): Promise<GlobalTask> {
+  async createGlobalTask(
+    dto: CreateGlobalTaskDto,
+    adminId: string,
+  ): Promise<GlobalTask> {
     const task = this.globalTaskRepo.create({
-      title:       dto.title,
+      title: dto.title,
       description: dto.description ?? null,
-      date:        dto.date,
-      time:        dto.time        ?? null,
-      repeat:      dto.repeat      ?? TaskRepeat.NONE,
+      date: dto.date,
+      time: dto.time ?? null,
+      repeat: dto.repeat ?? TaskRepeat.NONE,
       repeatUntil: dto.repeatUntil ?? null,
-      icon:        dto.icon?.trim() || null,
-      createdBy:   adminId,
+      icon: dto.icon?.trim() || null,
+      createdBy: adminId,
     });
     return this.globalTaskRepo.save(task);
   }

@@ -44,7 +44,6 @@ export const SHOP_ITEMS: ShopItemDef[] = [
     price: 2,
     meta: { color: '#eab308' },
   },
-
 ];
 
 export const SHOP_ITEM_MAP = new Map<string, ShopItemDef>(

@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 
 async function bootstrap() {
@@ -31,6 +32,17 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-secret'],
   });
 
+  if (process.env.SWAGGER_ENABLED !== 'false') {
+    const config = new DocumentBuilder()
+      .setTitle('Warmingtea API')
+      .setDescription('REST API менеджера задач Warmingtea')
+      .setVersion('1.0')
+      .addBearerAuth() // JWT в заголовке Authorization
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
+
   process.on('unhandledRejection', (reason) => {
     Logger.error('Unhandled Rejection:', String(reason), 'Bootstrap');
   });
@@ -39,4 +51,4 @@ async function bootstrap() {
   await app.listen(port);
   Logger.log(`API запущен на http://localhost:${port}`, 'Bootstrap');
 }
-bootstrap();
+void bootstrap();

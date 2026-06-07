@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Warmingtea.su - Full-stack project with Next.js + NestJS",
+  "packageManager": "pnpm@10.29.3",
   "scripts": {
     "dev": "pnpm run --parallel --filter \"./apps/**\" dev",
     "dev:web": "pnpm --filter web dev",
@@ -11,9 +12,15 @@
     "build:web": "pnpm --filter web build",
     "build:api": "pnpm --filter api build",
     "lint": "pnpm run --filter \"./apps/**\" lint",
-    "clean": "pnpm run --filter \"./apps/**\" clean && rm -rf node_modules"
+    "lint:check": "pnpm --filter web lint && pnpm --filter api lint:check",
+    "typecheck": "pnpm --filter web exec tsc --noEmit && pnpm --filter api exec tsc --noEmit -p tsconfig.json",
+    "test": "pnpm --filter web test && pnpm --filter api exec jest --passWithNoTests",
+    "clean": "pnpm run --filter \"./apps/**\" clean && rm -rf node_modules",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
     "typescript": "^5.7.2"
   },
   "engines": {

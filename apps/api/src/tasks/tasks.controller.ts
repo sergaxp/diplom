@@ -1,12 +1,24 @@
 import {
-  Controller, Get, Post, Patch, Delete,
-  Body, Param, UseGuards, Request, HttpCode, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
+@ApiTags('tasks')
+@ApiBearerAuth()
 @Controller('tasks')
 @UseGuards(JwtAuthGuard)
 export class TasksController {
@@ -34,7 +46,10 @@ export class TasksController {
     @Request() req: { user: { id: string } },
     @Body() dto: CreateTaskDto,
   ) {
-    const { task, newAchievements } = await this.tasksService.create(req.user.id, dto);
+    const { task, newAchievements } = await this.tasksService.create(
+      req.user.id,
+      dto,
+    );
     return { ...task, newAchievements };
   }
 
@@ -49,10 +64,7 @@ export class TasksController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(
-    @Request() req: { user: { id: string } },
-    @Param('id') id: string,
-  ) {
+  remove(@Request() req: { user: { id: string } }, @Param('id') id: string) {
     return this.tasksService.remove(req.user.id, id);
   }
 

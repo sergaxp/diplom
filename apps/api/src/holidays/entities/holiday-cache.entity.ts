@@ -1,7 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 
 export interface HolidayEntry {
-  date: string;   // YYYY-MM-DD
+  date: string; // YYYY-MM-DD
   name: string;
   /** holiday=нерабочий, shortday=предпраздничный, workday=перенесённый рабочий */
   type: 'holiday' | 'shortday' | 'workday';

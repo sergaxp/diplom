@@ -10,6 +10,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
   AuthService,
   AuthResponse,
@@ -22,6 +23,7 @@ import { GoogleCompleteDto } from './dto/google-complete.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -79,6 +81,7 @@ export class AuthController {
   }
 
   // GET /auth/me – проверить текущий токен
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@Request() req: Express.Request & { user: unknown }): {

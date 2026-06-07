@@ -1,13 +1,25 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Task, TaskRepeat, TaskType, TaskPriority } from './entities/task.entity';
+import {
+  Task,
+  TaskRepeat,
+  TaskType,
+  TaskPriority,
+} from './entities/task.entity';
 import { TaskCompletion } from './entities/task-completion.entity';
 import { GlobalTask } from './entities/global-task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TagsService } from '../tags/tags.service';
-import { AchievementsService, AchievementDef } from '../achievements/achievements.service';
+import {
+  AchievementsService,
+  AchievementDef,
+} from '../achievements/achievements.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
@@ -43,11 +55,19 @@ export class TasksService {
     // Запрет одинаковых названий в одном дне (страховка к фронтовой проверке)
     const dupe = await this.taskRepo
       .createQueryBuilder('t')
-      .where('t."userId" = :userId AND t.date = :date AND LOWER(t.title) = LOWER(:title)', {
-        userId, date: dto.date, title: dto.title.trim(),
-      })
+      .where(
+        't."userId" = :userId AND t.date = :date AND LOWER(t.title) = LOWER(:title)',
+        {
+          userId,
+          date: dto.date,
+          title: dto.title.trim(),
+        },
+      )
       .getOne();
-    if (dupe) throw new BadRequestException('На этот день уже есть задача с таким названием');
+    if (dupe)
+      throw new BadRequestException(
+        'На этот день уже есть задача с таким названием',
+      );
 
     const tags = dto.tagIds?.length
       ? await this.tagsService.findByIds(userId, dto.tagIds)
@@ -55,58 +75,69 @@ export class TasksService {
 
     const task = this.taskRepo.create({
       userId,
-      title:       dto.title,
-      description: dto.description  ?? null,
-      date:        dto.date,
-      time:        dto.time         ?? null,
-      repeat:      dto.repeat       ?? TaskRepeat.NONE,
-      repeatUntil: dto.repeatUntil  ?? null,
-      type:        dto.type         ?? TaskType.NORMAL,
-      priority:    dto.priority     ?? TaskPriority.NONE,
+      title: dto.title,
+      description: dto.description ?? null,
+      date: dto.date,
+      time: dto.time ?? null,
+      repeat: dto.repeat ?? TaskRepeat.NONE,
+      repeatUntil: dto.repeatUntil ?? null,
+      type: dto.type ?? TaskType.NORMAL,
+      priority: dto.priority ?? TaskPriority.NONE,
       repeatConfig: dto.repeatConfig ?? null,
-      icon:        dto.icon         ?? null,
-      endTime:     dto.endTime      ?? null,
-      endDate:     dto.endDate      ?? null,
-      subtasks:    dto.subtasks     ?? null,
+      icon: dto.icon ?? null,
+      endTime: dto.endTime ?? null,
+      endDate: dto.endDate ?? null,
+      subtasks: dto.subtasks ?? null,
       dayOverrides: dto.dayOverrides ?? null,
       tags,
     });
     const saved = await this.taskRepo.save(task);
 
-    const newAchievements = await this.achievementsService.checkAndUnlock(userId, {
-      type:       'task_created',
-      taskRepeat: saved.repeat,
-      taskType:   saved.type,
-      hasEndDate: !!saved.endDate,
-    });
+    const newAchievements = await this.achievementsService.checkAndUnlock(
+      userId,
+      {
+        type: 'task_created',
+        taskRepeat: saved.repeat,
+        taskType: saved.type,
+        hasEndDate: !!saved.endDate,
+      },
+    );
 
     return { task: saved, newAchievements };
   }
 
   async update(userId: string, id: string, dto: UpdateTaskDto): Promise<Task> {
-    const task = await this.taskRepo.findOne({ where: { id, userId }, relations: ['tags'] });
+    const task = await this.taskRepo.findOne({
+      where: { id, userId },
+      relations: ['tags'],
+    });
     if (!task) throw new NotFoundException('Задача не найдена');
 
-    if (dto.title       !== undefined) task.title       = dto.title;
-    if (dto.description !== undefined) task.description = dto.description ?? null;
-    if (dto.date        !== undefined) task.date        = dto.date;
-    if (dto.time        !== undefined) task.time        = dto.time ?? null;
-    if (dto.repeat      !== undefined) task.repeat      = dto.repeat;
-    if (dto.repeatUntil !== undefined) task.repeatUntil = dto.repeatUntil ?? null;
-    if (dto.type        !== undefined) task.type        = dto.type;
-    if (dto.priority    !== undefined) task.priority    = dto.priority ?? TaskPriority.NONE;
-    if (dto.repeatConfig !== undefined) task.repeatConfig = dto.repeatConfig ?? null;
-    if (dto.endTime     !== undefined) task.endTime     = dto.endTime  ?? null;
-    if (dto.endDate     !== undefined) task.endDate     = dto.endDate  ?? null;
+    if (dto.title !== undefined) task.title = dto.title;
+    if (dto.description !== undefined)
+      task.description = dto.description ?? null;
+    if (dto.date !== undefined) task.date = dto.date;
+    if (dto.time !== undefined) task.time = dto.time ?? null;
+    if (dto.repeat !== undefined) task.repeat = dto.repeat;
+    if (dto.repeatUntil !== undefined)
+      task.repeatUntil = dto.repeatUntil ?? null;
+    if (dto.type !== undefined) task.type = dto.type;
+    if (dto.priority !== undefined)
+      task.priority = dto.priority ?? TaskPriority.NONE;
+    if (dto.repeatConfig !== undefined)
+      task.repeatConfig = dto.repeatConfig ?? null;
+    if (dto.endTime !== undefined) task.endTime = dto.endTime ?? null;
+    if (dto.endDate !== undefined) task.endDate = dto.endDate ?? null;
 
     if (dto.tagIds !== undefined) {
       task.tags = dto.tagIds.length
         ? await this.tagsService.findByIds(userId, dto.tagIds)
         : [];
     }
-    if (dto.icon     !== undefined) task.icon     = dto.icon     ?? null;
+    if (dto.icon !== undefined) task.icon = dto.icon ?? null;
     if (dto.subtasks !== undefined) task.subtasks = dto.subtasks ?? null;
-    if (dto.dayOverrides !== undefined) task.dayOverrides = dto.dayOverrides ?? null;
+    if (dto.dayOverrides !== undefined)
+      task.dayOverrides = dto.dayOverrides ?? null;
 
     return this.taskRepo.save(task);
   }
@@ -141,25 +172,28 @@ export class TasksService {
     if (task) {
       await this.notifications.create({
         userId,
-        kind:  'task_completed',
+        kind: 'task_completed',
         title: `Задача выполнена: ${task.title}`,
-        body:  task.description ?? null,
-        icon:  'CheckCircle2',
+        body: task.description ?? null,
+        icon: 'CheckCircle2',
         color: '#22c55e',
       });
     }
 
-    const newAchievements = await this.achievementsService.checkAndUnlock(userId, {
-      type:     'task_completed',
-      taskTime: task?.time ?? null,
-      taskType: task?.type ?? TaskType.NORMAL,
-    });
+    const newAchievements = await this.achievementsService.checkAndUnlock(
+      userId,
+      {
+        type: 'task_completed',
+        taskTime: task?.time ?? null,
+        taskType: task?.type ?? TaskType.NORMAL,
+      },
+    );
 
     return { done: true, newAchievements };
   }
 
   async getCompletionKeys(userId: string): Promise<string[]> {
     const rows = await this.completionRepo.find({ where: { userId } });
-    return rows.map(c => `${c.taskId}__${c.date}`);
+    return rows.map((c) => `${c.taskId}__${c.date}`);
   }
 }

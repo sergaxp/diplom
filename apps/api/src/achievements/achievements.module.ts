@@ -11,7 +11,13 @@ import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserAchievement, User, Task, TaskCompletion, Tag]),
+    TypeOrmModule.forFeature([
+      UserAchievement,
+      User,
+      Task,
+      TaskCompletion,
+      Tag,
+    ]),
     NotificationsModule,
   ],
   controllers: [AchievementsController],

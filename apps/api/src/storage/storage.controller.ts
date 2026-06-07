@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { StorageService, BucketName, BUCKETS } from './storage.service';
 
@@ -33,6 +34,8 @@ const VIMEO_RE = /vimeo\.com\/(\d+)/;
 const FETCH_TIMEOUT_MS = 6_000;
 const FETCH_MAX_BYTES = 256 * 1024; // читаем не более 256 KB HTML
 
+@ApiTags('storage')
+@ApiBearerAuth()
 @Controller('storage')
 @UseGuards(JwtAuthGuard)
 export class StorageController {
@@ -186,7 +189,7 @@ export class StorageController {
       result += decoder.decode(value, { stream: true });
       bytes += value?.length ?? 0;
       if (bytes >= FETCH_MAX_BYTES) {
-        reader.cancel();
+        void reader.cancel();
         break;
       }
     }

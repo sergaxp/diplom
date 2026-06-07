@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # ── Frontend ──
+      - run: pnpm --filter web lint
+      - run: pnpm --filter web exec tsc --noEmit
+      - run: pnpm --filter web test
+      - run: pnpm --filter web build
+
+      # ── Backend ──
+      - run: pnpm --filter api lint:check
+      - run: pnpm --filter api exec tsc --noEmit -p tsconfig.json
+      - run: pnpm --filter api exec jest --passWithNoTests
+      - run: pnpm --filter api build

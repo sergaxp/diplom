@@ -14,6 +14,11 @@ import { HolidayCache, HolidayEntry } from './entities/holiday-cache.entity';
 // days-строка: числа = нерабочие дни, число+ = сокращённый предпраздничный.
 // transitions.from = рабочая суббота (перенос).
 
+interface CalendarApiResponse {
+  transitions?: { from?: string }[];
+  months?: { month: number; days: string }[];
+}
+
 @Injectable()
 export class HolidaysService {
   private readonly logger = new Logger(HolidaysService.name);
@@ -36,7 +41,9 @@ export class HolidaysService {
     const entries = await this.fetchAndParse(year);
     try {
       await this.repo.upsert({ year, entries }, ['year']);
-    } catch { /* race condition – не страшно */ }
+    } catch {
+      /* race condition – не страшно */
+    }
     return entries;
   }
 
@@ -50,17 +57,18 @@ export class HolidaysService {
     const url = `https://xmlcalendar.ru/data/ru/${year}/calendar.json`;
     this.logger.log(`Fetching: ${url}`);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let raw: any;
+    let raw: CalendarApiResponse | undefined;
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
       if (res.status === 404) {
         // Данные ещё не опубликованы (будущий год) – это норма, не ошибка
-        this.logger.debug(`No calendar data for ${year} (404 – year not published yet)`);
+        this.logger.debug(
+          `No calendar data for ${year} (404 – year not published yet)`,
+        );
         return [];
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      raw = await res.json();
+      raw = (await res.json()) as CalendarApiResponse;
     } catch (err) {
       this.logger.warn(`Fetch failed for ${year}: ${err}`);
       return [];
@@ -69,46 +77,50 @@ export class HolidaysService {
     try {
       return this.parse(raw, year);
     } catch (err) {
-      this.logger.error(`Parse failed for ${year}: ${err}. Keys: ${Object.keys(raw ?? {}).join(', ')}`);
+      this.logger.error(
+        `Parse failed for ${year}: ${err}. Keys: ${Object.keys(raw ?? {}).join(', ')}`,
+      );
       return [];
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private parse(raw: any, year: number): HolidayEntry[] {
+  private parse(raw: CalendarApiResponse, year: number): HolidayEntry[] {
     const entries: HolidayEntry[] = [];
 
     // ── Рабочие субботы из transitions ────────────────────────
     // transitions[].from = "DD.MM" – этот день является рабочим (перенос)
     const workdays = new Set<string>();
-    const transList: { from: string }[] = Array.isArray(raw.transitions) ? raw.transitions : [];
+    const transList: { from?: string }[] = Array.isArray(raw.transitions)
+      ? raw.transitions
+      : [];
     for (const tr of transList) {
       if (!tr.from) continue;
       const [dd, mm] = tr.from.split('.');
-      const date = `${year}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+      const date = `${year}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
       workdays.add(date);
     }
 
     // ── Нерабочие и сокращённые дни из months[].days ─────────
-    const months: { month: number; days: string }[] =
-      Array.isArray(raw.months) ? raw.months : [];
+    const months: { month: number; days: string }[] = Array.isArray(raw.months)
+      ? raw.months
+      : [];
 
     for (const monthObj of months) {
-      const m    = monthObj.month;
+      const m = monthObj.month;
       const dStr = monthObj.days ?? '';
       if (!m || !dStr) continue;
 
       for (const token of dStr.split(',')) {
-        const trimmed  = token.trim();
+        const trimmed = token.trim();
         // '+' = предпраздничный сокращённый, '*' = предпраздничный перенесённый (тоже сокращённый)
-        const isShort  = trimmed.endsWith('+') || trimmed.endsWith('*');
-        const cleaned  = trimmed.replace(/[^0-9]/g, '');
-        const dayNum   = parseInt(cleaned, 10);
+        const isShort = trimmed.endsWith('+') || trimmed.endsWith('*');
+        const cleaned = trimmed.replace(/[^0-9]/g, '');
+        const dayNum = parseInt(cleaned, 10);
         if (!dayNum || dayNum < 1 || dayNum > 31) continue;
 
-        const date    = `${year}-${String(m).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+        const date = `${year}-${String(m).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
         const dateObj = new Date(date + 'T00:00:00');
-        const dow     = dateObj.getDay(); // 0=Sun 6=Sat
+        const dow = dateObj.getDay(); // 0=Sun 6=Sat
 
         if (isShort) {
           // Предпраздничный сокращённый день (число+)

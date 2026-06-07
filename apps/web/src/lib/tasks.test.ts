@@ -9,7 +9,7 @@ import {
   checkHolidayCondition,
   getTasksForDate,
   type Task,
-  type RepeatConfig,
+  type WeatherCondition,
 } from './tasks';
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -57,7 +57,10 @@ describe('checkWeatherCondition', () => {
   const weather = (code: number, tempMax = 20, tempMin = 10) =>
     ({ tempMax, tempMin, weatherCode: code });
   // Helper для проверки только результата ok/!ok (без warning)
-  const wOk = (entry: any, cond: any) => checkWeatherCondition(entry, cond).ok;
+  const wOk = (
+    entry: { tempMax: number; tempMin: number; weatherCode?: number } | undefined | null,
+    cond: WeatherCondition,
+  ) => checkWeatherCondition(entry, cond).ok;
 
   it('returns ok=false when entry is undefined (strict: no data → hide)', () => {
     expect(checkWeatherCondition(undefined, { skipRain: true })).toEqual({ ok: false });
@@ -817,7 +820,7 @@ describe('getTasksForDate – conditions', () => {
 // ──────────────────────────────────────────────────────────────
 
 describe('weather tolerance ±2°C', () => {
-  const makeWeatherTask = (cond: any) => makeTask({
+  const makeWeatherTask = (cond: WeatherCondition) => makeTask({
     date: '2026-01-01', repeat: 'custom',
     repeatConfig: { every: 1, unit: 'day', weatherCondition: cond },
   });
@@ -889,7 +892,7 @@ describe('weather no-data behavior (strict hide)', () => {
   });
 
   it('shows when data later becomes available and matches', () => {
-    let wm = new Map<string, any>(); // initially empty
+    let wm = new Map<string, { tempMax: number; tempMin: number; weatherCode?: number }>(); // initially empty
     expect(getTasksForDate([t], d('2026-01-05'), new Set(), null, wm)).toHaveLength(0);
     // Later: forecast comes in, clear weather
     wm = new Map([['2026-01-05', { tempMax: 20, tempMin: 10, weatherCode: 0 }]]);

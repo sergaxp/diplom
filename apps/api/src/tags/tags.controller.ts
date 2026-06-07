@@ -1,8 +1,21 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 
+@ApiTags('tags')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('tags')
 export class TagsController {

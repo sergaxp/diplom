@@ -44,9 +44,7 @@ export class UsersService {
           'Пользователь с таким логином уже существует',
         );
       }
-      throw new ConflictException(
-        'Пользователь с таким email уже существует',
-      );
+      throw new ConflictException('Пользователь с таким email уже существует');
     }
 
     // Хешируем пароль
@@ -76,14 +74,20 @@ export class UsersService {
 
   /** Привязать Google-аккаунт к существующему пользователю */
   async linkGoogle(userId: string, googleId: string): Promise<User> {
-    await this.usersRepository.update(userId, { googleId, isEmailVerified: true });
+    await this.usersRepository.update(userId, {
+      googleId,
+      isEmailVerified: true,
+    });
     return this.findById(userId);
   }
 
   /** Создать пользователя из Google-профиля (без пароля). username уже проверен. */
   async createGoogleUser(data: {
-    username: string; email: string; googleId: string;
-    displayName?: string | null; avatarUrl?: string | null;
+    username: string;
+    email: string;
+    googleId: string;
+    displayName?: string | null;
+    avatarUrl?: string | null;
   }): Promise<User> {
     const taken = await this.usersRepository.findOne({
       where: [{ username: data.username }, { email: data.email }],
@@ -96,16 +100,18 @@ export class UsersService {
       );
     }
     const user = this.usersRepository.create({
-      username:        data.username,
-      email:           data.email,
-      googleId:        data.googleId,
-      password:        null,
-      displayName:     data.displayName ?? null,
-      avatarUrl:       data.avatarUrl ?? null,
+      username: data.username,
+      email: data.email,
+      googleId: data.googleId,
+      password: null,
+      displayName: data.displayName ?? null,
+      avatarUrl: data.avatarUrl ?? null,
       isEmailVerified: true,
     });
     const saved = await this.usersRepository.save(user);
-    this.logger.log(`Google-пользователь создан: ${saved.username} (${saved.id})`);
+    this.logger.log(
+      `Google-пользователь создан: ${saved.username} (${saved.id})`,
+    );
     return saved;
   }
 
@@ -153,7 +159,7 @@ export class UsersService {
       updateUserDto.selectedFrame !== undefined &&
       updateUserDto.selectedFrame !== null
     ) {
-      const owned = await this.usersRepository.manager
+      const owned: unknown = await this.usersRepository.manager
         .createQueryBuilder()
         .select('1')
         .from('user_inventory', 'inv')
@@ -174,10 +180,10 @@ export class UsersService {
     Object.assign(user, patch);
     const saved = await this.usersRepository.save(user);
     await this.achievementsService.checkAndUnlock(saved.id, {
-      type:        'profile_updated',
+      type: 'profile_updated',
       displayName: saved.displayName,
-      avatarUrl:   saved.avatarUrl,
-      bio:         saved.bio,
+      avatarUrl: saved.avatarUrl,
+      bio: saved.bio,
     });
     return saved;
   }
@@ -189,10 +195,10 @@ export class UsersService {
     user.avatarUrl = avatarUrl;
     const saved = await this.usersRepository.save(user);
     await this.achievementsService.checkAndUnlock(saved.id, {
-      type:        'profile_updated',
+      type: 'profile_updated',
       displayName: saved.displayName,
-      avatarUrl:   saved.avatarUrl,
-      bio:         saved.bio,
+      avatarUrl: saved.avatarUrl,
+      bio: saved.bio,
     });
     return saved;
   }
@@ -214,7 +220,11 @@ export class UsersService {
    *  totalUsers – всего активных аккаунтов,
    *  onlineUsers – пользователи с lastSeenAt за последние 5 минут,
    *  deletedToday – количество удалённых сегодня аккаунтов. */
-  async getPublicStats(): Promise<{ totalUsers: number; onlineUsers: number; deletedToday: number }> {
+  async getPublicStats(): Promise<{
+    totalUsers: number;
+    onlineUsers: number;
+    deletedToday: number;
+  }> {
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
     const [totalUsers, onlineUsers, deletedToday] = await Promise.all([
       this.usersRepository.count({ where: { isActive: true } }),
@@ -237,8 +247,9 @@ export class UsersService {
     });
     if (!user) return false;
 
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const last  = user.lastDailyBonusAt ? new Date(user.lastDailyBonusAt) : null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const last = user.lastDailyBonusAt ? new Date(user.lastDailyBonusAt) : null;
     if (last) last.setHours(0, 0, 0, 0);
 
     if (last && last.getTime() === today.getTime()) return false;
@@ -247,21 +258,27 @@ export class UsersService {
       lastDailyBonusAt: new Date(),
     });
     await this.usersRepository.increment({ id }, 'coins', 1);
-    await this.notifications.create({
-      userId: id,
-      kind:   'daily_bonus',
-      title:  'Ежедневный бонус: +1 монета',
-      body:   'Спасибо, что вернулись! Загляните в магазин.',
-      icon:   'Coins',
-      color:  '#eab308',
-    }).catch(() => { /* ignore */ });
+    await this.notifications
+      .create({
+        userId: id,
+        kind: 'daily_bonus',
+        title: 'Ежедневный бонус: +1 монета',
+        body: 'Спасибо, что вернулись! Загляните в магазин.',
+        icon: 'Coins',
+        color: '#eab308',
+      })
+      .catch(() => {
+        /* ignore */
+      });
     return true;
   }
 
   // ── Смена пароля ───────────────────────────────────────────
   async changePassword(id: string, dto: ChangePasswordDto): Promise<void> {
     if (dto.currentPassword === dto.newPassword) {
-      throw new BadRequestException('Новый пароль должен отличаться от текущего');
+      throw new BadRequestException(
+        'Новый пароль должен отличаться от текущего',
+      );
     }
     const user = await this.usersRepository
       .createQueryBuilder('u')
@@ -288,13 +305,17 @@ export class UsersService {
       .getOne();
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    const valid = user.password ? await bcrypt.compare(dto.password, user.password) : false;
+    const valid = user.password
+      ? await bcrypt.compare(dto.password, user.password)
+      : false;
     if (!valid) throw new UnauthorizedException('Неверный пароль');
 
     if (user.email === dto.newEmail) {
       throw new BadRequestException('Это уже ваш текущий email');
     }
-    const exists = await this.usersRepository.findOne({ where: { email: dto.newEmail } });
+    const exists = await this.usersRepository.findOne({
+      where: { email: dto.newEmail },
+    });
     if (exists) throw new ConflictException('Этот email уже используется');
 
     user.email = dto.newEmail;
@@ -314,7 +335,9 @@ export class UsersService {
       .getOne();
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    const valid = user.password ? await bcrypt.compare(password, user.password) : false;
+    const valid = user.password
+      ? await bcrypt.compare(password, user.password)
+      : false;
     if (!valid) throw new UnauthorizedException('Неверный пароль');
 
     await this.purgeUser(id);
@@ -356,7 +379,8 @@ export class UsersService {
 
   /** Сколько аккаунтов было удалено сегодня (с 00:00 локального времени). */
   async deletedToday(): Promise<number> {
-    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
     const res = await this.dataSource
       .createQueryBuilder()
       .select('COUNT(*)', 'count')
@@ -379,10 +403,24 @@ export class UsersService {
   }
 
   // ── Публичный профиль ──────────────────────────────────────
-  async getPublicProfile(username: string): Promise<Partial<User> & { level: number }> {
+  async getPublicProfile(
+    username: string,
+  ): Promise<Partial<User> & { level: number }> {
     const user = await this.usersRepository.findOne({
       where: { username, isActive: true },
-      select: ['id', 'username', 'displayName', 'avatarUrl', 'coverUrl', 'bio', 'location', 'createdAt', 'xp', 'selectedFrame', 'socialLinks'],
+      select: [
+        'id',
+        'username',
+        'displayName',
+        'avatarUrl',
+        'coverUrl',
+        'bio',
+        'location',
+        'createdAt',
+        'xp',
+        'selectedFrame',
+        'socialLinks',
+      ],
     });
     if (!user) throw new NotFoundException('Пользователь не найден');
     return { ...user, level: Math.floor((user.xp ?? 0) / 1000) };

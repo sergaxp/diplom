@@ -200,7 +200,11 @@ export class AuthService {
       return { user: this.stripPassword(user), tokens };
     } catch (err) {
       // Пробрасываем ConflictException как есть (409), логируем остальное
-      if (err.status && err.status < 500) throw err;
+      const status =
+        err instanceof Object && 'status' in err
+          ? (err as { status?: number }).status
+          : undefined;
+      if (status !== undefined && status < 500) throw err;
       this.logger.error(
         'Ошибка регистрации:',
         (err as Error).message,

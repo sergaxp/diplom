@@ -24,11 +24,11 @@ export class NotificationsService {
   async create(p: CreateNotificationPayload): Promise<Notification> {
     const n = this.repo.create({
       userId: p.userId,
-      kind:   p.kind,
-      title:  p.title,
-      body:   p.body  ?? null,
-      icon:   p.icon  ?? null,
-      color:  p.color ?? null,
+      kind: p.kind,
+      title: p.title,
+      body: p.body ?? null,
+      icon: p.icon ?? null,
+      color: p.color ?? null,
     });
     const saved = await this.repo.save(n);
 
@@ -42,7 +42,7 @@ export class NotificationsService {
         select: ['id'],
       });
       if (stale.length) {
-        await this.repo.delete({ id: In(stale.map(s => s.id)) });
+        await this.repo.delete({ id: In(stale.map((s) => s.id)) });
       }
     }
     return saved;

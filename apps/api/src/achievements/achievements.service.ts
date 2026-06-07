@@ -6,7 +6,11 @@ import { User } from '../users/entities/user.entity';
 import { Task, TaskRepeat, TaskType } from '../tasks/entities/task.entity';
 import { TaskCompletion } from '../tasks/entities/task-completion.entity';
 import { Tag } from '../tags/entities/tag.entity';
-import { ACHIEVEMENTS, ACHIEVEMENT_MAP, AchievementDef, RANK_COINS } from './achievements.definitions';
+import {
+  ACHIEVEMENTS,
+  AchievementDef,
+  RANK_COINS,
+} from './achievements.definitions';
 import { NotificationsService } from '../notifications/notifications.service';
 
 const RANK_COLOR: Record<1 | 2 | 3 | 4, string> = {
@@ -19,10 +23,20 @@ export type { AchievementDef };
 
 // ── Trigger types ─────────────────────────────────────────────
 export type AchievementTrigger =
-  | { type: 'task_created'; taskRepeat: TaskRepeat; taskType: TaskType; hasEndDate: boolean }
+  | {
+      type: 'task_created';
+      taskRepeat: TaskRepeat;
+      taskType: TaskType;
+      hasEndDate: boolean;
+    }
   | { type: 'task_completed'; taskTime: string | null; taskType: TaskType }
   | { type: 'tag_created' }
-  | { type: 'profile_updated'; displayName: string | null; avatarUrl: string | null; bio: string | null };
+  | {
+      type: 'profile_updated';
+      displayName: string | null;
+      avatarUrl: string | null;
+      bio: string | null;
+    };
 
 export interface AchievementResult extends AchievementDef {
   unlocked: boolean;
@@ -49,9 +63,9 @@ export class AchievementsService {
   // ── Публичный список достижений пользователя ──────────────
   async getAll(userId: string): Promise<AchievementResult[]> {
     const rows = await this.achRepo.find({ where: { userId } });
-    const unlockedMap = new Map(rows.map(r => [r.defId, r.unlockedAt]));
+    const unlockedMap = new Map(rows.map((r) => [r.defId, r.unlockedAt]));
 
-    return ACHIEVEMENTS.map(def => ({
+    return ACHIEVEMENTS.map((def) => ({
       ...def,
       unlocked: unlockedMap.has(def.id),
       unlockedAt: unlockedMap.get(def.id)?.toISOString(),
@@ -59,11 +73,14 @@ export class AchievementsService {
   }
 
   // ── Проверить и выдать новые достижения ───────────────────
-  async checkAndUnlock(userId: string, trigger: AchievementTrigger): Promise<AchievementDef[]> {
+  async checkAndUnlock(
+    userId: string,
+    trigger: AchievementTrigger,
+  ): Promise<AchievementDef[]> {
     const existing = await this.achRepo.find({ where: { userId } });
-    const unlockedIds = new Set(existing.map(e => e.defId));
+    const unlockedIds = new Set(existing.map((e) => e.defId));
 
-    const candidates = ACHIEVEMENTS.filter(a => !unlockedIds.has(a.id));
+    const candidates = ACHIEVEMENTS.filter((a) => !unlockedIds.has(a.id));
     const newlyUnlocked: AchievementDef[] = [];
 
     for (const def of candidates) {
@@ -71,13 +88,17 @@ export class AchievementsService {
       if (should) {
         await this.achRepo.save(this.achRepo.create({ userId, defId: def.id }));
         await this.userRepo.increment({ id: userId }, 'xp', def.xp);
-        await this.userRepo.increment({ id: userId }, 'coins', RANK_COINS[def.rank]);
+        await this.userRepo.increment(
+          { id: userId },
+          'coins',
+          RANK_COINS[def.rank],
+        );
         await this.notifications.create({
           userId,
-          kind:  'achievement',
+          kind: 'achievement',
           title: `Достижение: ${def.title}`,
-          body:  `${def.description} · +${def.xp} XP · +${RANK_COINS[def.rank]} монет`,
-          icon:  def.icon,
+          body: `${def.description} · +${def.xp} XP · +${RANK_COINS[def.rank]} монет`,
+          icon: def.icon,
           color: RANK_COLOR[def.rank],
         });
         newlyUnlocked.push(def);
@@ -95,7 +116,6 @@ export class AchievementsService {
     trigger: AchievementTrigger,
   ): Promise<boolean> {
     switch (defId) {
-
       // ── Первые шаги ──────────────────────────────────────
       case 'first_task':
         return trigger.type === 'task_created';
@@ -104,10 +124,16 @@ export class AchievementsService {
         return trigger.type === 'task_completed';
 
       case 'first_repeat':
-        return trigger.type === 'task_created' && trigger.taskRepeat !== TaskRepeat.NONE;
+        return (
+          trigger.type === 'task_created' &&
+          trigger.taskRepeat !== TaskRepeat.NONE
+        );
 
       case 'first_mandatory':
-        return trigger.type === 'task_created' && trigger.taskType === TaskType.MANDATORY;
+        return (
+          trigger.type === 'task_created' &&
+          trigger.taskType === TaskType.MANDATORY
+        );
 
       case 'first_multiday':
         return trigger.type === 'task_created' && trigger.hasEndDate;
@@ -129,7 +155,11 @@ export class AchievementsService {
       case 'tasks_1000': {
         if (trigger.type !== 'task_completed') return false;
         const targets: Record<string, number> = {
-          tasks_10: 10, tasks_50: 50, tasks_100: 100, tasks_500: 500, tasks_1000: 1000,
+          tasks_10: 10,
+          tasks_50: 50,
+          tasks_100: 100,
+          tasks_500: 500,
+          tasks_1000: 1000,
         };
         const count = await this.completionRepo.count({ where: { userId } });
         return count >= targets[defId];
@@ -138,11 +168,15 @@ export class AchievementsService {
       // ── Обязательные задачи ──────────────────────────────
       case 'mandatory_10':
       case 'mandatory_50': {
-        if (trigger.type !== 'task_completed' || trigger.taskType !== TaskType.MANDATORY) return false;
+        if (
+          trigger.type !== 'task_completed' ||
+          trigger.taskType !== TaskType.MANDATORY
+        )
+          return false;
         const target = defId === 'mandatory_10' ? 10 : 50;
         const mandatoryIds = await this.taskRepo
           .find({ where: { userId, type: TaskType.MANDATORY }, select: ['id'] })
-          .then(ts => ts.map(t => t.id));
+          .then((ts) => ts.map((t) => t.id));
         if (!mandatoryIds.length) return false;
         const count = await this.completionRepo.count({
           where: { userId, taskId: In(mandatoryIds) },
@@ -173,7 +207,11 @@ export class AchievementsService {
       case 'streak_365': {
         if (trigger.type !== 'task_completed') return false;
         const targets: Record<string, number> = {
-          streak_3: 3, streak_7: 7, streak_30: 30, streak_100: 100, streak_365: 365,
+          streak_3: 3,
+          streak_7: 7,
+          streak_30: 30,
+          streak_100: 100,
+          streak_365: 365,
         };
         const streak = await this.getCurrentStreak(userId);
         return streak >= targets[defId];
@@ -202,7 +240,7 @@ export class AchievementsService {
 
     if (!rows.length) return 0;
 
-    const todayStr  = this.dateStr(new Date());
+    const todayStr = this.dateStr(new Date());
     const yesterdayStr = this.dateStr(new Date(Date.now() - 86_400_000));
 
     // Серия должна включать сегодня или вчера

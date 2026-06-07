@@ -1,8 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 
 /**
  * Audit запись о факте удаления аккаунта.
- * Не хранит ничего идентифицирующего, чтобы соблюсти "удаление без восстановления" – 
+ * Не хранит ничего идентифицирующего, чтобы соблюсти "удаление без восстановления" –
  * только timestamp для публичной статистики.
  */
 @Entity('account_deletion')

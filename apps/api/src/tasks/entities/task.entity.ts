@@ -1,6 +1,13 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  ManyToOne, ManyToMany, JoinTable, JoinColumn, CreateDateColumn, UpdateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  ManyToMany,
+  JoinTable,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../tags/entities/tag.entity';
@@ -88,11 +95,11 @@ export class Task {
   @Column({ type: 'json', nullable: true, default: null })
   dayOverrides: Record<string, object> | null;
 
-  @ManyToMany(() => Tag, tag => tag.tasks, { eager: false, cascade: false })
+  @ManyToMany(() => Tag, (tag) => tag.tasks, { eager: false, cascade: false })
   @JoinTable({
     name: 'task_tags',
-    joinColumn:        { name: 'taskId',  referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'tagId',   referencedColumnName: 'id' },
+    joinColumn: { name: 'taskId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'tagId', referencedColumnName: 'id' },
   })
   tags!: Tag[];
 

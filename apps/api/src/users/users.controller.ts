@@ -15,6 +15,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
 import { extname } from 'path';
 import { UsersService } from './users.service';
@@ -24,6 +25,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangeEmailDto } from './dto/change-email.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthenticatedRequest } from '../auth/types/authenticated-request';
 
 const ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.gif'];
 
@@ -39,6 +41,7 @@ const avatarFilter = (
   }
 };
 
+@ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(
@@ -53,43 +56,61 @@ export class UsersController {
   }
 
   // GET /users/me
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getMe(@Request() req) {
+  async getMe(@Request() req: AuthenticatedRequest) {
     return this.usersService.findById(req.user.id);
   }
 
   // PATCH /users/me
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch('me')
-  async updateMe(@Request() req, @Body() dto: UpdateUserDto) {
+  async updateMe(
+    @Request() req: AuthenticatedRequest,
+    @Body() dto: UpdateUserDto,
+  ) {
     return this.usersService.update(req.user.id, dto);
   }
 
   // PATCH /users/me/password – смена пароля
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch('me/password')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async changePassword(@Request() req, @Body() dto: ChangePasswordDto) {
+  async changePassword(
+    @Request() req: AuthenticatedRequest,
+    @Body() dto: ChangePasswordDto,
+  ) {
     await this.usersService.changePassword(req.user.id, dto);
   }
 
   // PATCH /users/me/email – смена email
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch('me/email')
-  async changeEmail(@Request() req, @Body() dto: ChangeEmailDto) {
+  async changeEmail(
+    @Request() req: AuthenticatedRequest,
+    @Body() dto: ChangeEmailDto,
+  ) {
     return this.usersService.changeEmail(req.user.id, dto);
   }
 
   // DELETE /users/me – удаление аккаунта
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete('me')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteAccount(@Request() req, @Body() dto: DeleteAccountDto) {
+  async deleteAccount(
+    @Request() req: AuthenticatedRequest,
+    @Body() dto: DeleteAccountDto,
+  ) {
     await this.usersService.deleteAccount(req.user.id, dto.password);
   }
 
   // POST /users/me/avatar
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('me/avatar')
   @UseInterceptors(
@@ -100,7 +121,7 @@ export class UsersController {
     }),
   )
   async uploadAvatar(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('Файл не загружен');
@@ -113,6 +134,7 @@ export class UsersController {
   }
 
   // POST /users/me/cover
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('me/cover')
   @UseInterceptors(
@@ -123,7 +145,7 @@ export class UsersController {
     }),
   )
   async uploadCover(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('Файл не загружен');
@@ -136,9 +158,10 @@ export class UsersController {
   }
 
   // POST /users/me/ping – обновить lastSeenAt (вызывается периодически с фронтенда)
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('me/ping')
-  async ping(@Request() req) {
+  async ping(@Request() req: AuthenticatedRequest) {
     await this.usersService.updateLastSeen(req.user.id);
     const granted = await this.usersService.grantDailyBonusIfDue(req.user.id);
     return { dailyBonusGranted: granted };

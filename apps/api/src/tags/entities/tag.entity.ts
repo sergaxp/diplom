@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToMany,
+} from 'typeorm';
 import { Task } from '../../tasks/entities/task.entity';
 
 @Entity('tags')
@@ -18,7 +24,7 @@ export class Tag {
   @Column({ type: 'varchar', length: 20, default: '#6b7280' })
   color: string;
 
-  @ManyToMany(() => Task, t => t.tags)
+  @ManyToMany(() => Task, (t) => t.tags)
   tasks: Task[];
 
   @CreateDateColumn()

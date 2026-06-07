@@ -19,7 +19,9 @@ declare global {
 export function GoogleSignInButton({ onToken, disabled }: { onToken: (accessToken: string) => void; disabled?: boolean }) {
   const clientRef = useRef<any>(null);
   const cbRef = useRef(onToken);
-  cbRef.current = onToken;
+  useEffect(() => {
+    cbRef.current = onToken;
+  });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {

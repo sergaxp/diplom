@@ -1,6 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  Index,
+} from 'typeorm';
 
-export type NotificationKind = 'achievement' | 'task_completed' | 'daily_bonus' | 'purchase';
+export type NotificationKind =
+  | 'achievement'
+  | 'task_completed'
+  | 'daily_bonus'
+  | 'purchase';
 
 @Entity('notifications')
 @Index(['userId', 'createdAt'])
