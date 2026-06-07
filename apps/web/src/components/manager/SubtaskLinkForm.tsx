@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import * as LucideIcons from 'lucide-react';
+import { Loader2, Play, Image as ImageIcon, Video, Link as LinkIcon } from 'lucide-react';
 import type { SubtaskItem } from '../../lib/tasks';
 import { parseLink } from '../../lib/linkPreview';
 import { storageApi } from '../../lib/storage';
@@ -96,7 +96,7 @@ export function SubtaskLinkForm({ onSave, onCancel }: Props) {
           value={title}
           onChange={e => { setTitle(e.target.value); setTitleTouched(true); }}
           placeholder={fetching ? 'Загружаем подпись...' : 'Подпись (необязательно)'}
-          suffix={fetching ? <LucideIcons.Loader2 size={14} className={styles.titleLoader} /> : undefined}
+          suffix={fetching ? <Loader2 size={14} className={styles.titleLoader} /> : undefined}
         />
 
         {info && (
@@ -104,13 +104,13 @@ export function SubtaskLinkForm({ onSave, onCancel }: Props) {
             <div className={styles.attachItem}>
               {effectiveThumb ? (
                 <div className={styles.attachMedia} style={{ background: `url(${effectiveThumb}) center/cover no-repeat` }}>
-                  {info.type === 'video' && <span className={styles.playBadge}><LucideIcons.Play size={20} strokeWidth={2} /></span>}
+                  {info.type === 'video' && <span className={styles.playBadge}><Play size={20} strokeWidth={2} /></span>}
                 </div>
               ) : (
                 <div className={styles.attachFile}>
-                  {info.type === 'image' ? <LucideIcons.Image size={24} strokeWidth={1.5} />
-                 : info.type === 'video' ? <LucideIcons.Video size={24} strokeWidth={1.5} />
-                 :                          <LucideIcons.Link  size={24} strokeWidth={1.5} />}
+                  {info.type === 'image' ? <ImageIcon size={24} strokeWidth={1.5} />
+                 : info.type === 'video' ? <Video size={24} strokeWidth={1.5} />
+                 :                          <LinkIcon  size={24} strokeWidth={1.5} />}
                 </div>
               )}
               <div className={styles.attachName} title={info.url}>

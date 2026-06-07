@@ -1,17 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import * as LucideIcons from 'lucide-react';
 import { Paperclip, File as FileIcon } from 'lucide-react';
 import type { SubtaskItem, SubtaskAttachment } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { storageApi } from '../../lib/storage';
+import { Icon, hasIcon } from '../../lib/icons';
 import { TimePickerField } from './TimePickerField';
 import { Modal, Button, Input, Textarea } from '../../components/ui';
 import styles from './SubtaskCreatePopup.module.scss';
-
-type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
-const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 const ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/ogg,application/zip,application/x-7z-compressed,application/x-rar-compressed,application/pdf';
 
@@ -57,7 +54,6 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
   }, [tagDropOpen]);
 
   const selectedTag = tagId ? userTags.find(t => t.id === tagId) : undefined;
-  const TagIcon = selectedTag?.icon ? Icons[selectedTag.icon] : null;
 
   const openTagDrop = () => {
     if (tagDropOpen) { setTagDropOpen(false); return; }
@@ -221,8 +217,8 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
                 style={selectedTag ? { borderColor: selectedTag.color, color: selectedTag.color } : undefined}
               >
                 {selectedTag ? (
-                  TagIcon
-                    ? <TagIcon size={13} strokeWidth={2} />
+                  hasIcon(selectedTag.icon)
+                    ? <Icon name={selectedTag.icon} size={13} strokeWidth={2} />
                     : <span className={styles.tagDot} style={{ background: selectedTag.color }} />
                 ) : '#'}
                 {selectedTag ? selectedTag.name : 'Тег'}
@@ -243,7 +239,6 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
                     {!tagId && <span className={styles.tagDropCheck}>✓</span>}
                   </button>
                   {userTags.map(t => {
-                    const Ic = t.icon ? Icons[t.icon] : null;
                     const active = tagId === t.id;
                     return (
                       <button key={t.id} type="button"
@@ -251,7 +246,7 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
                         onClick={() => { setTagId(t.id); setTagDropOpen(false); }}
                       >
                         <span className={styles.tagDropDot} style={{ background: t.color }} />
-                        {Ic && <Ic size={11} strokeWidth={2} />}
+                        {hasIcon(t.icon) && <Icon name={t.icon} size={11} strokeWidth={2} />}
                         <span className={styles.tagDropName}>{t.name}</span>
                         {active && <span className={styles.tagDropCheck}>✓</span>}
                       </button>

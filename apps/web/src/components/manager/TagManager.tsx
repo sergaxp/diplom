@@ -1,15 +1,12 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import * as LucideIcons from 'lucide-react';
 import { ChevronDown, Pencil, X, Plus } from 'lucide-react';
 import { Tag } from '../../lib/tags';
 import { IconPicker } from '../IconPicker';
+import { Icon, hasIcon } from '../../lib/icons';
 import { Button, IconButton, Input } from '../../components/ui';
 import styles from './TagManager.module.scss';
-
-type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
-const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 const DEFAULT_COLOR = '#4F46E5';
 
@@ -89,12 +86,11 @@ export function TagManager({ tags, alwaysOpen, onCreate, onDelete, onUpdate }: P
           {tags.length > 0 && (
             <div className={styles.list}>
               {tags.map(tag => {
-                const Ic = tag.icon ? Icons[tag.icon] : null;
                 return (
                   <div key={tag.id} className={[styles.tagRow, editingId === tag.id ? styles.tagRowEditing : ''].join(' ')}>
                     <span className={styles.tagChip} style={{ borderColor: tag.color, color: tag.color }}>
-                      {Ic
-                        ? <Ic size={11} strokeWidth={2} />
+                      {hasIcon(tag.icon)
+                        ? <Icon name={tag.icon} size={11} strokeWidth={2} />
                         : <span className={styles.tagDot} style={{ background: tag.color }} />}
                       <span className={styles.tagName}>{tag.name}</span>
                     </span>

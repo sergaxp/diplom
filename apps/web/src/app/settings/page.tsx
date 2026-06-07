@@ -16,7 +16,8 @@ import { reverseGeocode } from '../../lib/weather';
 import { clearAuth, User } from '../../lib/auth';
 import { tagsApi } from '../../lib/tags';
 import { shopApi } from '../../lib/shop';
-import { SOCIAL_PROVIDERS, getSocialIcon } from '../../lib/socials';
+import { SOCIAL_PROVIDERS } from '../../lib/socials';
+import { Icon } from '../../lib/icons';
 import { TagManager } from '../../components/manager/TagManager';
 import { Button, IconButton, Input, Textarea } from '../../components/ui';
 import styles from './page.module.scss';
@@ -362,12 +363,11 @@ function SocialLinksEditor({ user, setUser }: { user: User; setUser: (u: User | 
 
       <div className={styles.socialEditList}>
         {SOCIAL_PROVIDERS.map(p => {
-          const Ic = getSocialIcon(p.id);
           const value = links[p.id] ?? '';
           return (
             <div key={p.id} className={styles.socialRow}>
               <span className={styles.socialRowIcon} style={{ color: p.color, background: p.color + '1f' }}>
-                {Ic && <Ic size={14} strokeWidth={2} />}
+                <Icon name={p.icon} size={14} strokeWidth={2} />
               </span>
               <span className={styles.socialRowLabel}>{p.label}</span>
               <Input

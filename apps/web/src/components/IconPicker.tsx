@@ -2,12 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import * as LucideIcons from 'lucide-react';
-import { ICON_CATEGORIES } from '../lib/icons';
+import { ICON_CATEGORIES, Icon, hasIcon } from '../lib/icons';
 import styles from './IconPicker.module.scss';
-
-type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
-const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 const ALL_CATEGORY = 'Все';
 const ALL_ICON_NAMES = [...new Set(ICON_CATEGORIES.flatMap(c => c.names))];
@@ -77,7 +73,6 @@ export function IconPicker({ value, onChange }: Props) {
       ? ALL_ICON_NAMES
       : ICON_CATEGORIES.find(c => c.label === category)?.names ?? [];
 
-  const SelectedIcon = value ? Icons[value] : null;
 
   const dropdown = (
     <div
@@ -125,17 +120,15 @@ export function IconPicker({ value, onChange }: Props) {
         {visibleNames.length === 0 && q && (
           <div className={styles.empty}>Ничего не найдено</div>
         )}
-        {visibleNames.map(name => {
-          const Ic = Icons[name];
-          if (!Ic) return null;
-          return (
+        {visibleNames.map(name => (
+          hasIcon(name) && (
             <button key={name} type="button" title={name}
               className={[styles.btn, value === name ? styles.btnActive : ''].join(' ')}
               onClick={() => { onChange(name); setOpen(false); setSearch(''); }}>
-              <Ic size={18} strokeWidth={1.75} />
+              <Icon name={name} size={18} strokeWidth={1.75} />
             </button>
-          );
-        })}
+          )
+        ))}
       </div>
     </div>
   );
@@ -144,8 +137,8 @@ export function IconPicker({ value, onChange }: Props) {
     <div className={styles.wrap}>
       <button ref={triggerRef} type="button" className={styles.trigger}
         onClick={handleToggle} title={value || 'Без иконки'}>
-        {SelectedIcon
-          ? <SelectedIcon size={16} strokeWidth={1.75} />
+        {hasIcon(value)
+          ? <Icon name={value} size={16} strokeWidth={1.75} />
           : <span className={styles.fallback}>–</span>}
         <span className={[styles.name, !value ? styles.nameEmpty : ''].join(' ')}>
           {value || 'Без иконки'}

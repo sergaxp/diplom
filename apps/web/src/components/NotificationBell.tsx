@@ -2,14 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as LucideIcons from 'lucide-react';
 import { Bell } from 'lucide-react';
 import { notificationsApi, NotificationItem } from '../lib/notifications';
+import { Icon, hasIcon } from '../lib/icons';
 import { Button, EmptyState, Skeleton } from './ui';
 import styles from './NotificationBell.module.scss';
-
-type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number; color?: string }>;
-const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 function relativeTime(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -135,14 +132,13 @@ export function NotificationBell() {
             )}
 
             {items.map(n => {
-              const Ic = n.icon ? Icons[n.icon] : null;
               return (
                 <div key={n.id} className={[styles.item, !n.read ? styles.itemUnread : ''].join(' ')}>
                   <div
                     className={styles.itemIcon}
                     style={n.color ? { color: n.color, background: n.color + '1f' } : undefined}
                   >
-                    {Ic ? <Ic size={16} strokeWidth={1.75} /> : <Bell size={15} strokeWidth={1.75} />}
+                    {hasIcon(n.icon) ? <Icon name={n.icon} size={16} strokeWidth={1.75} /> : <Bell size={15} strokeWidth={1.75} />}
                   </div>
                   <div className={styles.itemBody}>
                     <span className={styles.itemTitle}>{n.title}</span>

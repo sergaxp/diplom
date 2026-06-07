@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { UserAchievement } from './entities/user-achievement.entity';
 import { User } from '../users/entities/user.entity';
-import { Task } from '../tasks/entities/task.entity';
+import { Task, TaskRepeat, TaskType } from '../tasks/entities/task.entity';
 import { TaskCompletion } from '../tasks/entities/task-completion.entity';
 import { Tag } from '../tags/entities/tag.entity';
 import { ACHIEVEMENTS, ACHIEVEMENT_MAP, AchievementDef, RANK_COINS } from './achievements.definitions';
@@ -19,8 +19,8 @@ export type { AchievementDef };
 
 // ── Trigger types ─────────────────────────────────────────────
 export type AchievementTrigger =
-  | { type: 'task_created'; taskRepeat: string; taskType: string; hasEndDate: boolean }
-  | { type: 'task_completed'; taskTime: string | null; taskType: string }
+  | { type: 'task_created'; taskRepeat: TaskRepeat; taskType: TaskType; hasEndDate: boolean }
+  | { type: 'task_completed'; taskTime: string | null; taskType: TaskType }
   | { type: 'tag_created' }
   | { type: 'profile_updated'; displayName: string | null; avatarUrl: string | null; bio: string | null };
 
@@ -104,10 +104,10 @@ export class AchievementsService {
         return trigger.type === 'task_completed';
 
       case 'first_repeat':
-        return trigger.type === 'task_created' && trigger.taskRepeat !== 'none';
+        return trigger.type === 'task_created' && trigger.taskRepeat !== TaskRepeat.NONE;
 
       case 'first_mandatory':
-        return trigger.type === 'task_created' && trigger.taskType === 'mandatory';
+        return trigger.type === 'task_created' && trigger.taskType === TaskType.MANDATORY;
 
       case 'first_multiday':
         return trigger.type === 'task_created' && trigger.hasEndDate;
@@ -138,10 +138,10 @@ export class AchievementsService {
       // ── Обязательные задачи ──────────────────────────────
       case 'mandatory_10':
       case 'mandatory_50': {
-        if (trigger.type !== 'task_completed' || trigger.taskType !== 'mandatory') return false;
+        if (trigger.type !== 'task_completed' || trigger.taskType !== TaskType.MANDATORY) return false;
         const target = defId === 'mandatory_10' ? 10 : 50;
         const mandatoryIds = await this.taskRepo
-          .find({ where: { userId, type: 'mandatory' }, select: ['id'] })
+          .find({ where: { userId, type: TaskType.MANDATORY }, select: ['id'] })
           .then(ts => ts.map(t => t.id));
         if (!mandatoryIds.length) return false;
         const count = await this.completionRepo.count({

@@ -5,6 +5,29 @@ import {
 import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../tags/entities/tag.entity';
 
+export enum TaskRepeat {
+  NONE = 'none',
+  DAILY = 'daily',
+  WEEKDAYS = 'weekdays',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+  YEARLY = 'yearly',
+  CUSTOM = 'custom',
+}
+
+export enum TaskType {
+  NORMAL = 'normal',
+  MANDATORY = 'mandatory',
+  EVENT = 'event',
+}
+
+export enum TaskPriority {
+  NONE = 'none',
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+}
+
 @Entity('tasks')
 export class Task {
   @PrimaryGeneratedColumn('uuid')
@@ -35,8 +58,8 @@ export class Task {
   @Column({ type: 'varchar', length: 10, nullable: true, default: null })
   endDate!: string | null;
 
-  @Column({ type: 'varchar', length: 20, default: 'none' })
-  repeat: string;
+  @Column({ type: 'varchar', length: 20, default: TaskRepeat.NONE })
+  repeat: TaskRepeat;
 
   @Column({ type: 'json', nullable: true, default: null })
   repeatConfig: object | null;
@@ -44,11 +67,11 @@ export class Task {
   @Column({ type: 'varchar', length: 10, nullable: true, default: null })
   repeatUntil: string | null;
 
-  @Column({ type: 'varchar', length: 20, default: 'normal' })
-  type: string;
+  @Column({ type: 'varchar', length: 20, default: TaskType.NORMAL })
+  type: TaskType;
 
-  @Column({ type: 'varchar', length: 20, default: 'none' })
-  priority: string;
+  @Column({ type: 'varchar', length: 20, default: TaskPriority.NONE })
+  priority: TaskPriority;
 
   @Column({ type: 'varchar', length: 64, nullable: true, default: null })
   icon: string | null;

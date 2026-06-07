@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../users/entities/user.entity';
-import { Task } from '../tasks/entities/task.entity';
+import { Task, TaskRepeat } from '../tasks/entities/task.entity';
 import { GlobalTask } from '../tasks/entities/global-task.entity';
 import { UsersService } from '../users/users.service';
 
@@ -22,7 +22,7 @@ export interface CreateGlobalTaskDto {
   description?: string;
   date: string;
   time?: string;
-  repeat?: string;
+  repeat?: TaskRepeat;
   repeatUntil?: string;
   icon?: string;
 }
@@ -104,7 +104,7 @@ export class AdminService {
       description: dto.description ?? null,
       date:        dto.date,
       time:        dto.time        ?? null,
-      repeat:      dto.repeat      ?? 'none',
+      repeat:      dto.repeat      ?? TaskRepeat.NONE,
       repeatUntil: dto.repeatUntil ?? null,
       icon:        dto.icon?.trim() || null,
       createdBy:   adminId,

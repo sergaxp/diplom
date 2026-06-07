@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import * as LucideIcons from 'lucide-react';
+import { Cloud, Wind, Thermometer, CloudRain, Clock, Paperclip, Play, FileText, Link as LinkIcon, Plus, X } from 'lucide-react';
 import { Task, TaskRepeat, TaskType, TaskPriority, RepeatConfig, SubtaskSection, SubtaskItem, toDateStr } from '../../lib/tasks';
 import { DatePickerPopup, getDateButtonLabel } from './DatePickerPopup';
 import { RepeatConfigModal } from './RepeatConfigModal';
@@ -16,11 +16,8 @@ import type { Tag } from '../../lib/tags';
 import { useDayWeather, weatherCodeToInfo } from '../../lib/weather';
 import { useAuthStore } from '../../store/authStore';
 import { Modal, Button, IconButton } from '../../components/ui';
-import { X } from 'lucide-react';
+import { Icon, hasIcon } from '../../lib/icons';
 import styles from './TaskFormModal.module.scss';
-
-type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
-const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -109,7 +106,7 @@ function WeatherWidget({ date }: { date: string }) {
     return (
       <div className={styles.weatherCard}>
         <div className={styles.weatherHeader}>
-          {(() => { const C = Icons['Cloud']; return C ? <C size={18} strokeWidth={1.5} /> : '☁'; })()}
+          <Cloud size={18} strokeWidth={1.5} />
           <span className={styles.weatherTitle}>{dateLabel}</span>
         </div>
         <p className={styles.weatherNote}>Прогноз доступен только на 16 дней вперёд</p>
@@ -121,7 +118,7 @@ function WeatherWidget({ date }: { date: string }) {
     return (
       <div className={styles.weatherCard}>
         <div className={styles.weatherHeader}>
-          {(() => { const C = Icons['Cloud']; return C ? <C size={18} strokeWidth={1.5} /> : '☁'; })()}
+          <Cloud size={18} strokeWidth={1.5} />
           <span className={styles.weatherTitle}>{dateLabel}</span>
         </div>
         <p className={styles.weatherNote}>Загрузка прогноза...</p>
@@ -133,7 +130,7 @@ function WeatherWidget({ date }: { date: string }) {
     return (
       <div className={styles.weatherCard}>
         <div className={styles.weatherHeader}>
-          {(() => { const C = Icons['Cloud']; return C ? <C size={18} strokeWidth={1.5} /> : '☁'; })()}
+          <Cloud size={18} strokeWidth={1.5} />
           <span className={styles.weatherTitle}>{dateLabel}</span>
         </div>
         <p className={styles.weatherNote}>
@@ -144,17 +141,11 @@ function WeatherWidget({ date }: { date: string }) {
   }
 
   const { label, icon } = weatherCodeToInfo(weather.weatherCode);
-  const WeatherIcon = Icons[icon] ?? Icons['Cloud'];
-  const WindIcon    = Icons['Wind'];
-  const DropIcon    = Icons['Droplets'];
-  const ThermoIcon  = Icons['Thermometer'];
-  const SunIcon     = Icons['Sun'];
-  const RainIcon    = Icons['CloudRain'];
 
   return (
     <div className={styles.weatherCard}>
       <div className={styles.weatherHeader}>
-        <WeatherIcon size={20} strokeWidth={1.5} />
+        {hasIcon(icon) ? <Icon name={icon} size={20} strokeWidth={1.5} /> : <Cloud size={20} strokeWidth={1.5} />}
         <span className={styles.weatherTitle}>{dateLabel}</span>
         <span className={styles.weatherCondition}>{label}</span>
       </div>
@@ -165,31 +156,25 @@ function WeatherWidget({ date }: { date: string }) {
       </div>
 
       <div className={styles.weatherRows}>
-        {ThermoIcon && (
-          <div className={styles.weatherRow}>
-            <ThermoIcon size={12} strokeWidth={1.75} />
-            <span>Ощущается</span>
-            <span className={styles.weatherRowVal}>
-              {weather.feelsLikeMax > 0 ? '+' : ''}{weather.feelsLikeMax}°
-            </span>
-          </div>
-        )}
-        {RainIcon && (
-          <div className={styles.weatherRow}>
-            <RainIcon size={12} strokeWidth={1.75} />
-            <span>Осадки</span>
-            <span className={styles.weatherRowVal}>
-              {weather.precipProbMax}% · {weather.precipSum} мм
-            </span>
-          </div>
-        )}
-        {WindIcon && (
-          <div className={styles.weatherRow}>
-            <WindIcon size={12} strokeWidth={1.75} />
-            <span>Ветер</span>
-            <span className={styles.weatherRowVal}>{weather.windSpeedMax} км/ч</span>
-          </div>
-        )}
+        <div className={styles.weatherRow}>
+          <Thermometer size={12} strokeWidth={1.75} />
+          <span>Ощущается</span>
+          <span className={styles.weatherRowVal}>
+            {weather.feelsLikeMax > 0 ? '+' : ''}{weather.feelsLikeMax}°
+          </span>
+        </div>
+        <div className={styles.weatherRow}>
+          <CloudRain size={12} strokeWidth={1.75} />
+          <span>Осадки</span>
+          <span className={styles.weatherRowVal}>
+            {weather.precipProbMax}% · {weather.precipSum} мм
+          </span>
+        </div>
+        <div className={styles.weatherRow}>
+          <Wind size={12} strokeWidth={1.75} />
+          <span>Ветер</span>
+          <span className={styles.weatherRowVal}>{weather.windSpeedMax} км/ч</span>
+        </div>
       </div>
     </div>
   );
@@ -378,22 +363,19 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                     <div className={styles.cardBadges}>
                       {item.time && (
                         <span className={styles.cardBadge}>
-                          <LucideIcons.Clock size={10} strokeWidth={2}/> {item.time}
+                          <Clock size={10} strokeWidth={2}/> {item.time}
                         </span>
                       )}
-                      {tag && (() => {
-                        const TagIc = tag.icon ? (LucideIcons as unknown as Record<string, LucideIcon>)[tag.icon] : null;
-                        return (
-                          <span className={styles.cardBadge} style={{ borderColor: tag.color, color: tag.color }}>
-                            {TagIc ? <TagIc size={10} strokeWidth={2}/>
-                                   : <span className={styles.tagBadgeDot} style={{ background: tag.color }}/>}
-                            {tag.name}
-                          </span>
-                        );
-                      })()}
+                      {tag && (
+                        <span className={styles.cardBadge} style={{ borderColor: tag.color, color: tag.color }}>
+                          {hasIcon(tag.icon) ? <Icon name={tag.icon} size={10} strokeWidth={2}/>
+                                 : <span className={styles.tagBadgeDot} style={{ background: tag.color }}/>}
+                          {tag.name}
+                        </span>
+                      )}
                       {item.attachments && item.attachments.length > 0 && (
                         <span className={styles.cardBadge}>
-                          <LucideIcons.Paperclip size={10} strokeWidth={2}/> {item.attachments.length}
+                          <Paperclip size={10} strokeWidth={2}/> {item.attachments.length}
                         </span>
                       )}
                     </div>
@@ -454,7 +436,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                             : <video src={a.url} muted className={styles.tgMediaImg}/>}
                           {isVid && (
                             <span className={styles.tgMediaPlay}>
-                              <LucideIcons.Play size={28} strokeWidth={2}/>
+                              <Play size={28} strokeWidth={2}/>
                             </span>
                           )}
                         </button>
@@ -474,7 +456,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                         title={a.name}
                       >
                         <span className={styles.tgFileIcon}>
-                          <LucideIcons.FileText size={22} strokeWidth={1.5}/>
+                          <FileText size={22} strokeWidth={1.5}/>
                         </span>
                         <span className={styles.tgFileText}>
                           <span className={styles.tgFileName}>{a.name}</span>
@@ -514,7 +496,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                             >
                               {isVid && (
                                 <span className={styles.tgMediaPlay}>
-                                  <LucideIcons.Play size={32} strokeWidth={2}/>
+                                  <Play size={32} strokeWidth={2}/>
                                 </span>
                               )}
                             </span>
@@ -536,7 +518,7 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
                         title={item.url}
                       >
                         <span className={styles.tgFileIcon}>
-                          <LucideIcons.Link size={22} strokeWidth={1.5}/>
+                          <LinkIcon size={22} strokeWidth={1.5}/>
                         </span>
                         <span className={styles.tgFileText}>
                           <span className={styles.tgFileName}>{item.title || item.url}</span>
@@ -557,13 +539,13 @@ function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDat
           {formState === null && (
             <div className={styles.addActions}>
               <button type="button" className={styles.addActionBtn} onClick={() => setFormState('subtask-new')}>
-                <LucideIcons.Plus size={14} strokeWidth={2}/> Подзадача
+                <Plus size={14} strokeWidth={2}/> Подзадача
               </button>
               <button type="button" className={styles.addActionBtn} onClick={() => attachRef.current?.click()}>
-                <LucideIcons.Paperclip size={13} strokeWidth={2}/> Вложение
+                <Paperclip size={13} strokeWidth={2}/> Вложение
               </button>
               <button type="button" className={styles.addActionBtn} onClick={() => setFormState('link')}>
-                <LucideIcons.Link size={13} strokeWidth={2}/> Ссылка
+                <LinkIcon size={13} strokeWidth={2}/> Ссылка
               </button>
               <input
                 ref={attachRef}
@@ -747,7 +729,6 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   const allTags = localTag && !userTags.find(t => t.id === localTag.id)
     ? [...userTags, localTag] : userTags;
   const selectedTag = selectedTagId ? allTags.find(t => t.id === selectedTagId) : undefined;
-  const TagIcon     = selectedTag?.icon ? Icons[selectedTag.icon] : null;
 
   const toggleTag = (id: string) => setSelectedTagId(prev => prev === id ? null : id);
 
@@ -940,9 +921,9 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
         {/* ── Top: иконка + название + описание + мета-поля + теги ── */}
         <div className={styles.top}>
           <div className={styles.titleRow}>
-            {TagIcon && (
+            {hasIcon(selectedTag?.icon) && (
               <span className={styles.taskIconPreview} style={{ color: selectedTag?.color }}>
-                <TagIcon size={20} strokeWidth={1.75} />
+                <Icon name={selectedTag?.icon} size={20} strokeWidth={1.75} />
               </span>
             )}
             {/* textarea (1 строка) вместо input: мобильные браузеры (напр. Yandex)
@@ -1218,7 +1199,6 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
         </button>
 
         {allTags.map(tag => {
-          const Ic     = tag.icon ? Icons[tag.icon] : null;
           const active = selectedTagId === tag.id;
           return (
             <button
@@ -1228,7 +1208,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               onClick={() => { toggleTag(tag.id); setTagDropOpen(false); }}
             >
               <span className={styles.tagDropDot} style={{ background: tag.color }} />
-              {Ic && <Ic size={11} strokeWidth={2} />}
+              {hasIcon(tag.icon) && <Icon name={tag.icon} size={11} strokeWidth={2} />}
               <span className={styles.tagDropName}>{tag.name}</span>
               {active && <span className={styles.tagDropCheck}>✓</span>}
             </button>

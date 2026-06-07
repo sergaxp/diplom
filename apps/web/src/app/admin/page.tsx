@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as LucideIcons from 'lucide-react';
 import { Lock, X as XIcon, Plus, MessageSquare, Bug } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { useAuthStore } from '../../store/authStore';
 import { adminApi, AdminUser, GlobalTask } from '../../lib/admin';
 import { IconPicker } from '../../components/IconPicker';
+import { Icon, hasIcon } from '../../lib/icons';
 import {
   adminFeedbackApi,
   BugReport, FeatureRequest,
@@ -17,9 +17,6 @@ import {
 } from '../../lib/feedback';
 import { Button, IconButton, Input, Badge, Skeleton, EmptyState } from '../../components/ui';
 import styles from './page.module.scss';
-
-type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number; style?: React.CSSProperties }>;
-const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 // ── Утилиты ────────────────────────────────────────────────────
 const ONLINE_MS    = 5  * 60 * 1000;
@@ -323,7 +320,9 @@ function GlobalEventsSection() {
             <div key={ev.id} className={styles.eventItem}>
               <div className={styles.eventInfo}>
                 <span className={styles.eventTitle}>
-                  {(() => { const Ic = Icons[ev.icon ?? '']; return Ic ? <Ic size={16} strokeWidth={1.75} style={{ verticalAlign: 'middle', marginRight: 5 }} /> : (ev.icon || '🌐'); })()}
+                  {hasIcon(ev.icon)
+                    ? <Icon name={ev.icon} size={16} strokeWidth={1.75} style={{ verticalAlign: 'middle', marginRight: 5 }} />
+                    : (ev.icon || '🌐')}
                   {ev.title}
                 </span>
                 <span className={styles.eventMeta}>

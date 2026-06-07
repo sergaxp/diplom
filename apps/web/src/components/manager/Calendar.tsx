@@ -1,13 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import * as LucideIcons from 'lucide-react';
 import { Task, toDateStr, getTasksForDate, getMultiDayOccurrence } from '../../lib/tasks';
 import { useWeatherShownLock } from '../../lib/weatherLock';
 import { useHolidays, HolidayMap, getHolidayColor, getHolidayName } from '../../lib/holidays';
-
-type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number; color?: string }>;
-const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
+import { Icon, hasIcon } from '../../lib/icons';
 import { useCalendarWeather } from '../../lib/weather';
 import { useAuthStore } from '../../store/authStore';
 import styles from './Calendar.module.scss';
@@ -1124,12 +1121,11 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
     const extra = dayTasks.length - tagItems.length - noTagCount;
     return (
       <>
-        {tagItems.map(tag => {
-          const Ic = tag.icon ? Icons[tag.icon] : null;
-          return Ic
-            ? <Ic key={tag.id} size={9} strokeWidth={2.5} color={tag.color} />
-            : <span key={tag.id} className={styles.dot} style={{ background: tag.color }} />;
-        })}
+        {tagItems.map(tag => (
+          hasIcon(tag.icon)
+            ? <Icon key={tag.id} name={tag.icon} size={9} strokeWidth={2.5} color={tag.color} />
+            : <span key={tag.id} className={styles.dot} style={{ background: tag.color }} />
+        ))}
         {noTagCount > 0 && <span className={styles.dot} />}
         {extra > 0 && <span className={styles.dotPlus}>+{extra}</span>}
       </>

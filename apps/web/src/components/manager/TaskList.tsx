@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import * as LucideIcons from 'lucide-react';
 import { Plus, AlignLeft, CheckCircle2 } from 'lucide-react';
 import { Task, TaskPriority, TaskStatus, toDateStr, getTasksForDate, completionKey } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
@@ -10,11 +9,9 @@ import { useCurrentWeather, useDayWeather, weatherCodeToInfo } from '../../lib/w
 import { useWeatherShownLock } from '../../lib/weatherLock';
 import { useAuthStore } from '../../store/authStore';
 import { useHolidays, getHolidayName } from '../../lib/holidays';
+import { Icon, hasIcon } from '../../lib/icons';
 import { Button, IconButton, EmptyState } from '../../components/ui';
 import styles from './TaskList.module.scss';
-
-type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
-const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 const DAY_SHORT = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
@@ -91,7 +88,7 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
     return (
       <li className={[styles.task, styles.taskGlobal].join(' ')}>
         <span className={styles.globalIcon} title="Глобальное событие">
-          {(() => { const Ic = Icons[task.icon ?? '']; return Ic ? <Ic size={15} strokeWidth={1.75} /> : (task.icon || '🌐'); })()}
+          {hasIcon(task.icon) ? <Icon name={task.icon} size={15} strokeWidth={1.75} /> : (task.icon || '🌐')}
         </span>
         <div className={styles.taskBody}>
           {task.time && <span className={styles.taskTime}>{task.time}</span>}
@@ -110,8 +107,6 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
     );
   }
 
-  const taskIcon = task.icon ? Icons[task.icon] : null;
-
   return (
     <li className={[
       styles.task,
@@ -121,9 +116,9 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
       (menuOpen || postponeOpen) ? styles.taskMenuOpen : '',
     ].join(' ')}>
       {/* Иконка задачи (если есть) */}
-      {taskIcon && (
+      {hasIcon(task.icon) && (
         <span className={styles.taskIcon}>
-          {(() => { const Ic = taskIcon; return <Ic size={14} strokeWidth={1.75} />; })()}
+          <Icon name={task.icon} size={14} strokeWidth={1.75} />
         </span>
       )}
 
@@ -170,14 +165,11 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
         {dateLabel && (
           <span className={styles.taskDateBadge}>{dateLabel}</span>
         )}
-        {task.tags?.slice(0, 2).map(tag => {
-          const Ic = tag.icon ? Icons[tag.icon] : null;
-          return (
-            <span key={tag.id} className={styles.taskTag} style={{ borderColor: tag.color }}>
-              {Ic ? <Ic size={9} strokeWidth={2.5} /> : <span className={styles.taskTagDot} style={{ background: tag.color }} />}
-            </span>
-          );
-        })}
+        {task.tags?.slice(0, 2).map(tag => (
+          <span key={tag.id} className={styles.taskTag} style={{ borderColor: tag.color }}>
+            {hasIcon(tag.icon) ? <Icon name={tag.icon} size={9} strokeWidth={2.5} /> : <span className={styles.taskTagDot} style={{ background: tag.color }} />}
+          </span>
+        ))}
       </button>
 
       {/* Menu */}
@@ -358,10 +350,9 @@ export function TaskList({
           </button>
           {currentWeather && (() => {
             const { icon } = weatherCodeToInfo(currentWeather.weatherCode);
-            const WeatherIc = Icons[icon];
             return (
               <div className={styles.clockWeather}>
-                {WeatherIc && <WeatherIc size={16} strokeWidth={1.5} />}
+                {hasIcon(icon) && <Icon name={icon} size={16} strokeWidth={1.5} />}
                 <span className={styles.clockTemp}>
                   {currentWeather.temp > 0 ? '+' : ''}{currentWeather.temp}°
                 </span>

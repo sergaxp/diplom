@@ -1,7 +1,3 @@
-import * as LucideIcons from 'lucide-react';
-
-type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
-const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 export interface SocialProvider {
   id: string;
@@ -28,12 +24,6 @@ export const SOCIAL_PROVIDERS: SocialProvider[] = [
 ];
 
 export const SOCIAL_MAP = new Map(SOCIAL_PROVIDERS.map(p => [p.id, p]));
-
-export function getSocialIcon(id: string): LucideIcon | null {
-  const p = SOCIAL_MAP.get(id);
-  if (!p) return null;
-  return Icons[p.icon] ?? null;
-}
 
 /** Resolve href for various social link formats. */
 export function resolveSocialHref(providerId: string, value: string): string {

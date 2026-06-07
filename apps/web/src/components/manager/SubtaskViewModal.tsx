@@ -1,16 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import * as LucideIcons from 'lucide-react';
 import { Pencil, Trash2, X, Clock, Download, File as FileIcon } from 'lucide-react';
 import type { SubtaskItem } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { storageApi } from '../../lib/storage';
+import { Icon, hasIcon } from '../../lib/icons';
 import { Modal, Button, IconButton } from '../../components/ui';
 import styles from './SubtaskViewModal.module.scss';
-
-type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
-const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 interface Props {
   item: SubtaskItem;
@@ -46,7 +43,6 @@ export function SubtaskViewModal({ item, userTags, onClose, onEdit, onToggle, on
   }, [confirmAttIdx]);
 
   const tag = item.tagId ? userTags.find(t => t.id === item.tagId) : undefined;
-  const TagIc = tag?.icon ? Icons[tag.icon] : null;
 
   const download = (url: string, name: string) => {
     const a = document.createElement('a');
@@ -90,7 +86,7 @@ export function SubtaskViewModal({ item, userTags, onClose, onEdit, onToggle, on
 
             {tag && (
               <span className={styles.titleTag} style={{ color: tag.color }} title={tag.name}>
-                {TagIc ? <TagIc size={16} strokeWidth={1.75} />
+                {hasIcon(tag.icon) ? <Icon name={tag.icon} size={16} strokeWidth={1.75} />
                        : <span className={styles.titleTagDot} style={{ background: tag.color }} />}
               </span>
             )}

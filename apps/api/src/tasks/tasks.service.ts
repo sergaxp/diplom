@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Task } from './entities/task.entity';
+import { Task, TaskRepeat, TaskType, TaskPriority } from './entities/task.entity';
 import { TaskCompletion } from './entities/task-completion.entity';
 import { GlobalTask } from './entities/global-task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -59,10 +59,10 @@ export class TasksService {
       description: dto.description  ?? null,
       date:        dto.date,
       time:        dto.time         ?? null,
-      repeat:      dto.repeat       ?? 'none',
+      repeat:      dto.repeat       ?? TaskRepeat.NONE,
       repeatUntil: dto.repeatUntil  ?? null,
-      type:        dto.type         ?? 'normal',
-      priority:    dto.priority     ?? 'none',
+      type:        dto.type         ?? TaskType.NORMAL,
+      priority:    dto.priority     ?? TaskPriority.NONE,
       repeatConfig: dto.repeatConfig ?? null,
       icon:        dto.icon         ?? null,
       endTime:     dto.endTime      ?? null,
@@ -94,7 +94,7 @@ export class TasksService {
     if (dto.repeat      !== undefined) task.repeat      = dto.repeat;
     if (dto.repeatUntil !== undefined) task.repeatUntil = dto.repeatUntil ?? null;
     if (dto.type        !== undefined) task.type        = dto.type;
-    if (dto.priority    !== undefined) task.priority    = dto.priority ?? 'none';
+    if (dto.priority    !== undefined) task.priority    = dto.priority ?? TaskPriority.NONE;
     if (dto.repeatConfig !== undefined) task.repeatConfig = dto.repeatConfig ?? null;
     if (dto.endTime     !== undefined) task.endTime     = dto.endTime  ?? null;
     if (dto.endDate     !== undefined) task.endDate     = dto.endDate  ?? null;
@@ -152,7 +152,7 @@ export class TasksService {
     const newAchievements = await this.achievementsService.checkAndUnlock(userId, {
       type:     'task_completed',
       taskTime: task?.time ?? null,
-      taskType: task?.type ?? 'normal',
+      taskType: task?.type ?? TaskType.NORMAL,
     });
 
     return { done: true, newAchievements };

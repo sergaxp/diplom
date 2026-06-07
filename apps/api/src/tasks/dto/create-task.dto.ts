@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsIn, Matches, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsEnum, Matches, MaxLength } from 'class-validator';
+import { TaskRepeat, TaskType, TaskPriority } from '../entities/task.entity';
 
 export class CreateTaskDto {
   @IsString()
@@ -29,8 +30,8 @@ export class CreateTaskDto {
   endDate?: string | null;
 
   @IsOptional()
-  @IsIn(['none', 'daily', 'weekdays', 'weekly', 'monthly', 'yearly', 'custom'])
-  repeat?: string;
+  @IsEnum(TaskRepeat)
+  repeat?: TaskRepeat;
 
   @IsOptional()
   repeatConfig?: object | null;
@@ -40,12 +41,12 @@ export class CreateTaskDto {
   repeatUntil?: string | null;
 
   @IsOptional()
-  @IsIn(['normal', 'mandatory', 'event'])
-  type?: string;
+  @IsEnum(TaskType)
+  type?: TaskType;
 
   @IsOptional()
-  @IsIn(['none', 'low', 'medium', 'high'])
-  priority?: string;
+  @IsEnum(TaskPriority)
+  priority?: TaskPriority;
 
   @IsOptional()
   @IsString({ each: true })

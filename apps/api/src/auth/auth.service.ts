@@ -42,7 +42,9 @@ export interface GoogleAuthResult {
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
-  private readonly googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  private readonly googleClient = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+  );
 
   // Секреты подписи токенов — обязательны, без fallback на дефолтные значения:
   // предсказуемый секрет в проде позволил бы подделывать JWT.
@@ -65,15 +67,19 @@ export class AuthService {
     this.accessSecret = accessSecret;
     this.refreshSecret = refreshSecret;
     this.accessExpiresIn = asExpiresIn(process.env.JWT_EXPIRES_IN ?? '15m');
-    this.refreshExpiresIn = asExpiresIn(process.env.REFRESH_TOKEN_EXPIRES_IN ?? '7d');
+    this.refreshExpiresIn = asExpiresIn(
+      process.env.REFRESH_TOKEN_EXPIRES_IN ?? '7d',
+    );
   }
 
   // ── Вход/регистрация через Google ──────────────────────────
   // Принимаем access_token (OAuth token flow от кастомной кнопки на фронте).
   async googleAuth(accessToken: string): Promise<GoogleAuthResult> {
     const clientId = process.env.GOOGLE_CLIENT_ID;
-    if (!clientId) throw new InternalServerErrorException('Google-вход не настроен');
-    if (!accessToken) throw new UnauthorizedException('Не передан токен Google');
+    if (!clientId)
+      throw new InternalServerErrorException('Google-вход не настроен');
+    if (!accessToken)
+      throw new UnauthorizedException('Не передан токен Google');
 
     // 1) Проверяем токен и что он выдан именно нашему приложению
     let info: { aud?: string; sub?: string; email?: string };
@@ -103,22 +109,29 @@ export class AuthService {
         name = u.name ?? '';
         picture = u.picture ?? '';
       }
-    } catch { /* профиль необязателен */ }
+    } catch {
+      /* профиль необязателен */
+    }
 
     // 1) Уже входил через Google
     let user = await this.usersService.findByGoogleId(googleId);
     // 2) Есть аккаунт с таким email — привязываем Google к нему
     if (!user) {
       const byEmail = await this.usersService.findByEmail(email);
-      if (byEmail) user = await this.usersService.linkGoogle(byEmail.id, googleId);
+      if (byEmail)
+        user = await this.usersService.linkGoogle(byEmail.id, googleId);
     }
 
     if (user) {
-      if (!user.isActive) throw new UnauthorizedException('Аккаунт деактивирован');
+      if (!user.isActive)
+        throw new UnauthorizedException('Аккаунт деактивирован');
       await this.usersService.updateLastSeen(user.id);
       await this.usersService.grantDailyBonusIfDue(user.id);
       const fresh = await this.usersService.findById(user.id);
-      return { user: this.stripPassword(fresh), tokens: this.generateTokens(fresh) };
+      return {
+        user: this.stripPassword(fresh),
+        tokens: this.generateTokens(fresh),
+      };
     }
 
     // 3) Новый пользователь — просим выбрать логин (аккаунт пока не создаём)
@@ -130,19 +143,36 @@ export class AuthService {
   }
 
   // ── Завершение регистрации через Google (выбран логин) ─────
-  async googleComplete(signupToken: string, username: string): Promise<AuthResponse> {
-    let data: { googleId: string; email: string; name?: string; picture?: string; purpose: string };
+  async googleComplete(
+    signupToken: string,
+    username: string,
+  ): Promise<AuthResponse> {
+    let data: {
+      googleId: string;
+      email: string;
+      name?: string;
+      picture?: string;
+      purpose: string;
+    };
     try {
-      data = this.jwtService.verify(signupToken, { secret: this.signupSecret() });
+      data = this.jwtService.verify(signupToken, {
+        secret: this.signupSecret(),
+      });
     } catch {
-      throw new UnauthorizedException('Сессия регистрации истекла — войдите через Google заново');
+      throw new UnauthorizedException(
+        'Сессия регистрации истекла — войдите через Google заново',
+      );
     }
-    if (data.purpose !== 'google-signup') throw new UnauthorizedException('Недействительный токен');
+    if (data.purpose !== 'google-signup')
+      throw new UnauthorizedException('Недействительный токен');
 
     // На случай гонки: аккаунт мог быть уже создан/привязан
     const already = await this.usersService.findByGoogleId(data.googleId);
     if (already) {
-      return { user: this.stripPassword(already), tokens: this.generateTokens(already) };
+      return {
+        user: this.stripPassword(already),
+        tokens: this.generateTokens(already),
+      };
     }
 
     const user = await this.usersService.createGoogleUser({
@@ -152,7 +182,10 @@ export class AuthService {
       displayName: data.name || null,
       avatarUrl: data.picture || null,
     });
-    return { user: this.stripPassword(user), tokens: this.generateTokens(user) };
+    return {
+      user: this.stripPassword(user),
+      tokens: this.generateTokens(user),
+    };
   }
 
   private signupSecret(): string {
@@ -167,8 +200,12 @@ export class AuthService {
       return { user: this.stripPassword(user), tokens };
     } catch (err) {
       // Пробрасываем ConflictException как есть (409), логируем остальное
-      if ((err as any).status && (err as any).status < 500) throw err;
-      this.logger.error('Ошибка регистрации:', (err as Error).message, (err as Error).stack);
+      if (err.status && err.status < 500) throw err;
+      this.logger.error(
+        'Ошибка регистрации:',
+        (err as Error).message,
+        (err as Error).stack,
+      );
       throw new InternalServerErrorException('Ошибка при создании аккаунта');
     }
   }
@@ -220,7 +257,9 @@ export class AuthService {
   // ── Обновление токенов ──────────────────────────────────────
   async refreshTokens(refreshToken: string): Promise<TokenPair> {
     try {
-      const payload = this.jwtService.verify<{ sub: string }>(refreshToken, { secret: this.refreshSecret });
+      const payload = this.jwtService.verify<{ sub: string }>(refreshToken, {
+        secret: this.refreshSecret,
+      });
       const user = await this.usersService.findById(payload.sub);
       return this.generateTokens(user);
     } catch {
@@ -232,8 +271,14 @@ export class AuthService {
   private generateTokens(user: User): TokenPair {
     const payload = { sub: user.id, username: user.username, role: user.role };
 
-    const accessToken  = this.jwtService.sign(payload, { secret: this.accessSecret,  expiresIn: this.accessExpiresIn });
-    const refreshToken = this.jwtService.sign(payload, { secret: this.refreshSecret, expiresIn: this.refreshExpiresIn });
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.accessSecret,
+      expiresIn: this.accessExpiresIn,
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.refreshSecret,
+      expiresIn: this.refreshExpiresIn,
+    });
 
     return { accessToken, refreshToken };
   }

@@ -2,19 +2,16 @@
 
 import { use } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import * as LucideIcons from 'lucide-react';
-import { MapPin, Calendar as CalIcon, Trophy } from 'lucide-react';
+import { MapPin, Calendar as CalIcon, Trophy, UserX } from 'lucide-react';
 import { Header } from '../../../components/Header';
 import { AvatarFramed } from '../../../components/AvatarFramed';
 import { Button, Card, Badge, Skeleton, EmptyState } from '../../../components/ui';
 import { profileApi } from '../../../lib/profile';
 import { achievementsApi, RANK_LABEL, RANK_COLOR, AchievementResult } from '../../../lib/achievements';
-import { SOCIAL_PROVIDERS, getSocialIcon, resolveSocialHref } from '../../../lib/socials';
+import { SOCIAL_PROVIDERS, resolveSocialHref } from '../../../lib/socials';
+import { Icon, hasIcon } from '../../../lib/icons';
 import { useAuthStore } from '../../../store/authStore';
 import styles from './page.module.scss';
-
-type LucideIcon = React.ComponentType<{ size?: number; strokeWidth?: number }>;
-const Icons = LucideIcons as unknown as Record<string, LucideIcon>;
 
 const XP_PER_LEVEL = 1000;
 
@@ -25,7 +22,6 @@ function formatDate(iso: string) {
 }
 
 function AchievementCard({ a }: { a: AchievementResult }) {
-  const Icon = Icons[a.icon];
   const color = RANK_COLOR[a.rank];
   const isSecret = a.secret && !a.unlocked;
   const tooltipText = isSecret ? '???' : `${a.description}${a.unlocked ? ` · +${a.xp} XP` : ''}`;
@@ -42,7 +38,7 @@ function AchievementCard({ a }: { a: AchievementResult }) {
       >
         {isSecret
           ? <span className={styles.achSecretGlyph}>?</span>
-          : Icon ? <Icon size={20} strokeWidth={1.75} /> : <span>🏆</span>}
+          : hasIcon(a.icon) ? <Icon name={a.icon} size={20} strokeWidth={1.75} /> : <span>🏆</span>}
       </div>
       <div className={styles.achBody}>
         <span className={styles.achTitle}>{isSecret ? '???' : a.title}</span>
@@ -133,7 +129,7 @@ export default function ProfilePage({
       {isError && (
         <EmptyState
           size="lg"
-          icon={<Icons.UserX size={48} strokeWidth={1.25} />}
+          icon={<UserX size={48} strokeWidth={1.25} />}
           title="Пользователь не найден"
           description="Возможно, ссылка устарела или пользователь удалил аккаунт."
         />
@@ -174,23 +170,20 @@ export default function ProfilePage({
 
                 {socialEntries.length > 0 && (
                   <div className={styles.socials}>
-                    {socialEntries.map(({ provider, value }) => {
-                      const Ic = getSocialIcon(provider.id);
-                      return (
-                        <a
-                          key={provider.id}
-                          href={resolveSocialHref(provider.id, value)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.socialChip}
-                          style={{ '--social-color': provider.color } as React.CSSProperties}
-                          title={`${provider.label}: ${value}`}
-                        >
-                          {Ic && <Ic size={14} strokeWidth={2} />}
-                          <span className={styles.socialLabel}>{provider.label}</span>
-                        </a>
-                      );
-                    })}
+                    {socialEntries.map(({ provider, value }) => (
+                      <a
+                        key={provider.id}
+                        href={resolveSocialHref(provider.id, value)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.socialChip}
+                        style={{ '--social-color': provider.color } as React.CSSProperties}
+                        title={`${provider.label}: ${value}`}
+                      >
+                        <Icon name={provider.icon} size={14} strokeWidth={2} />
+                        <span className={styles.socialLabel}>{provider.label}</span>
+                      </a>
+                    ))}
                   </div>
                 )}
               </div>

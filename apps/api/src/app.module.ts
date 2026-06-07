@@ -54,7 +54,20 @@ import { FeatureRequest } from './feedback/entities/feature-request.entity';
       username: process.env.DATABASE_USER ?? 'sergey',
       password: process.env.DATABASE_PASSWORD ?? '',
       database: process.env.DATABASE_NAME ?? 'warmingtea_dev',
-      entities: [User, Task, TaskCompletion, GlobalTask, Tag, UserAchievement, HolidayCache, UserInventory, Notification, AccountDeletion, BugReport, FeatureRequest],
+      entities: [
+        User,
+        Task,
+        TaskCompletion,
+        GlobalTask,
+        Tag,
+        UserAchievement,
+        HolidayCache,
+        UserInventory,
+        Notification,
+        AccountDeletion,
+        BugReport,
+        FeatureRequest,
+      ],
       synchronize: process.env.NODE_ENV !== 'production', // в проде схему накатывают миграции (см. src/migrations)
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
       migrationsRun: process.env.NODE_ENV === 'production',
@@ -76,9 +89,6 @@ import { FeatureRequest } from './feedback/entities/feature-request.entity';
     FeedbackModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
-  ],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

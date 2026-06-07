@@ -10,7 +10,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { AuthService, AuthResponse, TokenPair, GoogleAuthResult } from './auth.service';
+import {
+  AuthService,
+  AuthResponse,
+  TokenPair,
+  GoogleAuthResult,
+} from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { GoogleCompleteDto } from './dto/google-complete.dto';
@@ -41,7 +46,9 @@ export class AuthController {
   @Throttle({ default: { ttl: 300_000, limit: 10 } })
   @Post('google')
   @HttpCode(HttpStatus.OK)
-  async google(@Body('accessToken') accessToken: string): Promise<GoogleAuthResult> {
+  async google(
+    @Body('accessToken') accessToken: string,
+  ): Promise<GoogleAuthResult> {
     return this.authService.googleAuth(accessToken);
   }
 
@@ -57,20 +64,26 @@ export class AuthController {
   @Throttle({ default: { ttl: 300_000, limit: 20 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Body('refreshToken') refreshToken: string): Promise<TokenPair> {
+  async refresh(
+    @Body('refreshToken') refreshToken: string,
+  ): Promise<TokenPair> {
     return this.authService.refreshTokens(refreshToken);
   }
 
   // GET /auth/verify-email?token=...
   @Get('verify-email')
-  async verifyEmail(@Query('token') token: string): Promise<{ message: string }> {
+  async verifyEmail(
+    @Query('token') token: string,
+  ): Promise<{ message: string }> {
     return this.authService.verifyEmail(token);
   }
 
   // GET /auth/me – проверить текущий токен
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getMe(@Request() req: Express.Request & { user: unknown }): { user: unknown } {
+  getMe(@Request() req: Express.Request & { user: unknown }): {
+    user: unknown;
+  } {
     return { user: req.user };
   }
 }

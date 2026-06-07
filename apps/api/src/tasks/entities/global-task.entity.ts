@@ -1,6 +1,7 @@
 import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
 } from 'typeorm';
+import { TaskRepeat } from './task.entity';
 
 @Entity('global_tasks')
 export class GlobalTask {
@@ -19,8 +20,8 @@ export class GlobalTask {
   @Column({ type: 'varchar', length: 5, nullable: true, default: null })
   time!: string | null;
 
-  @Column({ type: 'varchar', length: 10, default: 'none' })
-  repeat!: string;
+  @Column({ type: 'varchar', length: 10, default: TaskRepeat.NONE })
+  repeat!: TaskRepeat;
 
   @Column({ type: 'varchar', length: 10, nullable: true, default: null })
   repeatUntil!: string | null;

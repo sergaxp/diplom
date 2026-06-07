@@ -16,7 +16,10 @@ import { UsersModule } from '../users/users.module';
     // Значение ниже приведено в соответствие с JWT_EXPIRES_IN, чтобы конфиг не вводил в заблуждение.
     JwtModule.register({
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') as SignOptions['expiresIn'] },
+      signOptions: {
+        expiresIn: (process.env.JWT_EXPIRES_IN ??
+          '15m') as SignOptions['expiresIn'],
+      },
     }),
   ],
   controllers: [AuthController],

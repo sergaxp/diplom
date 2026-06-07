@@ -9,6 +9,7 @@ import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { UserRole } from '../users/entities/user.entity';
+import { TaskRepeat } from '../tasks/entities/task.entity';
 import { FeedbackService } from '../feedback/feedback.service';
 import type { BugReportStatus } from '../feedback/entities/bug-report.entity';
 import type { FeatureRequestStatus } from '../feedback/entities/feature-request.entity';
@@ -95,7 +96,7 @@ export class AdminController {
   @Post('events')
   createGlobalTask(@Request() req: { user: { id: string } }, @Body() body: {
     title: string; description?: string; date: string;
-    time?: string; repeat?: string; repeatUntil?: string; icon?: string;
+    time?: string; repeat?: TaskRepeat; repeatUntil?: string; icon?: string;
   }) {
     return this.adminService.createGlobalTask(body, req.user.id);
   }

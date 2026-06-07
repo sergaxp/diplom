@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Tag } from './entities/tag.entity';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { AchievementsService } from '../achievements/achievements.service';
@@ -60,7 +60,6 @@ export class TagsService {
 
   async findByIds(userId: string, ids: string[]): Promise<Tag[]> {
     if (!ids.length) return [];
-    const tags = await this.tagRepo.findByIds(ids);
-    return tags.filter(t => t.userId === userId);
+    return this.tagRepo.find({ where: { id: In(ids), userId } });
   }
 }

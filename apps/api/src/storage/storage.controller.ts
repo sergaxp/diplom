@@ -16,17 +16,22 @@ import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { StorageService, BucketName, BUCKETS } from './storage.service';
 
-const ALLOWED_MIME = /^(image\/(png|jpe?g|gif|webp)|video\/(mp4|webm|ogg)|application\/(zip|x-7z-compressed|x-rar-compressed|pdf))$/i;
+const ALLOWED_MIME =
+  /^(image\/(png|jpe?g|gif|webp)|video\/(mp4|webm|ogg)|application\/(zip|x-7z-compressed|x-rar-compressed|pdf))$/i;
 const MAX_SIZE = 50 * 1024 * 1024;
 
 const ALLOWED_BUCKETS = new Set<string>(Object.values(BUCKETS));
-const CLIENT_BUCKETS: Set<BucketName> = new Set([BUCKETS.tasks, BUCKETS.feedback]);
+const CLIENT_BUCKETS: Set<BucketName> = new Set([
+  BUCKETS.tasks,
+  BUCKETS.feedback,
+]);
 
-const YT_RE    = /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
+const YT_RE =
+  /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
 const VIMEO_RE = /vimeo\.com\/(\d+)/;
 
 const FETCH_TIMEOUT_MS = 6_000;
-const FETCH_MAX_BYTES  = 256 * 1024; // читаем не более 256 KB HTML
+const FETCH_MAX_BYTES = 256 * 1024; // читаем не более 256 KB HTML
 
 @Controller('storage')
 @UseGuards(JwtAuthGuard)
@@ -45,8 +50,12 @@ export class StorageController {
     @Query('bucket') bucketParam?: string,
   ) {
     if (!file) throw new BadRequestException('Файл не передан');
-    if (file.size > MAX_SIZE) throw new BadRequestException('Файл слишком большой (макс. 50 MB)');
-    if (!ALLOWED_MIME.test(file.mimetype)) throw new BadRequestException(`Тип файла не поддерживается: ${file.mimetype}`);
+    if (file.size > MAX_SIZE)
+      throw new BadRequestException('Файл слишком большой (макс. 50 MB)');
+    if (!ALLOWED_MIME.test(file.mimetype))
+      throw new BadRequestException(
+        `Тип файла не поддерживается: ${file.mimetype}`,
+      );
 
     const bucket = (bucketParam ?? BUCKETS.tasks) as BucketName;
     if (!ALLOWED_BUCKETS.has(bucket) || !CLIENT_BUCKETS.has(bucket)) {
@@ -59,7 +68,13 @@ export class StorageController {
       file.mimetype,
       bucket,
     );
-    return { url, key, name: file.originalname, type: file.mimetype, size: file.size };
+    return {
+      url,
+      key,
+      name: file.originalname,
+      type: file.mimetype,
+      size: file.size,
+    };
   }
 
   // ── Удаление файла ─────────────────────────────────────────────
@@ -76,20 +91,33 @@ export class StorageController {
 
   // ── Превью ссылки ──────────────────────────────────────────────
   @Get('link-preview')
-  async linkPreview(@Query('url') rawUrl?: string): Promise<{ title: string | null; thumbnailUrl: string | null }> {
+  async linkPreview(
+    @Query('url') rawUrl?: string,
+  ): Promise<{ title: string | null; thumbnailUrl: string | null }> {
     if (!rawUrl) throw new BadRequestException('url обязателен');
 
     let url: URL;
-    try { url = new URL(rawUrl); } catch { throw new BadRequestException('Некорректный URL'); }
-    if (!['http:', 'https:'].includes(url.protocol)) throw new BadRequestException('Только http/https');
+    try {
+      url = new URL(rawUrl);
+    } catch {
+      throw new BadRequestException('Некорректный URL');
+    }
+    if (!['http:', 'https:'].includes(url.protocol))
+      throw new BadRequestException('Только http/https');
 
     // YouTube — oEmbed
     if (YT_RE.test(rawUrl)) {
       try {
-        const r = await this.fetchJson<{ title: string; thumbnail_url: string }>(
+        const r = await this.fetchJson<{
+          title: string;
+          thumbnail_url: string;
+        }>(
           `https://www.youtube.com/oembed?url=${encodeURIComponent(rawUrl)}&format=json`,
         );
-        return { title: r.title ?? null, thumbnailUrl: r.thumbnail_url ?? null };
+        return {
+          title: r.title ?? null,
+          thumbnailUrl: r.thumbnail_url ?? null,
+        };
       } catch (e) {
         this.logger.warn(`YouTube oEmbed failed: ${e}`);
       }
@@ -98,10 +126,16 @@ export class StorageController {
     // Vimeo — oEmbed
     if (VIMEO_RE.test(rawUrl)) {
       try {
-        const r = await this.fetchJson<{ title: string; thumbnail_url: string }>(
+        const r = await this.fetchJson<{
+          title: string;
+          thumbnail_url: string;
+        }>(
           `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(rawUrl)}`,
         );
-        return { title: r.title ?? null, thumbnailUrl: r.thumbnail_url ?? null };
+        return {
+          title: r.title ?? null,
+          thumbnailUrl: r.thumbnail_url ?? null,
+        };
       } catch (e) {
         this.logger.warn(`Vimeo oEmbed failed: ${e}`);
       }
@@ -135,7 +169,7 @@ export class StorageController {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Warmingtea-bot/1.0)',
-        'Accept': 'text/html',
+        Accept: 'text/html',
         'Accept-Language': 'ru,en;q=0.9',
       },
     });
@@ -151,15 +185,23 @@ export class StorageController {
       if (done) break;
       result += decoder.decode(value, { stream: true });
       bytes += value?.length ?? 0;
-      if (bytes >= FETCH_MAX_BYTES) { reader.cancel(); break; }
+      if (bytes >= FETCH_MAX_BYTES) {
+        reader.cancel();
+        break;
+      }
     }
     return result;
   }
 
   private extractTitle(html: string): string | null {
     // og:title — наиболее точный
-    const og = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
-            ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
+    const og =
+      html.match(
+        /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i,
+      ) ??
+      html.match(
+        /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i,
+      );
     if (og?.[1]) return this.decodeHtml(og[1].trim());
 
     // <title>

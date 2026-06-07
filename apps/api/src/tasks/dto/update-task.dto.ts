@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsIn, Matches, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsEnum, Matches, MaxLength } from 'class-validator';
+import { TaskRepeat, TaskType, TaskPriority } from '../entities/task.entity';
 
 // Manual partial – avoids @nestjs/mapped-types dependency
 export class UpdateTaskDto {
@@ -32,8 +33,8 @@ export class UpdateTaskDto {
   endDate?: string | null;
 
   @IsOptional()
-  @IsIn(['none', 'daily', 'weekdays', 'weekly', 'monthly', 'yearly', 'custom'])
-  repeat?: string;
+  @IsEnum(TaskRepeat)
+  repeat?: TaskRepeat;
 
   @IsOptional()
   repeatConfig?: object | null;
@@ -43,12 +44,12 @@ export class UpdateTaskDto {
   repeatUntil?: string | null;
 
   @IsOptional()
-  @IsIn(['normal', 'mandatory', 'event'])
-  type?: string;
+  @IsEnum(TaskType)
+  type?: TaskType;
 
   @IsOptional()
-  @IsIn(['none', 'low', 'medium', 'high'])
-  priority?: string;
+  @IsEnum(TaskPriority)
+  priority?: TaskPriority;
 
   @IsOptional()
   @IsString({ each: true })

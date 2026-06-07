@@ -1,14 +1,11 @@
 'use client';
 
-import * as LucideIcons from 'lucide-react';
 import {
-  Download, Trash2, File as FileIcon, Play, Video, Image as ImageIcon, Link as LinkIcon, ExternalLink,
+  Download, Trash2, File as FileIcon, Play, Video, Image as ImageIcon, Link as LinkIcon, ExternalLink, X,
 } from 'lucide-react';
 import type { SubtaskItem } from '../../lib/tasks';
 import { Modal, Button, IconButton } from '../../components/ui';
 import styles from './MediaViewModal.module.scss';
-
-void LucideIcons; // keep namespace import for future icon mapping if needed
 
 interface Props {
   item: SubtaskItem; // expects kind === 'attachment' or 'link'
@@ -108,7 +105,7 @@ export function MediaViewModal({ item, onClose, onDelete }: Props) {
             onClick={onDelete}
           />
           <IconButton
-            icon={<LucideIcons.X size={20} />}
+            icon={<X size={20} />}
             aria-label="Закрыть"
             variant="ghost"
             size="sm"
