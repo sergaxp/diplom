@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, AlignLeft, CheckCircle2 } from 'lucide-react';
 import { Task, TaskPriority, TaskStatus, toDateStr, getTasksForDate, completionKey } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
-import { TaskFormModal } from './TaskFormModal';
+import { TaskFormModal } from './task-form';
 import { useCurrentWeather, useDayWeather, weatherCodeToInfo } from '../../lib/weather';
 import { useWeatherShownLock } from '../../lib/weatherLock';
 import { useAuthStore } from '../../store/authStore';

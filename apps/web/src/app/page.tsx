@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Header } from '../components/Header';
-import { ManagerCalendar } from '../components/manager/Calendar';
+import { ManagerCalendar } from '../components/manager/calendar';
 import { MobileDayStrip } from '../components/manager/MobileDayStrip';
 import { TaskList } from '../components/manager/TaskList';
 import { Task, DayOverride, tasksApi, completionKey, toDateStr, isSeriesTask, prevDayStr, getTasksForDate } from '../lib/tasks';
