@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -35,6 +37,15 @@ import { FeatureRequest } from './feedback/entities/feature-request.entity';
       isGlobal: true,
     }),
 
+    // Глобальный рейт-лимит: 100 запросов / минуту с одного IP по умолчанию
+    // (отдельные эндпоинты — например /auth/* — переопределяют лимит через @Throttle)
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
+
     // База данных
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -44,7 +55,9 @@ import { FeatureRequest } from './feedback/entities/feature-request.entity';
       password: process.env.DATABASE_PASSWORD ?? '',
       database: process.env.DATABASE_NAME ?? 'warmingtea_dev',
       entities: [User, Task, TaskCompletion, GlobalTask, Tag, UserAchievement, HolidayCache, UserInventory, Notification, AccountDeletion, BugReport, FeatureRequest],
-      synchronize: true, // ⚠️ ТОЛЬКО в DEV! В продакшене – миграции
+      synchronize: process.env.NODE_ENV !== 'production', // в проде схему накатывают миграции (см. src/migrations)
+      migrations: [__dirname + '/migrations/*{.ts,.js}'],
+      migrationsRun: process.env.NODE_ENV === 'production',
       logging: process.env.NODE_ENV === 'development',
     }),
 
@@ -63,6 +76,9 @@ import { FeatureRequest } from './feedback/entities/feature-request.entity';
     FeedbackModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

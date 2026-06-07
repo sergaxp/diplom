@@ -7,10 +7,16 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
+import type { SignOptions } from 'jsonwebtoken';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { User } from '../users/entities/user.entity';
+
+// Срок действия токена задаётся строкой из env (например, "15m", "7d") — формат
+// проверяет сам jsonwebtoken при подписи; здесь только приводим тип к ожидаемому.
+type ExpiresIn = SignOptions['expiresIn'];
+const asExpiresIn = (value: string): ExpiresIn => value as ExpiresIn;
 
 export interface TokenPair {
   accessToken: string;
@@ -38,10 +44,29 @@ export class AuthService {
 
   private readonly googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+  // Секреты подписи токенов — обязательны, без fallback на дефолтные значения:
+  // предсказуемый секрет в проде позволил бы подделывать JWT.
+  private readonly accessSecret: string;
+  private readonly refreshSecret: string;
+  private readonly accessExpiresIn: ExpiresIn;
+  private readonly refreshExpiresIn: ExpiresIn;
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) {
+    const accessSecret = process.env.JWT_SECRET;
+    const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
+    if (!accessSecret || !refreshSecret) {
+      throw new Error(
+        'JWT_SECRET и REFRESH_TOKEN_SECRET должны быть заданы в переменных окружения — без них подпись токенов небезопасна',
+      );
+    }
+    this.accessSecret = accessSecret;
+    this.refreshSecret = refreshSecret;
+    this.accessExpiresIn = asExpiresIn(process.env.JWT_EXPIRES_IN ?? '15m');
+    this.refreshExpiresIn = asExpiresIn(process.env.REFRESH_TOKEN_EXPIRES_IN ?? '7d');
+  }
 
   // ── Вход/регистрация через Google ──────────────────────────
   // Принимаем access_token (OAuth token flow от кастомной кнопки на фронте).
@@ -131,7 +156,7 @@ export class AuthService {
   }
 
   private signupSecret(): string {
-    return (process.env.JWT_SECRET ?? 'fallback-dev-secret') + '_gsignup';
+    return this.accessSecret + '_gsignup';
   }
 
   // ── Регистрация ─────────────────────────────────────────────
@@ -195,8 +220,7 @@ export class AuthService {
   // ── Обновление токенов ──────────────────────────────────────
   async refreshTokens(refreshToken: string): Promise<TokenPair> {
     try {
-      const secret = process.env.JWT_REFRESH_SECRET ?? '';
-      const payload = this.jwtService.verify<{ sub: string }>(refreshToken, { secret });
+      const payload = this.jwtService.verify<{ sub: string }>(refreshToken, { secret: this.refreshSecret });
       const user = await this.usersService.findById(payload.sub);
       return this.generateTokens(user);
     } catch {
@@ -207,12 +231,9 @@ export class AuthService {
   // ── Генерация токенов ───────────────────────────────────────
   private generateTokens(user: User): TokenPair {
     const payload = { sub: user.id, username: user.username, role: user.role };
-    const accessSecret  = process.env.JWT_SECRET ?? 'fallback-dev-secret';
-    const refreshSecret = process.env.JWT_REFRESH_SECRET ?? 'fallback-dev-refresh-secret';
 
-    // expiresIn – число секунд
-    const accessToken  = this.jwtService.sign(payload, { secret: accessSecret,  expiresIn: 86400 });   // 24h
-    const refreshToken = this.jwtService.sign(payload, { secret: refreshSecret, expiresIn: 2592000 }); // 30d
+    const accessToken  = this.jwtService.sign(payload, { secret: this.accessSecret,  expiresIn: this.accessExpiresIn });
+    const refreshToken = this.jwtService.sign(payload, { secret: this.refreshSecret, expiresIn: this.refreshExpiresIn });
 
     return { accessToken, refreshToken };
   }

@@ -12,6 +12,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { StorageService, BucketName, BUCKETS } from './storage.service';
 
@@ -35,6 +36,8 @@ export class StorageController {
   constructor(private readonly storage: StorageService) {}
 
   // ── Загрузка файла ─────────────────────────────────────────────
+  // Квота: 30 загрузок / 5 минут на пользователя — защита от заполнения хранилища
+  @Throttle({ default: { ttl: 300_000, limit: 30 } })
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async upload(

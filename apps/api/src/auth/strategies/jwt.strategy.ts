@@ -19,11 +19,15 @@ interface JwtUser {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private usersService: UsersService) {
-    // ?? '' гарантирует что secretOrKey всегда string, а не undefined
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      // Пустой secretOrKey предсказуем и позволил бы подделывать JWT — лучше упасть на старте
+      throw new Error('JWT_SECRET должен быть задан в переменных окружения');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET ?? '',
+      secretOrKey: secret,
     });
   }
 

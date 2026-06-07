@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService, AuthResponse, TokenPair, GoogleAuthResult } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -20,14 +21,16 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // POST /auth/register
+  // POST /auth/register — защита от спама регистраций: 5 попыток / 5 минут с IP
+  @Throttle({ default: { ttl: 300_000, limit: 5 } })
   @Post('register')
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponse> {
     // RegisterDto совместим с CreateUserDto – поля те же
     return this.authService.register(registerDto as CreateUserDto);
   }
 
-  // POST /auth/login
+  // POST /auth/login — защита от брутфорса: 10 попыток / 5 минут с IP
+  @Throttle({ default: { ttl: 300_000, limit: 10 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
@@ -35,6 +38,7 @@ export class AuthController {
   }
 
   // POST /auth/google – вход/регистрация по Google access_token
+  @Throttle({ default: { ttl: 300_000, limit: 10 } })
   @Post('google')
   @HttpCode(HttpStatus.OK)
   async google(@Body('accessToken') accessToken: string): Promise<GoogleAuthResult> {
@@ -42,6 +46,7 @@ export class AuthController {
   }
 
   // POST /auth/google/complete – завершение регистрации (выбран логин)
+  @Throttle({ default: { ttl: 300_000, limit: 10 } })
   @Post('google/complete')
   @HttpCode(HttpStatus.OK)
   async googleComplete(@Body() dto: GoogleCompleteDto): Promise<AuthResponse> {
@@ -49,6 +54,7 @@ export class AuthController {
   }
 
   // POST /auth/refresh
+  @Throttle({ default: { ttl: 300_000, limit: 20 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(@Body('refreshToken') refreshToken: string): Promise<TokenPair> {
