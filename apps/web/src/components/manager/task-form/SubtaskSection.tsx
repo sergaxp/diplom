@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Clock, Paperclip, Play, FileText, Link as LinkIcon, Plus } from 'lucide-react';
+import { Clock, Paperclip, Play, FileText, Link as LinkIcon, Plus, CalendarDays } from 'lucide-react';
 import { SubtaskSection, SubtaskItem } from '../../../lib/tasks';
 import { storageApi } from '../../../lib/storage';
 import type { Tag } from '../../../lib/tags';
@@ -21,6 +21,10 @@ interface SectionProps {
   canDelete: boolean;
   userTags: Tag[];
   parentDate: string;
+  /** Дни серии (YYYY-MM-DD) для выбора области подзадачи. Для одиночной задачи — один день. */
+  seriesDays?: string[];
+  /** День, для которого открыт редактор (область «только этот день»). */
+  currentDay?: string;
   onToggleCollapse: () => void;
   onChange: (s: SubtaskSection) => void;
   onDelete: () => void;
@@ -28,7 +32,7 @@ interface SectionProps {
 
 type FormState = null | 'subtask-new' | 'subtask-edit' | 'link';
 
-export function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDate, onToggleCollapse, onChange, onDelete }: SectionProps) {
+export function SubtaskSectionComp({ section, collapsed, canDelete, userTags, parentDate, seriesDays, currentDay, onToggleCollapse, onChange, onDelete }: SectionProps) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleVal,     setTitleVal]     = useState(section.title);
   const [formState,    setFormState]    = useState<FormState>(null);
@@ -210,6 +214,11 @@ export function SubtaskSectionComp({ section, collapsed, canDelete, userTags, pa
                           <Paperclip size={10} strokeWidth={2}/> {item.attachments.length}
                         </span>
                       )}
+                      {seriesDays && seriesDays.length > 1 && item.days && item.days.length > 0 && item.days.length < seriesDays.length && (
+                        <span className={styles.cardBadge} title="Подзадача только в выбранные дни">
+                          <CalendarDays size={10} strokeWidth={2}/> {item.days.length} дн.
+                        </span>
+                      )}
                     </div>
                   </div>
                   {renderDelete(item)}
@@ -264,6 +273,7 @@ export function SubtaskSectionComp({ section, collapsed, canDelete, userTags, pa
                           title={a.name}
                         >
                           {isImg
+                            // eslint-disable-next-line @next/next/no-img-element -- загруженное вложение, оптимизация next/image не нужна
                             ? <img src={a.url} alt={a.name} className={styles.tgMediaImg}/>
                             : <video src={a.url} muted className={styles.tgMediaImg}/>}
                           {isVid && (
@@ -395,6 +405,8 @@ export function SubtaskSectionComp({ section, collapsed, canDelete, userTags, pa
               initial={formState === 'subtask-edit' ? (editingItem ?? undefined) : undefined}
               userTags={userTags}
               parentDate={parentDate}
+              seriesDays={seriesDays}
+              currentDay={currentDay}
               onSave={upsertItem}
               onCancel={() => { setFormState(null); setEditingItem(null); }}
             />

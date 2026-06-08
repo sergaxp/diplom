@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -52,23 +48,6 @@ export class TasksService {
     userId: string,
     dto: CreateTaskDto,
   ): Promise<{ task: Task; newAchievements: AchievementDef[] }> {
-    // Запрет одинаковых названий в одном дне (страховка к фронтовой проверке)
-    const dupe = await this.taskRepo
-      .createQueryBuilder('t')
-      .where(
-        't."userId" = :userId AND t.date = :date AND LOWER(t.title) = LOWER(:title)',
-        {
-          userId,
-          date: dto.date,
-          title: dto.title.trim(),
-        },
-      )
-      .getOne();
-    if (dupe)
-      throw new BadRequestException(
-        'На этот день уже есть задача с таким названием',
-      );
-
     const tags = dto.tagIds?.length
       ? await this.tagsService.findByIds(userId, dto.tagIds)
       : [];

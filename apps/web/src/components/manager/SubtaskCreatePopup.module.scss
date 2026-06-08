@@ -113,6 +113,72 @@
   align-items: center;
 }
 
+// ── Область «дни» (для серий) ─────────────────────────────────
+.dayScope {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.dayScopeLabel {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dayScopeRadios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.dayScopeRadio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  input { accent-color: var(--brand); cursor: pointer; }
+}
+
+.dayChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 132px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.dayChip {
+  padding: 5px var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    border-color var(--duration-fast) var(--ease-default),
+    background var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
+  &:hover { border-color: var(--brand); color: var(--brand); }
+}
+
+.dayChipActive {
+  border-color: var(--brand);
+  color: var(--text-on-brand);
+  background: var(--brand);
+  font-weight: var(--weight-medium);
+}
+
 .chip {
   display: inline-flex;
   align-items: center;

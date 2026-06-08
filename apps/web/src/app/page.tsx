@@ -7,7 +7,7 @@ import { Header } from '../components/Header';
 import { ManagerCalendar } from '../components/manager/calendar';
 import { MobileDayStrip } from '../components/manager/MobileDayStrip';
 import { TaskList } from '../components/manager/TaskList';
-import { Task, DayOverride, tasksApi, completionKey, toDateStr, isSeriesTask, prevDayStr, getTasksForDate } from '../lib/tasks';
+import { Task, DayOverride, tasksApi, completionKey, toDateStr, isSeriesTask, mergeSeriesSubtasks, prevDayStr } from '../lib/tasks';
 import { DeleteScopeModal } from '../components/manager/DeleteScopeModal';
 import { Tag, tagsApi } from '../lib/tags';
 import { useAuthStore } from '../store/authStore';
@@ -209,6 +209,20 @@ export default function ManagerPage() {
     setDelReq({ id, date });
   };
 
+  // Снять отметку выполнения для удаляемого(ых) дня(ей), чтобы не оставались
+  // «осиротевшие» отметки (искажают достижения/серии и воскресают при восстановлении).
+  const clearCompletion = (taskId: string, date: string) => {
+    if (completions.has(completionKey(taskId, date))) toggleMut.mutate({ taskId, date });
+  };
+  const clearCompletionsFrom = (taskId: string, fromDate: string) => {
+    const prefix = `${taskId}__`;
+    for (const key of completions) {
+      if (key.startsWith(prefix) && key.slice(prefix.length) >= fromDate) {
+        toggleMut.mutate({ taskId, date: key.slice(prefix.length) });
+      }
+    }
+  };
+
   const deleteOnlyDay = () => {
     if (!delReq) return;
     const base = tasks.find(t => t.id === delReq.id);
@@ -216,6 +230,7 @@ export default function ManagerPage() {
       const overrides: Record<string, DayOverride> = { ...(base.dayOverrides ?? {}) };
       overrides[delReq.date] = { ...(overrides[delReq.date] ?? {}), deleted: true };
       updateMut.mutate({ id: base.id, data: { ...stripRuntime(base), dayOverrides: overrides } });
+      clearCompletion(base.id, delReq.date);
     }
     setDelReq(null);
   };
@@ -238,32 +253,10 @@ export default function ManagerPage() {
           data.dayOverrides = pruned;
         }
         updateMut.mutate({ id: base.id, data });
+        clearCompletionsFrom(base.id, date);
       }
     }
     setDelReq(null);
-  };
-
-  // Проверка уникальности названия в дне (запрет одинаковых названий в одном дне).
-  // Возвращает текст ошибки или null. Для многодневной — проверяет каждый день диапазона.
-  const validateTitle = (title: string, dateStr: string, endDate?: string, excludeId?: string): string | null => {
-    const norm = (s: string) => s.trim().toLowerCase();
-    const target = norm(title);
-    if (!target) return null;
-    const dates: string[] = [];
-    if (endDate && endDate > dateStr) {
-      const d = new Date(dateStr + 'T00:00:00');
-      const end = new Date(endDate + 'T00:00:00');
-      while (d <= end) { dates.push(toDateStr(d)); d.setDate(d.getDate() + 1); }
-    } else {
-      dates.push(dateStr);
-    }
-    for (const ds of dates) {
-      const dayTasks = getTasksForDate(allTasks, new Date(ds + 'T00:00:00'), completions);
-      if (dayTasks.some(t => !t.isGlobal && t.id !== excludeId && norm(t.title) === target)) {
-        return 'На этот день уже есть задача с таким названием';
-      }
-    }
-    return null;
   };
 
   const deleteWholeSeries = () => {
@@ -273,19 +266,40 @@ export default function ManagerPage() {
 
   const handleAdd      = (data: Omit<Task, 'id' | 'status'>) => createMut.mutate(data);
 
-  // occDate задан → правка конкретного дня серии: контент пишем в переопределение дня
+  // Если все подзадачи дня выполнены — отмечаем выполненной и саму задачу.
+  const syncCompletionWithSubtasks = (
+    taskId: string,
+    dateStr: string,
+    sections?: Task['subtasks'],
+  ) => {
+    const items = (sections ?? []).flatMap(s =>
+      s.items.filter(i => (i.kind ?? 'subtask') === 'subtask'),
+    );
+    if (items.length === 0) return;
+    const allDone = items.every(i => i.done);
+    const isDone  = completions.has(completionKey(taskId, dateStr));
+    if (allDone && !isDone) toggleMut.mutate({ taskId, date: dateStr });
+  };
+
+  // occDate задан → правка конкретного дня серии. Подзадачи (с их областью «дни»)
+  // храним в базовой задаче; в переопределение дня пишем мета-поля и отметки
+  // выполненных подзадач именно этого дня (doneIds).
   const handleUpdate   = (id: string, data: Omit<Task, 'id' | 'status'>, occDate?: string) => {
     const base = tasks.find(t => t.id === id);
     if (occDate && base && isSeriesTask(base)) {
+      const merged = mergeSeriesSubtasks(base.subtasks, occDate, data.subtasks ?? []);
+      const prevOv = base.dayOverrides?.[occDate] ?? {};
+      const { subtasks: _legacy, ...prevRest } = prevOv;
+      void _legacy;
       const ov: DayOverride = {
-        ...(base.dayOverrides?.[occDate] ?? {}),
+        ...prevRest,
         title:       data.title,
         description: data.description,
         time:        data.time,
         endTime:     data.endTime,
         priority:    data.priority,
         icon:        data.icon ?? null,
-        subtasks:    data.subtasks ?? null,
+        doneIds:     merged.doneIds,
       };
       const overrides = { ...(base.dayOverrides ?? {}), [occDate]: ov };
       updateMut.mutate({ id, data: {
@@ -297,11 +311,19 @@ export default function ManagerPage() {
         repeatConfig: data.repeatConfig,
         repeatUntil:  data.repeatUntil,
         tags:         data.tags,
+        subtasks:     merged.subtasks,
         dayOverrides: overrides,
       }});
+      syncCompletionWithSubtasks(id, occDate, data.subtasks);
       return;
     }
-    updateMut.mutate({ id, data });
+    // Несерийное обновление: сохраняем переопределения дней, чтобы удалённые
+    // дни многодневной задачи не возвращались при правке (payload их не несёт).
+    const merged = base?.dayOverrides && data.dayOverrides === undefined
+      ? { ...data, dayOverrides: base.dayOverrides }
+      : data;
+    updateMut.mutate({ id, data: merged });
+    syncCompletionWithSubtasks(id, occDate ?? data.date, data.subtasks);
   };
 
   const handlePostpone = (id: string, days: number) => {
@@ -312,10 +334,18 @@ export default function ManagerPage() {
       d.setDate(d.getDate() + days);
       return toDateStr(d);
     };
+    // Переопределения дней (удалённые дни, правки, отметки) сдвигаем вместе с задачей,
+    // иначе они «отвяжутся» от своих дней (напр. удалённый день воскреснет).
+    let shiftedOverrides: Record<string, DayOverride> | null | undefined = task.dayOverrides;
+    if (task.dayOverrides) {
+      shiftedOverrides = {};
+      for (const [k, v] of Object.entries(task.dayOverrides)) shiftedOverrides[shiftDate(k)] = v;
+    }
     updateMut.mutate({ id, data: {
-      ...task,
-      date:    shiftDate(task.date),
-      endDate: task.endDate ? shiftDate(task.endDate) : undefined,
+      ...stripRuntime(task),
+      date:         shiftDate(task.date),
+      endDate:      task.endDate ? shiftDate(task.endDate) : undefined,
+      dayOverrides: shiftedOverrides,
     }});
   };
 
@@ -365,7 +395,6 @@ export default function ManagerPage() {
             onUpdate={handleUpdate}
             onPostpone={handlePostpone}
             onGoToToday={goToToday}
-            validateTitle={validateTitle}
           />
         </div>
         <div className={styles.right}>

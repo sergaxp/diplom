@@ -5,7 +5,7 @@ import { Task, toDateStr, getTasksForDate } from '../../../lib/tasks';
 import { HolidayMap, getHolidayColor } from '../../../lib/holidays';
 import {
   DAY_SHORT, HOURS, HOUR_H, ALLDAY_TASK_H, ALLDAY_GAP,
-  pad, getISOWeek, taskColorStyle, taskBlockHeight, taskActiveOn, computeLayout,
+  pad, getISOWeek, taskColorStyle, taskBlockHeight, computeLayout,
 } from '../../../lib/calendarLayout';
 import { TYPE_CLS } from './taskTypeStyles';
 import styles from './Calendar.module.scss';
@@ -32,6 +32,10 @@ export function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, 
   // карты "весь день" слотов, и для разбивки timed/allDay в самих колонках
   const dayTasksPerDay = days.map(d => getTasksForDate(tasks, d, new Set(), holidayMap));
   const allDayPerDay = dayTasksPerDay.map(dt => dt.filter(t => !t.time));
+  // Реально ли задача присутствует (отрисована) в колонке idx — учитывает удалённые
+  // дни серии (getTasksForDate их пропускает), в отличие от taskActiveOn.
+  const presentOn = (idx: number, id: string) =>
+    idx >= 0 && idx < days.length && dayTasksPerDay[idx].some(x => x.id === id);
   const adRange = new Map<string, { task: Task; min: number; max: number }>();
   for (let ci = 0; ci < days.length; ci++) {
     for (const t of allDayPerDay[ci]) {
@@ -141,13 +145,17 @@ export function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, 
 
                 {/* All-day tasks at TOP – use global slot map for proper spanning */}
                 {allDay.map(t => {
+                  // Рисуем непрерывным сегментом, разрывая полосу на удалённых днях
+                  // (день удалён из серии → задачи там нет → сегмент прерывается).
+                  if (presentOn(dayIdx - 1, t.id)) return null; // не начало сегмента
+                  let segLen = 1;
+                  while (presentOn(dayIdx + segLen, t.id)) segLen++;
                   const slot     = adSlot.get(t.id) ?? 0;
                   const range    = adRange.get(t.id);
-                  const connL    = !!range && range.min < dayIdx;
-                  const connR    = !!range && range.max > dayIdx;
-                  // Only render on the leftmost day of a span – bar will extend right via width
-                  if (connL) return null;
-                  const spanLen  = range ? range.max - range.min + 1 : 1;
+                  const spanLen  = segLen;
+                  // Квадратный правый край, только если сегмент упирается в край недели
+                  // у многодневной задачи (вероятно, продолжается дальше).
+                  const connR    = (dayIdx + segLen >= days.length) && !!range && range.max > range.min;
                   const tagStyle = taskColorStyle(t);
                   return (
                     <div key={t.id}
@@ -182,10 +190,10 @@ export function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, 
 
                   const height = taskBlockHeight(t);
                   const isStripe = !!t.endDate || t.repeat === 'daily';
-                  const prevDs   = dayIdx > 0 ? toDateStr(days[dayIdx - 1]) : null;
-                  const nextDs   = dayIdx < days.length - 1 ? toDateStr(days[dayIdx + 1]) : null;
-                  const connL    = isStripe && !!prevDs && taskActiveOn(t, prevDs);
-                  const connR    = isStripe && !!nextDs && taskActiveOn(t, nextDs);
+                  // Соединяем с соседним днём только если задача там реально есть
+                  // (удалённые дни серии разрывают полосу).
+                  const connL    = isStripe && presentOn(dayIdx - 1, t.id);
+                  const connR    = isStripe && presentOn(dayIdx + 1, t.id);
 
                   const { col, totalCols } = isStripe
                     ? { col: 0, totalCols: 1 }

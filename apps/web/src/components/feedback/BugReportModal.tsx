@@ -108,6 +108,7 @@ export function BugReportModal({ onClose }: Props) {
             {files.map(f => (
               <div key={f.key} className={styles.attachItem}>
                 {f.type.startsWith('image/') ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- локальное превью выбранного файла (blob), оптимизация next/image не нужна
                   <img src={f.url} alt={f.name} className={styles.attachThumb} />
                 ) : (
                   <div className={styles.attachFile}>

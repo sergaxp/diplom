@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import { Task, TaskRepeat, TaskType, TaskPriority, RepeatConfig, SubtaskSection, toDateStr } from '../../../lib/tasks';
+import { Task, TaskRepeat, TaskType, TaskPriority, RepeatConfig, SubtaskSection, toDateStr, getSeriesDays } from '../../../lib/tasks';
 import { DatePickerPopup, getDateButtonLabel } from '../date-picker';
 import { RepeatConfigModal } from '../repeat-config';
 import { TimePickerField } from '../TimePickerField';
@@ -35,11 +35,9 @@ interface Props {
   /** When set (edit mode), section changes (add/delete subtask, add attachment, etc.)
    *  immediately persist to the server, independent of the form's Save button. */
   onSectionsLiveUpdate?: (sections: SubtaskSection[]) => void;
-  /** Проверка уникальности названия в дне. Возвращает текст ошибки или null. */
-  validateTitle?: (title: string, dateStr: string, endDate?: string, excludeId?: string) => string | null;
 }
 
-export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, onDelete, onCreateTag, onSectionsLiveUpdate, validateTitle }: Props) {
+export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, onDelete, onCreateTag, onSectionsLiveUpdate }: Props) {
   const isEdit      = !!task;
   const initialDate = useMemo(() => toDateStr(date), [date]);
   const { draft, save: saveDraftFields, clear: clearDraft } = useTaskDraft(initialDate, isEdit);
@@ -47,7 +45,6 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   const makeDefaultSections = (): SubtaskSection[] => [{ id: uid(), title: 'Основное', items: [] }];
 
   const [title,         setTitle]         = useState(task?.title       ?? draft?.title       ?? '');
-  const [titleError,    setTitleError]    = useState('');
   const [description,   setDescription]   = useState(task?.description ?? draft?.description ?? '');
   const [formDate,      setFormDate]      = useState(task?.date        ?? initialDate);
   const [time,          setTime]          = useState(task?.time        ?? draft?.time        ?? '');
@@ -194,6 +191,21 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
       return next;
     });
 
+  // День, для которого открыт редактор (для области «дни» подзадач).
+  const currentDay = task?.occurrenceDate ?? formDate;
+  // Дни серии для выбора области подзадачи. Считаем из текущих значений формы,
+  // чтобы работало и при создании, и при редактировании.
+  const seriesDays = useMemo(
+    () => getSeriesDays({
+      date:        formDate,
+      endDate:     multiDay && endDate && endDate > formDate ? endDate : undefined,
+      repeat,
+      repeatUntil: repeat !== 'none' && hasEnd && repeatUntil ? repeatUntil : undefined,
+      repeatConfig,
+    }, task?.dayOverrides),
+    [formDate, multiDay, endDate, repeat, hasEnd, repeatUntil, repeatConfig, task?.dayOverrides],
+  );
+
   const toggleCollapse = (id: string) =>
     setCollapsed(prev => {
       const next = new Set(prev);
@@ -217,12 +229,6 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
       title, description, formDate, multiDay, endDate, time, endTime,
       repeat, hasEnd, repeatUntil, type, priority, repeatConfig, selectedTag, sections,
     });
-
-    // Запрет одинаковых названий в одном дне
-    if (validateTitle) {
-      const err = validateTitle(trimmed, formDate, payload.endDate, task?.id);
-      if (err) { setTitleError(err); return; }
-    }
 
     onSave(payload);
     onClose();
@@ -259,7 +265,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               ref={titleRef}
               className={styles.titleInput}
               value={title}
-              onChange={e => { setTitle(cap(e.target.value)); if (titleError) setTitleError(''); }}
+              onChange={e => setTitle(cap(e.target.value))}
               placeholder="Название задачи"
               rows={1}
               autoComplete="off"
@@ -288,12 +294,6 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
             // Enter закрывает клавиатуру (перенос строки — через Shift+Enter)
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.blur(); } }}
           />
-
-          {titleError && (
-            <p style={{ color: 'var(--error)', fontSize: 'var(--text-sm)', margin: '0.25rem 0 0' }}>
-              {titleError}
-            </p>
-          )}
 
           {/* Мета-поля: дата, время, приоритет – под описанием */}
           <div className={styles.metaRow}>
@@ -405,6 +405,8 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
                   canDelete={sections.length > 1}
                   userTags={allTags}
                   parentDate={formDate}
+                  seriesDays={seriesDays}
+                  currentDay={currentDay}
                   onToggleCollapse={() => toggleCollapse(sec.id)}
                   onChange={s => updateSection(idx, s)}
                   onDelete={() => deleteSection(idx)}

@@ -95,11 +95,8 @@ export function TimePickerField({ value, endValue, taskDate, hideEnd, onChange, 
       return idx >= 0 ? idx : 0;
     }
     if (isToday) return 0;
-    const targetMin = Math.max(0, Math.floor((nowTotalMin() - 60) / 15) * 15);
-    const h = Math.floor(targetMin / 60);
-    const m = targetMin % 60;
-    const slot = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-    const idx = slots.indexOf(slot);
+    // Для будущих/прошлых дней выбор времени начинаем с 6 утра, а не с текущего времени
+    const idx = slots.indexOf('06:00');
     return idx >= 0 ? idx : 0;
   };
 

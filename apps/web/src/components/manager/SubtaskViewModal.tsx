@@ -149,6 +149,7 @@ export function SubtaskViewModal({ item, userTags, onClose, onEdit, onToggle, on
                         onClick={() => setLightbox(a.url)}
                         title="Открыть"
                       >
+                        {/* eslint-disable-next-line @next/next/no-img-element -- загруженное вложение, оптимизация next/image не нужна */}
                         <img src={a.url} alt={a.name} className={styles.attachMedia} />
                       </button>
                     ) : isVid ? (
@@ -194,6 +195,7 @@ export function SubtaskViewModal({ item, userTags, onClose, onEdit, onToggle, on
 
       {lightbox && (
         <div className={styles.lightbox} onMouseDown={() => setLightbox(null)} role="dialog" aria-label="Просмотр изображения">
+          {/* eslint-disable-next-line @next/next/no-img-element -- полноэкранный просмотр загруженного вложения, оптимизация next/image не нужна */}
           <img src={lightbox} className={styles.lightboxImg} onMouseDown={e => e.stopPropagation()} alt="" />
           <IconButton
             icon={<X size={20} />}

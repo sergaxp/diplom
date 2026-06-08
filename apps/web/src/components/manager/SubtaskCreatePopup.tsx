@@ -7,7 +7,7 @@ import type { Tag } from '../../lib/tags';
 import { storageApi } from '../../lib/storage';
 import { Icon, hasIcon } from '../../lib/icons';
 import { TimePickerField } from './TimePickerField';
-import { Modal, Button, Input, Textarea } from '../../components/ui';
+import { Modal, Button, Textarea } from '../../components/ui';
 import styles from './SubtaskCreatePopup.module.scss';
 
 const ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/ogg,application/zip,application/x-7z-compressed,application/x-rar-compressed,application/pdf';
@@ -15,15 +15,24 @@ const ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,v
 const cap = (v: string) => v ? v.charAt(0).toUpperCase() + v.slice(1) : v;
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+type DayScope = 'this' | 'all' | 'select';
+
 interface Props {
   initial?: Partial<SubtaskItem>;
   userTags: Tag[];
   parentDate: string;
+  /** Дни серии (YYYY-MM-DD). Если больше одного — показываем выбор области по дням. */
+  seriesDays?: string[];
+  /** День, для которого открыт редактор («только этот день»). */
+  currentDay?: string;
   onSave: (item: SubtaskItem) => void;
   onCancel: () => void;
 }
 
-export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCancel }: Props) {
+const fmtDay = (ds: string): string =>
+  new Date(ds + 'T00:00:00').toLocaleDateString('ru', { day: 'numeric', month: 'short' });
+
+export function SubtaskCreatePopup({ initial, userTags, parentDate, seriesDays, currentDay, onSave, onCancel }: Props) {
   const [title,        setTitle]        = useState(initial?.title       ?? '');
   const [description,  setDescription]  = useState(initial?.description ?? '');
   const [time,         setTime]         = useState(initial?.time        ?? '');
@@ -32,6 +41,31 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
   const [tagDropOpen,  setTagDropOpen]  = useState(false);
   const [tagDropPos,   setTagDropPos]   = useState<{top:number;left:number}|null>(null);
   const [uploading,    setUploading]    = useState(0);
+
+  // ── Область «дни» (только для серий) ─────────────────────────────
+  const isSeries = !!seriesDays && seriesDays.length > 1;
+  const today    = currentDay ?? parentDate;
+  const [dayScope,     setDayScope]     = useState<DayScope>(() => {
+    const d = initial?.days;
+    if (!d || d.length === 0) return 'all';
+    if (d.length === 1 && d[0] === today) return 'this';
+    return 'select';
+  });
+  const [selectedDays, setSelectedDays] = useState<string[]>(() => {
+    const d = initial?.days;
+    return d && d.length ? d : (today ? [today] : []);
+  });
+
+  const toggleDay = (ds: string) =>
+    setSelectedDays(prev => prev.includes(ds) ? prev.filter(x => x !== ds) : [...prev, ds]);
+
+  // Итоговое значение `days` для сохранения (undefined ⇒ все дни).
+  const resolveDays = (): string[] | undefined => {
+    if (!isSeries) return undefined;
+    if (dayScope === 'all')  return undefined;
+    if (dayScope === 'this') return today ? [today] : undefined;
+    return selectedDays.length ? [...selectedDays] : (today ? [today] : undefined);
+  };
 
   const addedKeysRef   = useRef<string[]>([]);
   const removedKeysRef = useRef<string[]>([]);
@@ -114,6 +148,7 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
       time:        time || undefined,
       tagId:       tagId ?? undefined,
       attachments: attachments.length ? attachments : undefined,
+      days:        resolveDays(),
     });
   };
 
@@ -166,11 +201,52 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, onSave, onCa
           rows={2}
         />
 
+        {isSeries && (
+          <div className={styles.dayScope}>
+            <span className={styles.dayScopeLabel}>Применить к дням</span>
+            <div className={styles.dayScopeRadios}>
+              {([
+                ['this', 'Только этот день'],
+                ['all',  'Все дни серии'],
+                ['select', 'Выбранные дни'],
+              ] as [DayScope, string][]).map(([val, label]) => (
+                <label key={val} className={styles.dayScopeRadio}>
+                  <input
+                    type="radio"
+                    name="dayScope"
+                    checked={dayScope === val}
+                    onChange={() => setDayScope(val)}
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+            {dayScope === 'select' && (
+              <div className={styles.dayChips}>
+                {seriesDays!.map(ds => {
+                  const active = selectedDays.includes(ds);
+                  return (
+                    <button
+                      key={ds}
+                      type="button"
+                      className={[styles.dayChip, active ? styles.dayChipActive : ''].join(' ')}
+                      onClick={() => toggleDay(ds)}
+                    >
+                      {fmtDay(ds)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {(attachments.length > 0 || uploading > 0) && (
           <div className={styles.attachGrid}>
             {attachments.map((a, i) => (
               <div key={i} className={styles.attachItem}>
                 {a.type.startsWith('image/') ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- загруженное вложение, оптимизация next/image не нужна
                   <img src={a.url} alt={a.name} className={styles.attachMedia} />
                 ) : a.type.startsWith('video/') ? (
                   <video src={a.url} className={styles.attachMedia} muted />

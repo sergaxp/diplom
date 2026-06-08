@@ -64,6 +64,12 @@ export interface SubtaskItem {
   title: string;
   done: boolean;
 
+  /**
+   * Дни серии, к которым относится подзадача (YYYY-MM-DD). Пусто/undefined —
+   * подзадача на всех днях. Для одиночных (несерийных) задач не используется.
+   */
+  days?: string[] | null;
+
   // subtask-only
   description?: string;
   time?: string;        // "HH:MM"
@@ -98,7 +104,11 @@ export interface DayOverride {
   endTime?: string;
   priority?: TaskPriority;
   icon?: string | null;
+  /** Устаревшее: ранее тут хранилась копия подзадач дня. Оставлено для обратной
+   *  совместимости при чтении; новые данные пишутся в `doneIds`. */
   subtasks?: SubtaskSection[] | null;
+  /** Id выполненных подзадач именно в этот день (для серий — отметки по дням). */
+  doneIds?: string[];
 }
 
 export interface Task {
@@ -148,6 +158,151 @@ export function prevDayStr(dateStr: string): string {
  */
 export function isSeriesTask(task: Pick<Task, 'endDate' | 'repeat'>): boolean {
   return (!!task.endDate && task.endDate > '') || (!!task.repeat && task.repeat !== 'none');
+}
+
+/** Относится ли подзадача к указанному дню. Вложения/ссылки — всегда; подзадачи —
+ *  по полю `days` (пусто ⇒ все дни). */
+export function subtaskAppliesToDay(item: SubtaskItem, dateStr: string): boolean {
+  if ((item.kind ?? 'subtask') !== 'subtask') return true;
+  return !item.days || item.days.length === 0 || item.days.includes(dateStr);
+}
+
+/** Id выполненных подзадач из устаревшего снимка дня (обратная совместимость). */
+function legacyDoneIds(sections: SubtaskSection[] | null | undefined): string[] | undefined {
+  if (!sections) return undefined;
+  const ids = sections.flatMap(s => s.items.filter(i => (i.kind ?? 'subtask') === 'subtask' && i.done).map(i => i.id));
+  return ids.length ? ids : undefined;
+}
+
+/**
+ * Дневной «вид» подзадач серии: оставляем только подзадачи этого дня (по `days`)
+ * и проставляем `done` из набора выполненных в этот день. Определения берутся из
+ * базовой задачи — общие для всех дней.
+ */
+export function expandSeriesSubtasks(
+  base: SubtaskSection[],
+  dateStr: string,
+  doneIds: string[] | undefined,
+): SubtaskSection[] {
+  const done = new Set(doneIds ?? []);
+  return base.map(sec => ({
+    ...sec,
+    items: sec.items
+      .filter(it => subtaskAppliesToDay(it, dateStr))
+      .map(it => (it.kind ?? 'subtask') === 'subtask' ? { ...it, done: done.has(it.id) } : it),
+  }));
+}
+
+/**
+ * Сводит отредактированный дневной вид подзадач обратно в каноничную базу:
+ * сохраняет подзадачи других дней нетронутыми, обновляет/добавляет/удаляет
+ * подзадачи текущего дня и собирает id выполненных в этот день (`doneIds`).
+ */
+export function mergeSeriesSubtasks(
+  base: SubtaskSection[] | null | undefined,
+  dateStr: string,
+  daySections: SubtaskSection[],
+): { subtasks: SubtaskSection[]; doneIds: string[] } {
+  const baseById = new Map((base ?? []).map(s => [s.id, s]));
+  const doneIds: string[] = [];
+
+  const normalizeForBase = (item: SubtaskItem): SubtaskItem => {
+    if ((item.kind ?? 'subtask') !== 'subtask') return item;
+    if (item.done) doneIds.push(item.id);
+    return { ...item, done: false }; // в серии «выполнено» хранится по дням, не в базе
+  };
+
+  const subtasks: SubtaskSection[] = daySections.map(daySec => {
+    const baseSec   = baseById.get(daySec.id);
+    const editedById = new Map(daySec.items.map(it => [it.id, it]));
+    const items: SubtaskItem[] = [];
+
+    // Идём по базовому порядку: чужие дни сохраняем, видимые — обновляем/удаляем.
+    for (const it of baseSec?.items ?? []) {
+      if (!subtaskAppliesToDay(it, dateStr)) { items.push(it); continue; }
+      const edited = editedById.get(it.id);
+      if (!edited) continue;            // был на этом дне и удалён — убираем
+      editedById.delete(it.id);
+      items.push(normalizeForBase(edited));
+    }
+    // Новые подзадачи, добавленные в этот день (в исходном порядке).
+    for (const it of daySec.items) {
+      if (editedById.has(it.id)) { editedById.delete(it.id); items.push(normalizeForBase(it)); }
+    }
+    return { ...daySec, items };
+  });
+
+  return { subtasks, doneIds };
+}
+
+/**
+ * Применяет переопределение конкретного дня поверх базовой задачи и проставляет
+ * `occurrenceDate`. Для серий разворачивает подзадачи в дневной вид
+ * (фильтр по `days` + отметки `doneIds`).
+ */
+export function applyDayOverride(task: Task, dateStr: string): Task {
+  const out: Task = { ...task, occurrenceDate: dateStr };
+  const dayOv = task.dayOverrides?.[dateStr];
+  if (dayOv) {
+    if (dayOv.title)                     out.title       = dayOv.title;
+    if (dayOv.description !== undefined) out.description = dayOv.description;
+    if (dayOv.time        !== undefined) out.time        = dayOv.time;
+    if (dayOv.endTime     !== undefined) out.endTime     = dayOv.endTime;
+    if (dayOv.priority)                  out.priority    = dayOv.priority;
+    if (dayOv.icon        !== undefined) out.icon        = dayOv.icon;
+  }
+  if (isSeriesTask(task) && task.subtasks) {
+    const doneIds = dayOv?.doneIds ?? legacyDoneIds(dayOv?.subtasks);
+    out.subtasks = expandSeriesSubtasks(task.subtasks, dateStr, doneIds);
+  }
+  return out;
+}
+
+/**
+ * Перечень дней серии (YYYY-MM-DD): диапазон для многодневной задачи или
+ * вхождения для повторяющейся (ограниченное окно). Для одиночной — один день.
+ * Дни, помеченные удалёнными в `dayOverrides`, исключаются — их уже нет в серии.
+ */
+export function getSeriesDays(
+  task: Pick<Task, 'date' | 'endDate' | 'repeat' | 'repeatUntil' | 'repeatConfig'>,
+  dayOverrides?: Record<string, DayOverride> | null,
+): string[] {
+  const start = task.date;
+  const isDeleted = (ds: string) => dayOverrides?.[ds]?.deleted === true;
+  const days: string[] = [];
+  if (task.endDate && task.endDate >= start) {
+    const d = new Date(start + 'T00:00:00');
+    const end = new Date(task.endDate + 'T00:00:00');
+    let guard = 0;
+    while (d <= end && guard++ < 400) {
+      const ds = toDateStr(d);
+      if (!isDeleted(ds)) days.push(ds);
+      d.setDate(d.getDate() + 1);
+    }
+    return days;
+  }
+  if (task.repeat && task.repeat !== 'none') {
+    const startDate = new Date(start + 'T00:00:00');
+    const d = new Date(startDate);
+    let guard = 0;
+    while (days.length < 60 && guard++ < 760) {
+      const ds = toDateStr(d);
+      if (task.repeatUntil && ds > task.repeatUntil) break;
+      let occurs = false;
+      switch (task.repeat) {
+        case 'daily':    occurs = true; break;
+        case 'weekdays': occurs = d.getDay() >= 1 && d.getDay() <= 5; break;
+        case 'weekly':   occurs = d.getDay() === startDate.getDay(); break;
+        case 'monthly':  occurs = d.getDate() === startDate.getDate(); break;
+        case 'yearly':   occurs = d.getDate() === startDate.getDate() && d.getMonth() === startDate.getMonth(); break;
+        default:         occurs = ds === start; break; // custom — без перечисления
+      }
+      if (occurs && !isDeleted(ds)) days.push(ds);
+      d.setDate(d.getDate() + 1);
+    }
+    return days.length ? days : [start];
+  }
+  return [start];
 }
 
 /** Кол-во дней в указанном месяце (month: 0..11) */
@@ -728,17 +883,8 @@ export function getTasksForDate(
       if (isMatch) {
         const key = completionKey(task.id, dateStr);
         const status: TaskStatus = completions.has(key) ? 'done' : 'pending';
-        const out: Task = { ...task, status, occurrenceDate: dateStr };
         // Применяем переопределение дня поверх базовой задачи
-        if (dayOv) {
-          if (dayOv.title)                  out.title       = dayOv.title;
-          if (dayOv.description !== undefined) out.description = dayOv.description;
-          if (dayOv.time        !== undefined) out.time        = dayOv.time;
-          if (dayOv.endTime     !== undefined) out.endTime     = dayOv.endTime;
-          if (dayOv.priority)               out.priority    = dayOv.priority;
-          if (dayOv.icon        !== undefined) out.icon        = dayOv.icon;
-          if (dayOv.subtasks    !== undefined) out.subtasks    = dayOv.subtasks;
-        }
+        const out: Task = { ...applyDayOverride(task, dateStr), status };
         if (weatherWarning) out.weatherWarning = weatherWarning;
         result.push(out);
         continue;

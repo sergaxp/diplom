@@ -148,7 +148,7 @@ async function apiGetSafe(path: string, params: WeatherParams) {
 async function fetchMonthForecast(
   year: number, month: number, lat: number, lon: number, tz: string,
 ): Promise<Map<string, DayWeather>> {
-  const { today, monthStart, monthEnd, start, end } = monthBounds(year, month);
+  const { today, monthStart, monthEnd } = monthBounds(year, month);
   const map = new Map<string, DayWeather>();
   // Прогноз покрывает только настоящее/будущее; целиком прошлый месяц — пропускаем
   if (monthEnd < today) return map;

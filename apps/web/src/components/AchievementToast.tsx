@@ -11,12 +11,13 @@ const DISPLAY_MS = 4000;
 export function AchievementToast() {
   const { queue, pop } = useAchievementStore();
   const current = queue[0];
+  const currentId = current?.id;
 
   useEffect(() => {
-    if (!current) return;
+    if (!currentId) return;
     const t = setTimeout(pop, DISPLAY_MS);
     return () => clearTimeout(t);
-  }, [current?.id, pop]);
+  }, [currentId, pop]);
 
   if (!current) return null;
 

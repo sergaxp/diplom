@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Task, toDateStr } from '../../../lib/tasks';
+import { Task } from '../../../lib/tasks';
 import { HolidayMap } from '../../../lib/holidays';
 import {
   WEEKDAYS, MONTHS, MONTHS_SHORT, MONTHS_GEN, QUARTERS,
@@ -20,7 +20,6 @@ export function ChartView({ selectedDate, tasks, onSelect, holidayMap }: ChartPr
   const [period,      setPeriod]      = useState<ChartPeriod>('week');
   const [chartPicker, setChartPicker] = useState<PickerType | null>(null);
 
-  const today    = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
   const weekDays = useMemo(() => getWeekDays(selectedDate), [selectedDate]);
 
   const navigate = (dir: 1 | -1) => {
@@ -62,10 +61,6 @@ export function ChartView({ selectedDate, tasks, onSelect, holidayMap }: ChartPr
 
   const qStart        = Math.floor(selectedDate.getMonth() / 3) * 3;
   const quarterMonths = [0,1,2].map(i => ({ year: selectedDate.getFullYear(), month: qStart + i }));
-  const yearMonths    = Array.from({ length: 12 }, (_, i) => ({ year: selectedDate.getFullYear(), month: i }));
-
-  const todStr = toDateStr(today);
-  const selStr = toDateStr(selectedDate);
 
   return (
     <div className={styles.chart}>

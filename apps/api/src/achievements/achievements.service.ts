@@ -155,7 +155,7 @@ export class AchievementsService {
       case 'tasks_1000': {
         if (trigger.type !== 'task_completed') return false;
         const targets: Record<string, number> = {
-          tasks_10: 10,
+          tasks_10: 12,
           tasks_50: 50,
           tasks_100: 100,
           tasks_500: 500,

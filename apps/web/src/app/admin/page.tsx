@@ -121,6 +121,7 @@ function UserRow({ user, isSelf, onToggleRole, onToggleActive, onDelete }: {
       <td className={styles.tdUser}>
         <div className={styles.userAvatar}>
           {user.avatarUrl
+            // eslint-disable-next-line @next/next/no-img-element -- аватар из пользовательского upload, оптимизация next/image не нужна
             ? <img src={user.avatarUrl} alt="" className={styles.avatarImg} />
             : <span className={styles.avatarInitial}>{initial}</span>}
         </div>

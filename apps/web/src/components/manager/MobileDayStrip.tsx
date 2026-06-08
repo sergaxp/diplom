@@ -60,9 +60,22 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
   const user  = useAuthStore(s => s.user);
   const showHolidays = user?.showHolidays !== false;
 
+  // Месяц, который показывает развёрнутая сетка. Отдельно от выбранного дня:
+  // листание месяцев НЕ переносит выбор/«сегодня» на чужой месяц (как на ПК).
+  const [viewDate, setViewDate] = useState(selectedDate);
+  const [prevSel, setPrevSel]   = useState(selectedDate);
+  if (selectedDate !== prevSel) { setPrevSel(selectedDate); setViewDate(selectedDate); }
+
+  // При каждом раскрытии сетки показываем месяц выбранного дня (сбрасываем листание).
+  const prevExpanded = useRef(expanded);
+  useEffect(() => {
+    if (expanded && !prevExpanded.current) setViewDate(selectedDate);
+    prevExpanded.current = expanded;
+  }, [expanded, selectedDate]);
+
   const { user: u } = useAuthStore();
   const location = { lat: u?.locationLat, lon: u?.locationLon, name: u?.location };
-  const { data: weather } = useCalendarWeather(selectedDate.getFullYear(), selectedDate.getMonth(), location);
+  const { data: weather } = useCalendarWeather(viewDate.getFullYear(), viewDate.getMonth(), location);
   const { data: currentWeather } = useCurrentWeather(location);
 
   // Month picker state
@@ -106,31 +119,31 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
     // Игнорируем вертикальный/слабый свайп
     if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.2) return;
     const dir = dx < 0 ? 1 : -1; // влево = вперёд
-    const next = new Date(selectedDate);
-    next.setMonth(next.getMonth() + dir);
-    next.setHours(0, 0, 0, 0);
-    onSelect(next);
+    shiftMonth(dir);
   };
 
   // ── Month nav (expanded mode) ───────────────────────────────
+  // Листание стрелками/свайпом меняет только просматриваемый месяц, не выбор дня.
   const shiftMonth = (dir: -1 | 1) => {
-    const next = new Date(selectedDate);
-    next.setMonth(next.getMonth() + dir);
-    next.setHours(0, 0, 0, 0);
-    onSelect(next);
+    setViewDate(prev => {
+      const n = new Date(prev.getFullYear(), prev.getMonth() + dir, 1);
+      n.setHours(0, 0, 0, 0);
+      return n;
+    });
   };
 
+  // Выбор месяца из пикера — переносим выбранный день в этот месяц.
   const pickMonthYear = (m: number, y: number) => {
     const dim = new Date(y, m + 1, 0).getDate();
-    const day = Math.min(selectedDate.getDate(), dim);
+    const day = Math.min(viewDate.getDate(), dim);
     const next = new Date(y, m, day);
     next.setHours(0, 0, 0, 0);
     onSelect(next);
     setMonthPickerOpen(false);
   };
 
-  const { data: holCur  } = useHolidays(selectedDate.getFullYear(),     showHolidays);
-  const { data: holNext } = useHolidays(selectedDate.getFullYear() + 1, showHolidays);
+  const { data: holCur  } = useHolidays(viewDate.getFullYear(),     showHolidays);
+  const { data: holNext } = useHolidays(viewDate.getFullYear() + 1, showHolidays);
   const holidayMap = useMemo<HolidayMap>(() => {
     if (!showHolidays) return new Map();
     const m: HolidayMap = new Map();
@@ -160,8 +173,8 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
 
   // Month grid cells
   const monthCells = useMemo(
-    () => buildCells(selectedDate.getFullYear(), selectedDate.getMonth()),
-    [selectedDate],
+    () => buildCells(viewDate.getFullYear(), viewDate.getMonth()),
+    [viewDate],
   );
 
   const renderDayCard = (d: Date) => {
@@ -252,7 +265,7 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
               className={styles.monthTitleBtn}
               onClick={() => setMonthPickerOpen(o => !o)}
             >
-              {MONTHS[selectedDate.getMonth()]} · {selectedDate.getFullYear()}
+              {MONTHS[viewDate.getMonth()]} · {viewDate.getFullYear()}
               <span className={styles.monthCaret}>▾</span>
             </button>
             <button
@@ -267,8 +280,8 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
 
           {monthPickerOpen && (
             <MonthYearPicker
-              year={selectedDate.getFullYear()}
-              month={selectedDate.getMonth()}
+              year={viewDate.getFullYear()}
+              month={viewDate.getMonth()}
               onPick={pickMonthYear}
               onClose={() => setMonthPickerOpen(false)}
             />
@@ -286,7 +299,7 @@ export function MobileDayStrip({ selectedDate, onSelect, tasks, expanded, onTogg
           <div className={styles.monthGrid}>
             {monthCells.map((day, i) => {
               if (!day) return <span key={i} className={styles.monthEmpty}/>;
-              const d         = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
+              const d         = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
               const ds        = toDateStr(d);
               const isToday   = ds === todayStr;
               const isSel     = ds === selStr;

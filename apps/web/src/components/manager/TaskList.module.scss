@@ -343,6 +343,24 @@
   transition: color var(--duration-fast) var(--ease-default);
 }
 
+// Счётчик подзадач — маленький кружок в верхнем индексе у названия (напр. «Задача⁴»)
+.subtaskCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.05em;
+  height: 1.05em;
+  padding: 0 0.25em;
+  margin-left: 0.15em;
+  font-size: 0.62em;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  color: var(--text-on-brand);
+  background: var(--brand);
+  border-radius: 999px;
+  vertical-align: super;
+}
+
 .taskDesc {
   font-size: var(--text-xs);
   color: var(--text-muted);

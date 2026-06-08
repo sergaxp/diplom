@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, AlignLeft, CheckCircle2 } from 'lucide-react';
-import { Task, TaskPriority, TaskStatus, toDateStr, getTasksForDate, completionKey } from '../../lib/tasks';
+import { Task, TaskPriority, TaskStatus, toDateStr, getTasksForDate, completionKey, applyDayOverride } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { TaskFormModal } from './task-form';
 import { useCurrentWeather, useDayWeather, weatherCodeToInfo } from '../../lib/weather';
@@ -84,6 +84,12 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
   // не для обязательных и не для многодневных.
   const showQuickPostpone = task.type !== 'mandatory' && !task.endDate;
 
+  // Кол-во подзадач (только пункты-чеклисты, без вложений/ссылок) — для бейджа у названия
+  const subtaskCount = (task.subtasks ?? []).reduce(
+    (n, s) => n + s.items.filter(i => (i.kind ?? 'subtask') === 'subtask').length,
+    0,
+  );
+
   if (task.isGlobal) {
     return (
       <li className={[styles.task, styles.taskGlobal].join(' ')}>
@@ -144,7 +150,12 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
         aria-label={`Открыть задачу: ${task.title}`}>
         {task.time && <span className={styles.taskTime}>{task.time}</span>}
         <div className={styles.taskText}>
-          <span className={styles.taskTitle}>{task.title}</span>
+          <span className={styles.taskTitle}>
+            {task.title}
+            {subtaskCount > 0 && (
+              <span className={styles.subtaskCount} title={`Подзадач: ${subtaskCount}`}>{subtaskCount}</span>
+            )}
+          </span>
           {task.description && (
             <span className={styles.taskDesc}>{task.description}</span>
           )}
@@ -251,24 +262,32 @@ interface Props {
   onPostpone:  (id: string, days: number) => void;
   onGoToToday: () => void;
   onCreateTag?: (name: string, color: string, icon?: string | null) => Promise<Tag>;
-  validateTitle?: (title: string, dateStr: string, endDate?: string, excludeId?: string) => string | null;
 }
 
 export function TaskList({
   selectedDate, tasks, completions, isAdmin, userTags,
-  onToggle, onDelete, onAdd, onUpdate, onPostpone, onGoToToday, onCreateTag, validateTitle,
+  onToggle, onDelete, onAdd, onUpdate, onPostpone, onGoToToday, onCreateTag,
 }: Props) {
   const [now,           setNow]           = useState(new Date());
   const [createOpen,    setCreateOpen]    = useState(false);
   const [editingTask,   setEditingTask]   = useState<Task | null>(null);
   const [sortByPriority, setSortByPriority] = useState(false);
 
-  // Sync editingTask with fresh server data so external changes (other devices) propagate into the modal
+  // Sync editingTask with fresh server data so external changes (other devices) propagate into the modal.
+  // Важно: сохраняем контекст вхождения (occurrenceDate) и применяем переопределение дня
+  // заново, иначе правка превращается в правку всей серии и затирает dayOverrides
+  // (например, возвращает ранее удалённые дни). editBaseRef защищает от зацикливания.
+  const editBaseRef = useRef<Task | null>(null);
   useEffect(() => {
-    if (!editingTask) return;
+    if (!editingTask) { editBaseRef.current = null; return; }
     const fresh = tasks.find(t => t.id === editingTask.id);
-    if (fresh && fresh !== editingTask) setEditingTask(fresh);
-  }, [tasks]);
+    if (!fresh || fresh === editBaseRef.current) return;
+    editBaseRef.current = fresh;
+    const occ = editingTask.occurrenceDate;
+    setEditingTask(occ
+      ? { ...applyDayOverride(fresh, occ), status: editingTask.status }
+      : fresh);
+  }, [tasks, editingTask]);
 
   const user     = useAuthStore(s => s.user);
   const location = { lat: user?.locationLat, lon: user?.locationLon, name: user?.location };
@@ -463,7 +482,6 @@ export function TaskList({
           onSave={onAdd}
           onClose={() => setCreateOpen(false)}
           onCreateTag={onCreateTag}
-          validateTitle={validateTitle}
         />
       )}
 
@@ -483,7 +501,6 @@ export function TaskList({
             void id; void status;
             onUpdate(editingTask.id, { ...rest, subtasks: sections }, editingTask.occurrenceDate);
           }}
-          validateTitle={validateTitle}
         />
       )}
     </>

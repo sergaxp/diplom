@@ -87,7 +87,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'tasks_10',
     title: 'Первая дюжина',
-    description: 'Выполнить 10 задач',
+    description: 'Выполнить 12 задач',
     rank: 1,
     xp: 500,
     icon: 'List',

@@ -8,7 +8,11 @@ import {
   checkWeatherCondition,
   checkHolidayCondition,
   getTasksForDate,
+  getSeriesDays,
+  mergeSeriesSubtasks,
+  subtaskAppliesToDay,
   type Task,
+  type SubtaskSection,
   type WeatherCondition,
 } from './tasks';
 
@@ -1096,6 +1100,86 @@ describe('isSeriesTask', () => {
   });
 });
 
+describe('getSeriesDays', () => {
+  it('enumerates a multi-day range inclusively', () => {
+    expect(getSeriesDays({ date: '2026-01-01', endDate: '2026-01-04', repeat: 'none' }))
+      .toEqual(['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04']);
+  });
+  it('returns the single day for a plain task', () => {
+    expect(getSeriesDays({ date: '2026-01-01', repeat: 'none' })).toEqual(['2026-01-01']);
+  });
+  it('enumerates weekly occurrences', () => {
+    const days = getSeriesDays({ date: '2026-01-01', repeat: 'weekly', repeatUntil: '2026-01-22' });
+    expect(days).toEqual(['2026-01-01', '2026-01-08', '2026-01-15', '2026-01-22']);
+  });
+  it('excludes days marked deleted (multi-day)', () => {
+    const days = getSeriesDays(
+      { date: '2026-01-01', endDate: '2026-01-04', repeat: 'none' },
+      { '2026-01-02': { deleted: true } },
+    );
+    expect(days).toEqual(['2026-01-01', '2026-01-03', '2026-01-04']);
+  });
+  it('excludes deleted occurrences (repeating)', () => {
+    const days = getSeriesDays(
+      { date: '2026-01-01', repeat: 'weekly', repeatUntil: '2026-01-22' },
+      { '2026-01-08': { deleted: true } },
+    );
+    expect(days).toEqual(['2026-01-01', '2026-01-15', '2026-01-22']);
+  });
+});
+
+describe('subtaskAppliesToDay', () => {
+  it('all-days when days is empty/undefined', () => {
+    expect(subtaskAppliesToDay({ id: 'a', title: 'A', done: false }, '2026-01-05')).toBe(true);
+    expect(subtaskAppliesToDay({ id: 'a', title: 'A', done: false, days: [] }, '2026-01-05')).toBe(true);
+  });
+  it('restricts to listed days', () => {
+    const it = { id: 'a', title: 'A', done: false, days: ['2026-01-05'] };
+    expect(subtaskAppliesToDay(it, '2026-01-05')).toBe(true);
+    expect(subtaskAppliesToDay(it, '2026-01-06')).toBe(false);
+  });
+  it('media items always apply', () => {
+    const link = { id: 'l', kind: 'link' as const, title: 'L', done: false, days: ['2026-01-05'] };
+    expect(subtaskAppliesToDay(link, '2026-01-06')).toBe(true);
+  });
+});
+
+describe('mergeSeriesSubtasks', () => {
+  const base: SubtaskSection[] = [{ id: 's', title: 'Секция', items: [
+    { id: 'all',  title: 'Везде',  done: false },
+    { id: 'only', title: 'Только 2-го', done: false, days: ['2026-01-02'] },
+  ] }];
+
+  it('keeps other-day items and records doneIds for the edited day', () => {
+    // День 1 видит только 'all'; отмечаем его выполненным
+    const daySections: SubtaskSection[] = [{ id: 's', title: 'Секция', items: [
+      { id: 'all', title: 'Везде', done: true },
+    ] }];
+    const res = mergeSeriesSubtasks(base, '2026-01-01', daySections);
+    expect(res.subtasks[0].items.map(i => i.id)).toEqual(['all', 'only']); // скрытый сохранён
+    expect(res.subtasks[0].items.find(i => i.id === 'all')!.done).toBe(false); // done не в базе
+    expect(res.doneIds).toEqual(['all']);
+  });
+
+  it('adds a new item scoped to the current day', () => {
+    const daySections: SubtaskSection[] = [{ id: 's', title: 'Секция', items: [
+      { id: 'all', title: 'Везде', done: false },
+      { id: 'new', title: 'Новая', done: false, days: ['2026-01-01'] },
+    ] }];
+    const res = mergeSeriesSubtasks(base, '2026-01-01', daySections);
+    expect(res.subtasks[0].items.map(i => i.id)).toEqual(['all', 'only', 'new']);
+  });
+
+  it('removes an item deleted on the current day but keeps it for other days', () => {
+    // На дне 2 видны 'all' и 'only'; удаляем 'all'
+    const daySections: SubtaskSection[] = [{ id: 's', title: 'Секция', items: [
+      { id: 'only', title: 'Только 2-го', done: false, days: ['2026-01-02'] },
+    ] }];
+    const res = mergeSeriesSubtasks(base, '2026-01-02', daySections);
+    expect(res.subtasks[0].items.map(i => i.id)).toEqual(['only']);
+  });
+});
+
 describe('getTasksForDate – dayOverrides', () => {
   it('hides a day marked deleted', () => {
     const task = makeTask({ date: '2026-01-01', endDate: '2026-01-03',
@@ -1105,15 +1189,36 @@ describe('getTasksForDate – dayOverrides', () => {
     expect(getTasksForDate([task], d('2026-01-03'))).toHaveLength(1);
   });
 
-  it('applies per-day title and subtasks override only on that day', () => {
+  it('applies per-day title override only on that day', () => {
     const task = makeTask({ date: '2026-01-01', endDate: '2026-01-03',
       title: 'Базовая',
-      dayOverrides: { '2026-01-02': { title: 'День 2', subtasks: [{ id: 's', title: 'Секция', items: [] }] } } });
+      dayOverrides: { '2026-01-02': { title: 'День 2' } } });
     expect(getTasksForDate([task], d('2026-01-01'))[0].title).toBe('Базовая');
-    const day2 = getTasksForDate([task], d('2026-01-02'))[0];
-    expect(day2.title).toBe('День 2');
-    expect(day2.subtasks).toHaveLength(1);
+    expect(getTasksForDate([task], d('2026-01-02'))[0].title).toBe('День 2');
     expect(getTasksForDate([task], d('2026-01-03'))[0].title).toBe('Базовая');
+  });
+
+  it('scopes base subtasks to specific days via `days`', () => {
+    const task = makeTask({ date: '2026-01-01', endDate: '2026-01-03',
+      subtasks: [{ id: 's', title: 'Секция', items: [
+        { id: 'a', title: 'Везде', done: false },
+        { id: 'b', title: 'Только 2-го', done: false, days: ['2026-01-02'] },
+      ] }] });
+    const items = (ds: string) =>
+      getTasksForDate([task], d(ds))[0].subtasks![0].items.map(i => i.id);
+    expect(items('2026-01-01')).toEqual(['a']);
+    expect(items('2026-01-02')).toEqual(['a', 'b']);
+    expect(items('2026-01-03')).toEqual(['a']);
+  });
+
+  it('applies per-day done from doneIds', () => {
+    const task = makeTask({ date: '2026-01-01', endDate: '2026-01-02',
+      subtasks: [{ id: 's', title: 'Секция', items: [{ id: 'a', title: 'A', done: false }] }],
+      dayOverrides: { '2026-01-02': { doneIds: ['a'] } } });
+    const done = (ds: string) =>
+      getTasksForDate([task], d(ds))[0].subtasks![0].items[0].done;
+    expect(done('2026-01-01')).toBe(false);
+    expect(done('2026-01-02')).toBe(true);
   });
 
   it('sets occurrenceDate on returned tasks', () => {

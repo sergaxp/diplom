@@ -116,6 +116,7 @@ export function ProfileTab({ user, setUser }: { user: User; setUser: (u: User | 
           disabled={coverMut.isPending}
         >
           {user.coverUrl
+            // eslint-disable-next-line @next/next/no-img-element -- баннер из пользовательского upload, оптимизация next/image не нужна
             ? <img src={user.coverUrl} alt="banner" className={styles.coverImg} />
             : <span className={styles.coverPlaceholder}>{coverMut.isPending ? 'Загрузка...' : '+ Загрузить баннер'}</span>}
           {user.coverUrl && <span className={styles.coverOverlay}>{coverMut.isPending ? '...' : 'Изменить'}</span>}

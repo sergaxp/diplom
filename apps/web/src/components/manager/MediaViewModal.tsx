@@ -30,6 +30,7 @@ export function MediaViewModal({ item, onClose, onDelete }: Props) {
     if (isAttachment && item.attachment) {
       const a = item.attachment;
       if (a.type.startsWith('image/')) {
+        // eslint-disable-next-line @next/next/no-img-element -- загруженное вложение, оптимизация next/image не нужна
         return <img src={a.url} alt={a.name} className={styles.fullMedia} />;
       }
       if (a.type.startsWith('video/')) {
@@ -45,6 +46,7 @@ export function MediaViewModal({ item, onClose, onDelete }: Props) {
     }
     if (isLink && item.url) {
       if (item.linkType === 'image' && item.thumbnailUrl) {
+        // eslint-disable-next-line @next/next/no-img-element -- превью внешней ссылки, оптимизация next/image не нужна
         return <img src={item.thumbnailUrl} alt={item.title || item.url} className={styles.fullMedia} />;
       }
       return (

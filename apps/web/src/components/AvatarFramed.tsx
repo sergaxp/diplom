@@ -47,6 +47,7 @@ export function AvatarFramed({
     >
       <span className={styles.inner}>
         {avatarUrl
+          // eslint-disable-next-line @next/next/no-img-element -- аватар из пользовательского upload, оптимизация next/image не нужна
           ? <img src={avatarUrl} alt={username ?? ''} className={styles.img} />
           : <span className={styles.initial} style={{ fontSize: Math.max(10, size * 0.42) }}>{initial}</span>}
       </span>

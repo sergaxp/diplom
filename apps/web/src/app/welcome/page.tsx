@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -51,9 +52,9 @@ export default function Home() {
           </p>
 
           <div className={styles.previewWrap}>
-            <img src="/white.png" alt="Warmingtea preview"
+            <Image src="/white.png" alt="Warmingtea preview" width={2373} height={1455} priority
               className={[styles.preview, styles.previewLight].join(' ')} />
-            <img src="/dark.png" alt="Warmingtea preview"
+            <Image src="/dark.png" alt="Warmingtea preview" width={2373} height={1455} priority
               className={[styles.preview, styles.previewDark].join(' ')} />
           </div>
 
