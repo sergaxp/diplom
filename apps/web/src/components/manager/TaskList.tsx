@@ -128,13 +128,6 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
       isMandatoryDay ? styles.taskMandatoryDay : '',
       (menuOpen || postponeOpen) ? styles.taskMenuOpen : '',
     ].join(' ')}>
-      {/* Иконка задачи (если есть) */}
-      {hasIcon(task.icon) && (
-        <span className={styles.taskIcon}>
-          <Icon name={task.icon} size={14} strokeWidth={1.75} />
-        </span>
-      )}
-
       {/* Checkbox */}
       <button
         type="button"
@@ -185,7 +178,7 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
         )}
         {task.tags?.slice(0, 2).map(tag => (
           <span key={tag.id} className={styles.taskTag} style={{ borderColor: tag.color }}>
-            {hasIcon(tag.icon) ? <Icon name={tag.icon} size={9} strokeWidth={2.5} /> : <span className={styles.taskTagDot} style={{ background: tag.color }} />}
+            {hasIcon(tag.icon) ? <Icon name={tag.icon} size={10} strokeWidth={2.5} /> : <span className={styles.taskTagDot} style={{ background: tag.color }} />}
           </span>
         ))}
       </button>

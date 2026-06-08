@@ -5,7 +5,7 @@ import { Task, toDateStr, getTasksForDate } from '../../../lib/tasks';
 import { useWeatherShownLock } from '../../../lib/weatherLock';
 import { getHolidayColor, getHolidayName } from '../../../lib/holidays';
 import { Icon, hasIcon } from '../../../lib/icons';
-import { useCalendarWeather } from '../../../lib/weather';
+import { useCalendarWeather, weatherCodeToInfo } from '../../../lib/weather';
 import { useAuthStore } from '../../../store/authStore';
 import { useHolidayMap } from '../../../hooks/useHolidayMap';
 import { WEEKDAYS, MONTHS, PickerType, buildCells } from '../../../lib/calendarLayout';
@@ -14,9 +14,9 @@ import { ChartView } from './ChartView';
 import styles from './Calendar.module.scss';
 
 // ── Main calendar ─────────────────────────────────────────────
-interface Props { selectedDate: Date; onSelect: (d: Date) => void; tasks: Task[]; }
+interface Props { selectedDate: Date; onSelect: (d: Date) => void; tasks: Task[]; completions?: Set<string>; }
 
-export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
+export function ManagerCalendar({ selectedDate, onSelect, tasks, completions = new Set() }: Props) {
   const [viewYear,    setViewYear]    = useState(selectedDate.getFullYear());
   const [viewMonth,   setViewMonth]   = useState(selectedDate.getMonth());
   const [view,        setView]        = useState<'grid' | 'chart'>('grid');
@@ -66,26 +66,29 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
   };
 
   const renderTagIcons = (dayTasks: Task[]) => {
-    // Собираем уникальные теги дня (первый тег каждой задачи)
-    const seen = new Set<string>();
-    const tagItems: Array<{ id: string; icon: string | null; color: string }> = [];
-    for (const t of dayTasks) {
-      if (!t.tags?.length) continue;
-      const tag = t.tags[0];
-      if (!seen.has(tag.id)) { seen.add(tag.id); tagItems.push(tag); }
-      if (tagItems.length >= 4) break;
-    }
-    const noTagCount = dayTasks.filter(t => !t.tags?.length).length;
-    const extra = dayTasks.length - tagItems.length - noTagCount;
+    const MAX = 9;
+    const hasMore = dayTasks.length > MAX;
+    const shown = dayTasks.slice(0, hasMore ? MAX - 1 : MAX);
     return (
       <>
-        {tagItems.map(tag => (
-          hasIcon(tag.icon)
-            ? <Icon key={tag.id} name={tag.icon} size={9} strokeWidth={2.5} color={tag.color} />
-            : <span key={tag.id} className={styles.dot} style={{ background: tag.color }} />
-        ))}
-        {noTagCount > 0 && <span className={styles.dot} />}
-        {extra > 0 && <span className={styles.dotPlus}>+{extra}</span>}
+        {shown.map((task, i) => {
+          const tag     = task.tags?.[0];
+          const isDone  = task.status === 'done';
+          const color   = tag?.color ?? 'var(--text-muted)';
+          if (hasIcon(tag?.icon)) {
+            return (
+              <Icon key={i} name={tag!.icon!} size={14} strokeWidth={2.5}
+                color={isDone ? color : 'var(--text-muted)'} />
+            );
+          }
+          return (
+            <span key={i} className={styles.dot} style={isDone
+              ? { background: color }
+              : { background: 'transparent', border: `2px solid ${color}`, boxSizing: 'border-box' as const }
+            } />
+          );
+        })}
+        {hasMore && <span className={styles.dotPlus}>+</span>}
       </>
     );
   };
@@ -163,8 +166,9 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
               const d        = new Date(viewYear, viewMonth, day);
               const ds       = toDateStr(d);
               const dow      = d.getDay(); // 0=Sun, 6=Sat
-              const dayTasks = getTasksForDate(tasks, d, new Set(), holidayMap, weather, { todayStr, weatherShownLock });
+              const dayTasks = getTasksForDate(tasks, d, completions, holidayMap, weather, { todayStr, weatherShownLock });
               const tempMax  = weather?.get(ds)?.tempMax;
+              const wCode    = weather?.get(ds)?.weatherCode;
               const hol      = holidayMap.get(ds);
               const isWeekend = dow === 0 || dow === 6;
               const isWorkday = hol?.type === 'workday';
@@ -186,7 +190,14 @@ export function ManagerCalendar({ selectedDate, onSelect, tasks }: Props) {
                   title={cellTitle}
                 >
                   <span className={styles.dayNum}>{day}</span>
-                  <span className={styles.temp}>{tempMax != null ? (tempMax > 0 ? `+${tempMax}` : tempMax) + '°' : 't°'}</span>
+                  <span className={styles.weather}>
+                    {wCode != null && (
+                      <Icon name={weatherCodeToInfo(wCode).icon} size={13} strokeWidth={2} />
+                    )}
+                    <span className={styles.temp}>
+                      {tempMax != null ? (tempMax > 0 ? `+${tempMax}` : tempMax) + '°' : 't°'}
+                    </span>
+                  </span>
                   {hol && (
                     <span className={styles.holBadge} style={{ background: getHolidayColor(hol.type) }}>
                       {hol.type === 'workday' ? 'Р' : hol.type === 'shortday' ? '½' : '●'}

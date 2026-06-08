@@ -193,8 +193,10 @@ export default function ManagerPage() {
   const [delReq, setDelReq] = useState<{ id: string; date: string } | null>(null);
 
   // ── Handlers ──────────────────────────────────────────────────
-  const handleToggle   = (taskId: string, dateStr: string) =>
+  const handleToggle   = (taskId: string, dateStr: string) => {
+    if (taskId.startsWith('opt_')) return;
     toggleMut.mutate({ taskId, date: dateStr });
+  };
 
   const stripRuntime = (t: Task): Omit<Task, 'id' | 'status'> => {
     const { id: _i, status: _s, occurrenceDate: _o, weatherWarning: _w, ...rest } = t;
@@ -402,6 +404,7 @@ export default function ManagerPage() {
             selectedDate={selectedDate}
             onSelect={setSelectedDate}
             tasks={allTasks}
+            completions={completions}
           />
         </div>
       </div>

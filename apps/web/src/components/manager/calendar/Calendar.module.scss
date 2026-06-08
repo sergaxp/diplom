@@ -111,12 +111,16 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
+  gap: 6px;
+  // Кап высоты карточки: при 6 строках сетки и зазорах 6px сетка должна
+  // помещаться по высоте без скролла на ПК (FHD/2K/4K). 200px — суммарная
+  // высота шапки страницы, шапки календаря, строки дней недели и отступов.
+  --cell-max: calc((100dvh - 200px) / 6);
 }
 
 .empty {
   background: transparent;
-  min-height: 60px;
+  height: var(--cell-max);
 }
 
 .cell {
@@ -124,13 +128,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 6px var(--space-2);
+  height: var(--cell-max);
+  padding: var(--space-3) var(--space-4);
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: 14px;
   cursor: pointer;
-  min-height: 60px;
-  gap: 2px;
+  gap: 6px;
   transition: background var(--duration-fast) var(--ease-default),
               border-color var(--duration-fast) var(--ease-default);
   text-align: left;
@@ -161,7 +165,7 @@
   // Лёгкая янтарная заливка — «сегодня» читается даже когда
   // тонкая обводка сливается с фоном (особенно на светлой теме).
   background: var(--accent-subtle);
-  padding: 5px calc(var(--space-2) - 1px);
+  padding: calc(var(--space-3) - 1px) calc(var(--space-4) - 1px);
 
   // Тёмно-янтарный жирный номер дня — контраст и на светлой, и на тёмной теме
   .dayNum {
@@ -184,7 +188,7 @@
 }
 
 .dayNum {
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   font-weight: var(--weight-semibold);
   color: var(--text-primary);
   line-height: 1;
@@ -192,39 +196,62 @@
 }
 
 .temp {
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
   color: var(--text-muted);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
-.dots {
+.weather {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
+  align-items: center;
+  gap: 3px;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.dots {
+  display: grid;
+  grid-template-columns: repeat(3, 14px);
+  align-items: center;
+  gap: 3px;
   margin-top: auto;
 }
 
 .dot {
-  width: 5px;
-  height: 5px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: var(--brand);
+  background: var(--text-muted);
   flex-shrink: 0;
 }
 
+.dotIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+
 .dotPlus {
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
   color: var(--brand);
   font-weight: var(--weight-semibold);
   line-height: 1;
+  text-align: center;
 }
 
 // Праздничный индикатор в ячейке сетки
 .holBadge {
   position: absolute;
-  top: 3px;
-  right: 3px;
+  top: 5px;
+  right: 5px;
   font-size: var(--text-2xs);
   color: var(--text-on-brand);
   border-radius: var(--radius-full);
