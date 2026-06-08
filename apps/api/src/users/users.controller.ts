@@ -167,6 +167,17 @@ export class UsersController {
     return { dailyBonusGranted: granted };
   }
 
+  // POST /users/me/settings-opened – пользователь открыл страницу настроек
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('me/settings-opened')
+  async settingsOpened(@Request() req: AuthenticatedRequest) {
+    const newAchievements = await this.usersService.markSettingsOpened(
+      req.user.id,
+    );
+    return { newAchievements };
+  }
+
   // GET /users/:username
   @Get(':username')
   async getPublicProfile(@Param('username') username: string) {

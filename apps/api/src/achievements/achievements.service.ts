@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, Not, IsNull } from 'typeorm';
 import { UserAchievement } from './entities/user-achievement.entity';
 import { User } from '../users/entities/user.entity';
 import { Task, TaskRepeat, TaskType } from '../tasks/entities/task.entity';
@@ -23,14 +23,21 @@ export type { AchievementDef };
 
 // ── Trigger types ─────────────────────────────────────────────
 export type AchievementTrigger =
+  | { type: 'registered' }
   | {
       type: 'task_created';
       taskRepeat: TaskRepeat;
       taskType: TaskType;
       hasEndDate: boolean;
     }
-  | { type: 'task_completed'; taskTime: string | null; taskType: TaskType }
+  | {
+      type: 'task_completed';
+      taskTime: string | null;
+      taskType: TaskType;
+      hasEndDate: boolean;
+    }
   | { type: 'tag_created' }
+  | { type: 'settings_opened' }
   | {
       type: 'profile_updated';
       displayName: string | null;
@@ -79,13 +86,20 @@ export class AchievementsService {
   ): Promise<AchievementDef[]> {
     const existing = await this.achRepo.find({ where: { userId } });
     const unlockedIds = new Set(existing.map((e) => e.defId));
-
-    const candidates = ACHIEVEMENTS.filter((a) => !unlockedIds.has(a.id));
     const newlyUnlocked: AchievementDef[] = [];
 
-    for (const def of candidates) {
-      const should = await this.shouldUnlock(userId, def.id, trigger);
-      if (should) {
+    // Гейтинг дерева навыков: достижение открывается, только когда открыты все
+    // его предки (requires). Каскад: открытие предка может сразу открыть потомка
+    // в этом же вызове (например, первое выполнение задачи открывает first_done,
+    // а следом morning_bird). Поэтому повторяем проходы до фиксированной точки.
+    let progressed = true;
+    while (progressed) {
+      progressed = false;
+      for (const def of ACHIEVEMENTS) {
+        if (unlockedIds.has(def.id)) continue;
+        if (!def.requires.every((id) => unlockedIds.has(id))) continue;
+        if (!(await this.shouldUnlock(userId, def.id, trigger))) continue;
+
         await this.achRepo.save(this.achRepo.create({ userId, defId: def.id }));
         await this.userRepo.increment({ id: userId }, 'xp', def.xp);
         await this.userRepo.increment(
@@ -103,6 +117,7 @@ export class AchievementsService {
         });
         newlyUnlocked.push(def);
         unlockedIds.add(def.id);
+        progressed = true;
       }
     }
 
@@ -116,6 +131,17 @@ export class AchievementsService {
     trigger: AchievementTrigger,
   ): Promise<boolean> {
     switch (defId) {
+      // ── Корень дерева ────────────────────────────────────
+      // Выдаётся при регистрации (триггер 'registered'), но также
+      // открывается при любом первом действии — чтобы у уже
+      // существующих пользователей корень разблокировался сам и не
+      // блокировал гейтингом остальное дерево.
+      case 'now_with_us':
+        return true;
+
+      case 'settings_explored':
+        return trigger.type === 'settings_opened';
+
       // ── Первые шаги ──────────────────────────────────────
       case 'first_task':
         return trigger.type === 'task_created';
@@ -128,6 +154,14 @@ export class AchievementsService {
           trigger.type === 'task_created' &&
           trigger.taskRepeat !== TaskRepeat.NONE
         );
+
+      case 'repeat_5': {
+        if (trigger.type !== 'task_created') return false;
+        const count = await this.taskRepo.count({
+          where: { userId, repeat: Not(TaskRepeat.NONE) },
+        });
+        return count >= 5;
+      }
 
       case 'first_mandatory':
         return (
@@ -184,6 +218,20 @@ export class AchievementsService {
         return count >= target;
       }
 
+      // ── Многодневные задачи ──────────────────────────────
+      case 'multiday_5': {
+        if (trigger.type !== 'task_completed' || !trigger.hasEndDate)
+          return false;
+        const multidayIds = await this.taskRepo
+          .find({ where: { userId, endDate: Not(IsNull()) }, select: ['id'] })
+          .then((ts) => ts.map((t) => t.id));
+        if (!multidayIds.length) return false;
+        const count = await this.completionRepo.count({
+          where: { userId, taskId: In(multidayIds) },
+        });
+        return count >= 5;
+      }
+
       // ── Время задачи ─────────────────────────────────────
       case 'morning_bird':
         return (
@@ -218,10 +266,12 @@ export class AchievementsService {
       }
 
       // ── Теги ─────────────────────────────────────────────
-      case 'tags_5': {
+      case 'tags_5':
+      case 'tags_10': {
         if (trigger.type !== 'tag_created') return false;
+        const target = defId === 'tags_5' ? 5 : 10;
         const count = await this.tagRepo.count({ where: { userId } });
-        return count >= 5;
+        return count >= target;
       }
 
       default:

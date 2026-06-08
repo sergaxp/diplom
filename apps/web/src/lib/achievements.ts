@@ -34,9 +34,19 @@ export interface AchievementResult {
   xp: number;
   icon: string;
   secret?: boolean;
+  /** id достижений-предков в дереве навыков (пусто — корень). */
+  requires: string[];
   unlocked: boolean;
   unlockedAt?: string;
 }
+
+// Монеты за разблокировку достижения соответствующего ранга (зеркало backend RANK_COINS).
+export const RANK_COINS: Record<AchievementRank, number> = {
+  1: 1,
+  2: 2,
+  3: 3,
+  4: 4,
+};
 
 export const achievementsApi = {
   getAll: (): Promise<AchievementResult[]> =>

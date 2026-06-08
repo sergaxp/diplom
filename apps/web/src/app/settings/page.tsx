@@ -10,7 +10,10 @@ import {
 import { Header } from '../../components/Header';
 import { AvatarFramed } from '../../components/AvatarFramed';
 import { useAuthStore } from '../../store/authStore';
-import { clearAuth } from '../../lib/auth';
+import { useAchievementStore } from '../../store/achievementStore';
+import { clearAuth, authApi } from '../../lib/auth';
+import { api } from '../../lib/api';
+import type { AchievementResult } from '../../lib/achievements';
 import { TabId } from './types';
 import { ProfileTab } from './tabs/ProfileTab';
 import { AccountTab } from './tabs/account/AccountTab';
@@ -33,10 +36,31 @@ export default function SettingsPage() {
   const qc = useQueryClient();
 
   const [tab, setTab] = useState<TabId>('profile');
+  const pushAchievement = useAchievementStore(s => s.push);
 
   useEffect(() => {
     if (ready && !user) router.replace('/auth');
   }, [ready, user, router]);
+
+  // Достижение «Настройщик» — фиксируем факт открытия страницы настроек.
+  useEffect(() => {
+    if (!ready || !user) return;
+    let cancelled = false;
+    api
+      .post<{ newAchievements?: AchievementResult[] }>('/users/me/settings-opened')
+      .then(async (res) => {
+        const earned = res.data.newAchievements ?? [];
+        if (cancelled || earned.length === 0) return;
+        earned.forEach(pushAchievement);
+        qc.invalidateQueries({ queryKey: ['achievements'] });
+        const fresh = await authApi.me().catch(() => null);
+        if (fresh && !cancelled) setUser(fresh);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // Выполняем один раз после готовности авторизации.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, user?.id]);
 
   if (!ready || !user) return null;
 

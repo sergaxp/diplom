@@ -165,6 +165,7 @@ export class TasksService {
         type: 'task_completed',
         taskTime: task?.time ?? null,
         taskType: task?.type ?? TaskType.NORMAL,
+        hasEndDate: !!task?.endDate,
       },
     );
 

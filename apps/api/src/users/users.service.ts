@@ -15,6 +15,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangeEmailDto } from './dto/change-email.dto';
 import { AchievementsService } from '../achievements/achievements.service';
+import { AchievementDef } from '../achievements/achievements.definitions';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
@@ -60,6 +61,9 @@ export class UsersService {
 
     const saved = await this.usersRepository.save(user);
     this.logger.log(`Пользователь создан: ${saved.username} (${saved.id})`);
+    await this.achievementsService.checkAndUnlock(saved.id, {
+      type: 'registered',
+    });
     return saved;
   }
 
@@ -112,7 +116,17 @@ export class UsersService {
     this.logger.log(
       `Google-пользователь создан: ${saved.username} (${saved.id})`,
     );
+    await this.achievementsService.checkAndUnlock(saved.id, {
+      type: 'registered',
+    });
     return saved;
+  }
+
+  /** Отметить, что пользователь открыл страницу настроек (достижение). */
+  async markSettingsOpened(userId: string): Promise<AchievementDef[]> {
+    return this.achievementsService.checkAndUnlock(userId, {
+      type: 'settings_opened',
+    });
   }
 
   // ── Найти по ID ────────────────────────────────────────────

@@ -371,6 +371,17 @@
   flex-shrink: 0;
 }
 
+// Модалка дерева достижений — на больших экранах даём больше простора
+.treeModal {
+  @media (min-width: 900px) {
+    max-width: min(1240px, 94vw);
+  }
+
+  @media (min-width: 1280px) {
+    max-width: min(1360px, 90vw);
+  }
+}
+
 // ── Responsive ────────────────────────────────────────────────
 @media (max-width: 768px) {
   .columns {

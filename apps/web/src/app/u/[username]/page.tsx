@@ -1,15 +1,16 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { MapPin, Calendar as CalIcon, Trophy, UserX } from 'lucide-react';
+import { MapPin, Calendar as CalIcon, Trophy, UserX, GitBranch } from 'lucide-react';
 import { Header } from '../../../components/Header';
 import { AvatarFramed } from '../../../components/AvatarFramed';
-import { Button, Card, Badge, Skeleton, EmptyState } from '../../../components/ui';
+import { Button, Card, Badge, Skeleton, EmptyState, Modal } from '../../../components/ui';
+import { AchievementTree } from '../../../components/achievements/AchievementTree';
 import { profileApi } from '../../../lib/profile';
-import { achievementsApi, RANK_LABEL, RANK_COLOR, AchievementResult } from '../../../lib/achievements';
+import { achievementsApi } from '../../../lib/achievements';
 import { SOCIAL_PROVIDERS, resolveSocialHref } from '../../../lib/socials';
-import { Icon, hasIcon } from '../../../lib/icons';
+import { Icon } from '../../../lib/icons';
 import { useAuthStore } from '../../../store/authStore';
 import styles from './page.module.scss';
 
@@ -19,36 +20,6 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('ru-RU', {
     day: 'numeric', month: 'long', year: 'numeric',
   });
-}
-
-function AchievementCard({ a }: { a: AchievementResult }) {
-  const color = RANK_COLOR[a.rank];
-  const isSecret = a.secret && !a.unlocked;
-  const tooltipText = isSecret ? '???' : `${a.description}${a.unlocked ? ` · +${a.xp} XP` : ''}`;
-
-  return (
-    <div
-      className={[styles.achCard, a.unlocked ? styles.achCardUnlocked : styles.achCardLocked].join(' ')}
-      data-tooltip={tooltipText}
-      style={{ ['--rank-stripe' as string]: a.unlocked ? color : 'var(--border-default)' }}
-    >
-      <div
-        className={styles.achIcon}
-        style={a.unlocked ? { background: color + '20', color } : undefined}
-      >
-        {isSecret
-          ? <span className={styles.achSecretGlyph}>?</span>
-          : hasIcon(a.icon) ? <Icon name={a.icon} size={20} strokeWidth={1.75} /> : <span>🏆</span>}
-      </div>
-      <div className={styles.achBody}>
-        <span className={styles.achTitle}>{isSecret ? '???' : a.title}</span>
-        <span className={styles.achRank} style={a.unlocked ? { color } : undefined}>
-          {RANK_LABEL[a.rank]}
-        </span>
-      </div>
-      {a.unlocked && <div className={styles.achCheck}>✓</div>}
-    </div>
-  );
 }
 
 function ProfileSkeleton() {
@@ -88,6 +59,7 @@ export default function ProfilePage({
 }) {
   const { username } = use(params);
   const { user: me } = useAuthStore();
+  const [treeOpen, setTreeOpen] = useState(false);
 
   const { data: profile, isLoading, isError } = useQuery({
     queryKey: ['profile', username],
@@ -108,11 +80,6 @@ export default function ProfilePage({
   const xpPct     = (xpInLevel / XP_PER_LEVEL) * 100;
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
-
-  const grouped = [4, 3, 2, 1].map(rank => ({
-    rank,
-    items: achievements.filter(a => a.rank === rank),
-  })).filter(g => g.items.length);
 
   const socialEntries = profile?.socialLinks
     ? SOCIAL_PROVIDERS
@@ -246,17 +213,16 @@ export default function ProfilePage({
                     <h2 className={styles.cardTitle}>Достижения</h2>
                     <span className={styles.achCount}>{unlockedCount} / {achievements.length}</span>
                   </div>
-
-                  {grouped.map(({ rank, items }) => (
-                    <div key={rank} className={styles.achGroup}>
-                      <span className={styles.achGroupLabel} style={{ color: RANK_COLOR[rank as 1|2|3|4] }}>
-                        {RANK_LABEL[rank as 1|2|3|4]}
-                      </span>
-                      <div className={styles.achGrid}>
-                        {items.map(a => <AchievementCard key={a.id} a={a} />)}
-                      </div>
-                    </div>
-                  ))}
+                  <p className={styles.muted}>
+                    Открывайте достижения шаг за шагом — каждое ведёт к следующему.
+                  </p>
+                  <Button
+                    variant="primary"
+                    onClick={() => setTreeOpen(true)}
+                    leftIcon={<GitBranch size={18} strokeWidth={1.75} />}
+                  >
+                    Дерево достижений
+                  </Button>
                 </Card>
               ) : isOwn && achievements.length === 0 ? (
                 <Card padding="md">
@@ -275,6 +241,20 @@ export default function ProfilePage({
             </main>
           </div>
         </div>
+      )}
+
+      {isOwn && (
+        <Modal
+          open={treeOpen}
+          onClose={() => setTreeOpen(false)}
+          title="Дерево достижений"
+          size="xl"
+          noPadding
+          ariaLabel="Дерево достижений"
+          className={styles.treeModal}
+        >
+          <AchievementTree achievements={achievements} />
+        </Modal>
       )}
     </div>
   );
