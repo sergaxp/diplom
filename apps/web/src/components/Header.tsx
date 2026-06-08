@@ -3,7 +3,9 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Sun, Moon } from 'lucide-react';
+import { popLayer } from '../lib/motion';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { clearAuth } from '../lib/auth';
@@ -74,8 +76,15 @@ export function Header() {
                 />
               </button>
 
-              {menuOpen && (
-                <div className={styles.dropdown}>
+              <AnimatePresence>
+                {menuOpen && (
+                <motion.div
+                  className={styles.dropdown}
+                  variants={popLayer}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
                   <div className={styles.dropdownUser}>
                     <span className={styles.dropdownUsername}>@{user.username}</span>
                     <span className={styles.dropdownEmail}>{user.email}</span>
@@ -125,8 +134,9 @@ export function Header() {
                   <button className={styles.dropdownLogout} onClick={handleLogout}>
                     Выйти
                   </button>
-                </div>
-              )}
+                </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
             <Button href="/auth" variant="primary" size="sm">Войти</Button>

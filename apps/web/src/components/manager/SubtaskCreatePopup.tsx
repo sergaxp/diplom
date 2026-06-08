@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Paperclip, File as FileIcon } from 'lucide-react';
+import { popLayer } from '../../lib/motion';
 import type { SubtaskItem, SubtaskAttachment } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { storageApi } from '../../lib/storage';
@@ -299,11 +301,16 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, seriesDays, 
                 ) : '#'}
                 {selectedTag ? selectedTag.name : 'Тег'}
               </button>
+              <AnimatePresence>
               {tagDropOpen && tagDropPos && (
-                <div
+                <motion.div
                   ref={tagDropRef}
                   className={styles.tagDropdown}
                   style={{ top: tagDropPos.top, left: tagDropPos.left }}
+                  variants={popLayer}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
                 >
                   <button
                     type="button"
@@ -328,8 +335,9 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, seriesDays, 
                       </button>
                     );
                   })}
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
             </>
           )}
 

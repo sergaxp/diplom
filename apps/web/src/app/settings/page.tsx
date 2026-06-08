@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   User as UserIcon, Shield, Settings as SettingsIcon, Palette, Tags as TagsIcon,
@@ -14,6 +15,7 @@ import { useAchievementStore } from '../../store/achievementStore';
 import { clearAuth, authApi } from '../../lib/auth';
 import { api } from '../../lib/api';
 import type { AchievementResult } from '../../lib/achievements';
+import { fadeInUp } from '../../lib/motion';
 import { TabId } from './types';
 import { ProfileTab } from './tabs/ProfileTab';
 import { AccountTab } from './tabs/account/AccountTab';
@@ -107,11 +109,21 @@ export default function SettingsPage() {
           </aside>
 
           <main className={styles.content}>
-            {tab === 'profile'    && <ProfileTab    user={user} setUser={setUser} />}
-            {tab === 'account'    && <AccountTab    user={user} setUser={setUser} onDeleted={() => { logout(); clearAuth(); router.replace('/welcome'); }} />}
-            {tab === 'manager'    && <ManagerTab    user={user} setUser={setUser} />}
-            {tab === 'appearance' && <AppearanceTab user={user} setUser={setUser} />}
-            {tab === 'tags'       && <TagsTab user={user} qc={qc} />}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={tab}
+                variants={fadeInUp}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                {tab === 'profile'    && <ProfileTab    user={user} setUser={setUser} />}
+                {tab === 'account'    && <AccountTab    user={user} setUser={setUser} onDeleted={() => { logout(); clearAuth(); router.replace('/welcome'); }} />}
+                {tab === 'manager'    && <ManagerTab    user={user} setUser={setUser} />}
+                {tab === 'appearance' && <AppearanceTab user={user} setUser={setUser} />}
+                {tab === 'tags'       && <TagsTab user={user} qc={qc} />}
+              </motion.div>
+            </AnimatePresence>
           </main>
         </div>
       </div>

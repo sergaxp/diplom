@@ -427,6 +427,7 @@
   z-index: var(--z-dropdown);
   max-height: 240px;
   overflow-y: auto;
+  box-shadow: var(--shadow-pop);
 }
 
 .suggestLoading {

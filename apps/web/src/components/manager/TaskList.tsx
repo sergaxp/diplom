@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, AlignLeft, CheckCircle2 } from 'lucide-react';
+import { popLayer, listContainer, listItem, layoutTransition } from '../../lib/motion';
 import { Task, TaskPriority, TaskStatus, toDateStr, getTasksForDate, completionKey, applyDayOverride } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { TaskFormModal } from './task-form';
@@ -92,7 +94,8 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
 
   if (task.isGlobal) {
     return (
-      <li className={[styles.task, styles.taskGlobal].join(' ')}>
+      <motion.li className={[styles.task, styles.taskGlobal].join(' ')}
+        variants={listItem} layout transition={layoutTransition}>
         <span className={styles.globalIcon} title="Глобальное событие">
           {hasIcon(task.icon) ? <Icon name={task.icon} size={15} strokeWidth={1.75} /> : (task.icon || '🌐')}
         </span>
@@ -109,12 +112,16 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
             </span>
           )}
         </div>
-      </li>
+      </motion.li>
     );
   }
 
   return (
-    <li className={[
+    <motion.li
+      variants={listItem}
+      layout
+      transition={layoutTransition}
+      className={[
       styles.task,
       styles[`task_${task.status}`],
       !isMandatoryDay ? priorityClass(task.priority) : '',
@@ -193,8 +200,10 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
           aria-expanded={menuOpen}
         >···</button>
 
+        <AnimatePresence>
         {menuOpen && (
-          <div className={styles.menu}>
+          <motion.div className={styles.menu}
+            variants={popLayer} initial="hidden" animate="visible" exit="exit">
             {/* Перенести + submenu */}
             {!hidePostpone && (
               <div
@@ -206,8 +215,10 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
                   Перенести <span>›</span>
                 </button>
 
+                <AnimatePresence>
                 {postponeOpen && (
-                  <div className={styles.submenu}>
+                  <motion.div className={styles.submenu}
+                    variants={popLayer} initial="hidden" animate="visible" exit="exit">
                     {showQuickPostpone && [
                       { label: 'На день',   days: 1  },
                       { label: 'На 3 дня',  days: 3  },
@@ -229,8 +240,9 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
                     >
                       Другое...
                     </button>
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
               </div>
             )}
 
@@ -241,10 +253,11 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
             >
               Удалить
             </button>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
-    </li>
+    </motion.li>
   );
 }
 
@@ -430,7 +443,13 @@ export function TaskList({
               }
             />
           ) : (
-            <ul className={styles.list}>
+            <motion.ul
+              key={selectedStr}
+              className={styles.list}
+              variants={listContainer}
+              initial="hidden"
+              animate="visible"
+            >
               {sortedDayTasks.map(t => (
                 <TaskItem
                   key={t.id}
@@ -443,7 +462,7 @@ export function TaskList({
                   onPostpone={onPostpone}
                 />
               ))}
-            </ul>
+            </motion.ul>
           )}
         </div>
 
@@ -453,7 +472,12 @@ export function TaskList({
             <div className={styles.sectionHead}>
               <span className={styles.sectionLabel}>Обязательные впереди</span>
             </div>
-            <ul className={styles.list}>
+            <motion.ul
+              className={styles.list}
+              variants={listContainer}
+              initial="hidden"
+              animate="visible"
+            >
               {futureTasks.map(t => (
                 <TaskItem
                   key={t.id}
@@ -467,7 +491,7 @@ export function TaskList({
                   onPostpone={onPostpone}
                 />
               ))}
-            </ul>
+            </motion.ul>
           </div>
         )}
 

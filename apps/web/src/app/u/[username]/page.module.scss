@@ -228,7 +228,8 @@
   height: 100%;
   background: var(--brand-muted);
   border-radius: var(--radius-full);
-  transition: width var(--duration-slow) var(--ease-out);
+  // Ширину анимирует framer-motion (см. page.tsx) — CSS-transition убран,
+  // чтобы не было двойной анимации.
   min-width: 2px;
 }
 

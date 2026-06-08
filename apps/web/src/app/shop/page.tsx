@@ -3,7 +3,9 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { ShoppingBag } from 'lucide-react';
+import { fadeInUp, listContainer, listItem } from '../../lib/motion';
 import { Header } from '../../components/Header';
 import { AvatarFramed } from '../../components/AvatarFramed';
 import { useAuthStore } from '../../store/authStore';
@@ -47,7 +49,7 @@ export default function ShopPage() {
   return (
     <div className={styles.root}>
       <Header />
-      <div className={styles.body}>
+      <motion.div className={styles.body} variants={fadeInUp} initial="hidden" animate="visible">
         <Card padding="lg" className={styles.card}>
           <div className={styles.head}>
             <h1 className={styles.title}>Магазин</h1>
@@ -82,21 +84,27 @@ export default function ShopPage() {
           ) : (
             <>
               <h2 className={styles.section}>Рамки для аватара</h2>
-              <div className={styles.grid}>
+              <motion.div
+                className={styles.grid}
+                variants={listContainer}
+                initial="hidden"
+                animate="visible"
+              >
                 {frames.map(item => (
-                  <ShopItemCard
-                    key={item.id}
-                    item={item}
-                    user={user}
-                    onBuy={() => buyMut.mutate(item.id)}
-                    busy={buyMut.isPending}
-                  />
+                  <motion.div key={item.id} variants={listItem}>
+                    <ShopItemCard
+                      item={item}
+                      user={user}
+                      onBuy={() => buyMut.mutate(item.id)}
+                      busy={buyMut.isPending}
+                    />
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </>
           )}
         </Card>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { MessageSquare } from 'lucide-react';
+import { popLayer } from '../../lib/motion';
 import { BugReportModal } from './BugReportModal';
 import { FeatureRequestModal } from './FeatureRequestModal';
 import { MyFeedbackModal } from './MyFeedbackModal';
@@ -45,20 +47,28 @@ export function FeedbackDropdown() {
           <span className={styles.triggerLabel}>Обратная связь</span>
         </Button>
 
-        {open && (
-          <div className={styles.dropdown}>
-            <button className={styles.item} onClick={() => openModal('bug')}>
-              Баги
-            </button>
-            <button className={styles.item} onClick={() => openModal('feature')}>
-              Заявки на нововведения
-            </button>
-            <div className={styles.divider} />
-            <button className={styles.item} onClick={() => openModal('my')}>
-              Мои обращения
-            </button>
-          </div>
-        )}
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              className={styles.dropdown}
+              variants={popLayer}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <button className={styles.item} onClick={() => openModal('bug')}>
+                Баги
+              </button>
+              <button className={styles.item} onClick={() => openModal('feature')}>
+                Заявки на нововведения
+              </button>
+              <div className={styles.divider} />
+              <button className={styles.item} onClick={() => openModal('my')}>
+                Мои обращения
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {modal === 'bug'     && <BugReportModal      onClose={() => setModal(null)} />}

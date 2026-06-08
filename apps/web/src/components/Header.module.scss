@@ -47,14 +47,21 @@
 
 .themeIconSun,
 .themeIconMoon {
-  color: var(--text-disabled);
+  // Неактивная иконка видима (muted), а не «погашена» (disabled)
+  color: var(--text-muted);
   flex-shrink: 0;
   transition: color var(--duration-medium) var(--ease-default);
 }
 
+// Активная иконка подсвечена брендом — сразу видно, какая тема включена.
+// Светлая тема: солнце; тёмная (.themeToggleDark): луна.
+.themeIconSun { color: var(--brand); }
+.themeToggleDark .themeIconSun { color: var(--text-muted); }
+.themeToggleDark .themeIconMoon { color: var(--brand); }
+
 .themeToggle:hover .themeIconSun,
 .themeToggle:hover .themeIconMoon {
-  color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 .themeTrack {
@@ -113,7 +120,9 @@
   border-radius: var(--radius-md);
   padding: var(--space-2);
   z-index: var(--z-popover);
-  // Лёгкая граница без тени — следуем дизайн-доку (без blur > 0)
+  transform-origin: top right;
+  // Граница + elevation-тень, чтобы меню явно «парило» над контентом
+  box-shadow: var(--shadow-pop);
 }
 
 .dropdownUser {

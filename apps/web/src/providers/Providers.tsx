@@ -1,6 +1,7 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MotionConfig } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { authApi, hasToken, clearAuth } from '../lib/auth';
 import { useAuthStore } from '../store/authStore';
@@ -67,11 +68,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeInitializer />
-      <AuthInitializer />
-      {children}
-      <AchievementToast />
-      <LevelUpCelebration />
+      {/* reducedMotion="user" — все framer-анимации уважают
+          prefers-reduced-motion: трансформы гасятся, остаётся лишь opacity. */}
+      <MotionConfig reducedMotion="user">
+        <ThemeInitializer />
+        <AuthInitializer />
+        {children}
+        <AchievementToast />
+        <LevelUpCelebration />
+      </MotionConfig>
     </QueryClientProvider>
   );
 }

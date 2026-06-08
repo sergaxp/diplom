@@ -428,7 +428,7 @@
   border: none;
   cursor: pointer;
   font-size: var(--text-base);
-  color: var(--text-disabled);
+  color: var(--text-muted);
   min-width: 28px;
   min-height: 28px;
   padding: 0 var(--space-1);
@@ -453,6 +453,8 @@
   padding: var(--space-1);
   z-index: 20;
   min-width: 160px;
+  transform-origin: top right;
+  box-shadow: var(--shadow-pop);
 }
 
 .menuDivider {
@@ -510,6 +512,7 @@
   padding: var(--space-1);
   min-width: 160px;
   z-index: 30;
+  box-shadow: var(--shadow-pop);
 }
 
 .submenuItem {

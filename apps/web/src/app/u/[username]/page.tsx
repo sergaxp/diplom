@@ -2,7 +2,9 @@
 
 import { use, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { MapPin, Calendar as CalIcon, Trophy, UserX, GitBranch } from 'lucide-react';
+import { fadeInUp, EASE_OUT } from '../../../lib/motion';
 import { Header } from '../../../components/Header';
 import { AvatarFramed } from '../../../components/AvatarFramed';
 import { Button, Card, Badge, Skeleton, EmptyState, Modal } from '../../../components/ui';
@@ -103,7 +105,7 @@ export default function ProfilePage({
       )}
 
       {profile && (
-        <div className={styles.body}>
+        <motion.div className={styles.body} variants={fadeInUp} initial="hidden" animate="visible">
           <div
             className={[styles.banner, profile.coverUrl ? styles.bannerHasImage : ''].join(' ')}
             style={profile.coverUrl ? { backgroundImage: `url(${profile.coverUrl})` } : undefined}
@@ -201,7 +203,12 @@ export default function ProfilePage({
                   aria-valuemax={XP_PER_LEVEL}
                   aria-label={`Прогресс XP: ${xpInLevel} из ${XP_PER_LEVEL}`}
                 >
-                  <div className={styles.xpFill} style={{ width: `${xpPct}%` }} />
+                  <motion.div
+                    className={styles.xpFill}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${xpPct}%` }}
+                    transition={{ duration: 0.7, ease: EASE_OUT, delay: 0.15 }}
+                  />
                 </div>
               </Card>
             </aside>
@@ -240,7 +247,7 @@ export default function ProfilePage({
               )}
             </main>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {isOwn && (

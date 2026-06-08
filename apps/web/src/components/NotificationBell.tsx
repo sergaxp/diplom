@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Bell } from 'lucide-react';
+import { popLayer } from '../lib/motion';
 import { notificationsApi, NotificationItem } from '../lib/notifications';
 import { Icon, hasIcon } from '../lib/icons';
 import { Button, EmptyState, Skeleton } from './ui';
@@ -100,8 +102,15 @@ export function NotificationBell() {
         {unread > 0 && <span className={styles.badge}>{unread > 9 ? '9+' : unread}</span>}
       </button>
 
-      {open && (
-        <div className={styles.dropdown}>
+      <AnimatePresence>
+        {open && (
+        <motion.div
+          className={styles.dropdown}
+          variants={popLayer}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+        >
           <div className={styles.head}>
             <span className={styles.title}>Уведомления</span>
             {items.length > 0 && (
@@ -155,8 +164,9 @@ export function NotificationBell() {
               );
             })}
           </div>
-        </div>
-      )}
+        </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

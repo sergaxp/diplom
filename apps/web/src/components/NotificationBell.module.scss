@@ -59,6 +59,8 @@
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   z-index: var(--z-popover);
+  transform-origin: top right;
+  box-shadow: var(--shadow-pop);
   display: flex;
   flex-direction: column;
 }
