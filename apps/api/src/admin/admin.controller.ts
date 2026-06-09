@@ -86,6 +86,14 @@ export class AdminController {
     return this.adminService.updateUser(id, data);
   }
 
+  // PATCH /admin/users/:id/coins – выдать (или списать) монеты пользователю
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Patch('users/:id/coins')
+  grantCoins(@Param('id') id: string, @Body('amount') amount: number) {
+    return this.adminService.grantCoins(id, Number(amount));
+  }
+
   // DELETE /admin/users/:id – полное удаление пользователя и его данных
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, AdminGuard)

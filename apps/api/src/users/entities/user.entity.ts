@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { ShowcaseBlock } from '../../profile/showcase.types';
 
 export enum UserRole {
   USER = 'user',
@@ -40,6 +41,10 @@ export class User {
 
   @Column({ type: 'varchar', nullable: true, length: 500, default: null })
   coverUrl: string | null;
+
+  /** Полностраничный фон профиля (Steam-style подложка). null = без фона */
+  @Column({ type: 'varchar', nullable: true, length: 500, default: null })
+  backgroundUrl: string | null;
 
   @Column({ type: 'varchar', nullable: true, length: 200, default: null })
   bio: string | null;
@@ -94,9 +99,18 @@ export class User {
   @Column({ type: 'varchar', length: 64, nullable: true, default: null })
   selectedFrame: string | null;
 
+  /** ID экипированного фона профиля из магазина (напр. 'bg_aurora');
+   *  null = используется загруженный backgroundUrl (или ничего) */
+  @Column({ type: 'varchar', length: 64, nullable: true, default: null })
+  selectedBackground: string | null;
+
   /** Карта { provider -> url } внешних ссылок профиля (vk, telegram, github и т.д.) */
   @Column({ type: 'json', nullable: true, default: null })
   socialLinks: Record<string, string> | null;
+
+  /** Упорядоченный список блоков-витрин профиля (Steam-style showcases). */
+  @Column({ type: 'json', nullable: true, default: null })
+  showcases: ShowcaseBlock[] | null;
 
   @CreateDateColumn()
   createdAt: Date;

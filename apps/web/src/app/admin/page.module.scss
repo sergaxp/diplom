@@ -123,13 +123,51 @@
   min-width: 180px;
 }
 
-.tdEmail, .tdRole, .tdStatus, .tdDate, .tdActions {
+.tdEmail, .tdRole, .tdStatus, .tdCoins, .tdDate, .tdActions {
   padding: var(--space-3) var(--space-4);
   vertical-align: middle;
   white-space: nowrap;
 }
 
-.tdActions { display: flex; gap: 6px; align-items: center; }
+.tdActions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* ── Монеты ── */
+.coinsCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.coinDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.grantRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.grantInput {
+  width: 90px;
+  padding: 5px var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-sm);
+
+  &:focus { outline: none; border-color: var(--brand); }
+}
 
 /* ── Аватар в таблице ── */
 .userAvatar {

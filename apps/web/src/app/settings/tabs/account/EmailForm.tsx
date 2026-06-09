@@ -7,10 +7,15 @@ import { User } from '../../../../lib/auth';
 import { Button, Input } from '../../../../components/ui';
 import styles from '../../page.module.scss';
 
-export function EmailForm({ user, setUser }: { user: User; setUser: (u: User | null) => void }) {
+export function EmailForm({
+  user, setUser, onDone,
+}: {
+  user: User;
+  setUser: (u: User | null) => void;
+  onDone?: () => void;
+}) {
   const [newEmail, setNewEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [saved,    setSaved]    = useState(false);
   const [error,    setError]    = useState('');
 
   const mut = useMutation({
@@ -19,9 +24,8 @@ export function EmailForm({ user, setUser }: { user: User; setUser: (u: User | n
       setUser(u);
       setNewEmail('');
       setPassword('');
-      setSaved(true);
       setError('');
-      setTimeout(() => setSaved(false), 3000);
+      onDone?.();
     },
     onError: (err: { response?: { data?: { message?: string } } }) => {
       setError(err?.response?.data?.message ?? 'Не удалось изменить email');
@@ -36,11 +40,8 @@ export function EmailForm({ user, setUser }: { user: User; setUser: (u: User | n
   };
 
   return (
-    <form className={styles.section} onSubmit={submit}>
-      <div className={styles.sectionHead}>
-        <span className={styles.sectionTitle}>Email</span>
-        <span className={styles.sectionDesc}>Текущий: <b>{user.email}</b></span>
-      </div>
+    <form className={styles.form} onSubmit={submit}>
+      <p className={styles.sectionDesc}>Текущий email: <b>{user.email}</b></p>
 
       <Input
         label="Новый email"
@@ -60,9 +61,9 @@ export function EmailForm({ user, setUser }: { user: User; setUser: (u: User | n
       />
 
       {error && <div className={styles.error}>{error}</div>}
-      {saved && <div className={styles.success}>Email обновлён</div>}
 
       <div className={styles.actions}>
+        {onDone && <Button type="button" variant="secondary" onClick={onDone} disabled={mut.isPending}>Отмена</Button>}
         <Button
           type="submit"
           variant="accent"

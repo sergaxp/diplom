@@ -7,6 +7,7 @@ export interface User {
   displayName: string | null;
   avatarUrl: string | null;
   coverUrl: string | null;
+  backgroundUrl: string | null;
   bio: string | null;
   location: string | null;
   locationLat: number | null;
@@ -19,7 +20,9 @@ export interface User {
   xp?: number;
   coins?: number;
   selectedFrame?: string | null;
+  selectedBackground?: string | null;
   socialLinks?: Record<string, string> | null;
+  showcases?: import('./showcases').ShowcaseBlock[] | null;
 }
 
 export interface AuthResult {

@@ -61,6 +61,8 @@ export class ShopService {
       user.coins -= item.price;
       if (item.kind === 'frame') {
         user.selectedFrame = item.id;
+      } else if (item.kind === 'background') {
+        user.selectedBackground = item.id;
       }
 
       await em.save(user);

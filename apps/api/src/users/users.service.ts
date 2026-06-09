@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -141,6 +141,23 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { username } });
   }
 
+  /** Мини-профили (для авторов комментариев и т.п.). */
+  async getMiniProfiles(ids: string[]): Promise<
+    {
+      id: string;
+      username: string;
+      displayName: string | null;
+      avatarUrl: string | null;
+      selectedFrame: string | null;
+    }[]
+  > {
+    if (!ids.length) return [];
+    return this.usersRepository.find({
+      where: { id: In(ids) },
+      select: ['id', 'username', 'displayName', 'avatarUrl', 'selectedFrame'],
+    });
+  }
+
   // ── Найти по email (с паролем – для аутентификации) ───────
   async findByEmailWithPassword(email: string): Promise<User | null> {
     return this.usersRepository
@@ -187,6 +204,25 @@ export class UsersService {
       }
     }
 
+    // Аналогично для фона профиля
+    if (
+      updateUserDto.selectedBackground !== undefined &&
+      updateUserDto.selectedBackground !== null
+    ) {
+      const owned: unknown = await this.usersRepository.manager
+        .createQueryBuilder()
+        .select('1')
+        .from('user_inventory', 'inv')
+        .where('inv."userId" = :userId AND inv."itemId" = :itemId', {
+          userId: user.id,
+          itemId: updateUserDto.selectedBackground,
+        })
+        .getRawOne();
+      if (!owned) {
+        throw new BadRequestException('Этот фон не куплен');
+      }
+    }
+
     // Применяем только явно переданные поля (фильтруем undefined от class-transformer)
     const patch = Object.fromEntries(
       Object.entries(updateUserDto).filter(([, v]) => v !== undefined),
@@ -203,7 +239,7 @@ export class UsersService {
   }
 
   // ── Обновить аватар ────────────────────────────────────────
-  async updateAvatar(id: string, avatarUrl: string): Promise<User> {
+  async updateAvatar(id: string, avatarUrl: string | null): Promise<User> {
     const user = await this.findById(id);
     if (!user) throw new BadRequestException('Пользователь не найден');
     user.avatarUrl = avatarUrl;
@@ -218,10 +254,21 @@ export class UsersService {
   }
 
   // ── Обновить баннер ────────────────────────────────────────
-  async updateCover(id: string, coverUrl: string): Promise<User> {
+  async updateCover(id: string, coverUrl: string | null): Promise<User> {
     const user = await this.findById(id);
     if (!user) throw new BadRequestException('Пользователь не найден');
     user.coverUrl = coverUrl;
+    return this.usersRepository.save(user);
+  }
+
+  // ── Обновить фон профиля ───────────────────────────────────
+  async updateBackground(
+    id: string,
+    backgroundUrl: string | null,
+  ): Promise<User> {
+    const user = await this.findById(id);
+    if (!user) throw new BadRequestException('Пользователь не найден');
+    user.backgroundUrl = backgroundUrl;
     return this.usersRepository.save(user);
   }
 
@@ -233,23 +280,28 @@ export class UsersService {
   /** Публичная статистика для лендинга:
    *  totalUsers – всего активных аккаунтов,
    *  onlineUsers – пользователи с lastSeenAt за последние 5 минут,
-   *  deletedToday – количество удалённых сегодня аккаунтов. */
+   *  registeredToday – количество новых пользователей с начала суток. */
   async getPublicStats(): Promise<{
     totalUsers: number;
     onlineUsers: number;
-    deletedToday: number;
+    registeredToday: number;
   }> {
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const [totalUsers, onlineUsers, deletedToday] = await Promise.all([
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const [totalUsers, onlineUsers, registeredToday] = await Promise.all([
       this.usersRepository.count({ where: { isActive: true } }),
       this.usersRepository
         .createQueryBuilder('u')
         .where('u.isActive = :a', { a: true })
         .andWhere('u.lastSeenAt >= :since', { since: fiveMinAgo })
         .getCount(),
-      this.deletedToday(),
+      this.usersRepository
+        .createQueryBuilder('u')
+        .where('u.createdAt >= :start', { start: startOfDay })
+        .getCount(),
     ]);
-    return { totalUsers, onlineUsers, deletedToday };
+    return { totalUsers, onlineUsers, registeredToday };
   }
 
   /** Начислить ежедневный бонус (1 монетка), если ещё не начисляли сегодня.
@@ -428,12 +480,16 @@ export class UsersService {
         'displayName',
         'avatarUrl',
         'coverUrl',
+        'backgroundUrl',
         'bio',
         'location',
         'createdAt',
         'xp',
+        'coins',
         'selectedFrame',
+        'selectedBackground',
         'socialLinks',
+        'showcases',
       ],
     });
     if (!user) throw new NotFoundException('Пользователь не найден');

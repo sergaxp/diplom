@@ -34,6 +34,7 @@ export default function ShopPage() {
     onSuccess: async (res) => {
       setUser({ ...(user!), ...res.user });
       qc.invalidateQueries({ queryKey: ['shop', 'items'] });
+      qc.invalidateQueries({ queryKey: ['profile'] });
       const fresh = await authApi.me().catch(() => null);
       if (fresh) setUser(fresh);
     },
@@ -45,6 +46,7 @@ export default function ShopPage() {
   const errMsg = (buyMut.error as { response?: { data?: { message?: string } } } | null)?.response?.data?.message;
 
   const frames = items.filter(i => i.kind === 'frame');
+  const backgrounds = items.filter(i => i.kind === 'background');
 
   return (
     <div className={styles.root}>
@@ -60,8 +62,8 @@ export default function ShopPage() {
           </div>
 
           <p className={styles.subtitle}>
-            Зарабатывайте монеты за выполнение достижений (1–4 за уровень)
-            и за ежедневный вход в приложение (+1).
+            Зарабатывайте монеты за выполнение достижений
+            и за ежедневный вход в приложение.
           </p>
 
           {errMsg && <div className={styles.error}>{errMsg}</div>}
@@ -91,7 +93,7 @@ export default function ShopPage() {
                 animate="visible"
               >
                 {frames.map(item => (
-                  <motion.div key={item.id} variants={listItem}>
+                  <motion.div key={item.id} variants={listItem} className={styles.gridItem}>
                     <ShopItemCard
                       item={item}
                       user={user}
@@ -101,6 +103,29 @@ export default function ShopPage() {
                   </motion.div>
                 ))}
               </motion.div>
+
+              {backgrounds.length > 0 && (
+                <>
+                  <h2 className={styles.section}>Фоны профиля</h2>
+                  <motion.div
+                    className={styles.grid}
+                    variants={listContainer}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    {backgrounds.map(item => (
+                      <motion.div key={item.id} variants={listItem} className={styles.gridItem}>
+                        <ShopItemCard
+                          item={item}
+                          user={user}
+                          onBuy={() => buyMut.mutate(item.id)}
+                          busy={buyMut.isPending}
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </>
+              )}
             </>
           )}
         </Card>
@@ -116,8 +141,47 @@ interface ItemCardProps {
   busy: boolean;
 }
 
+/** Превью фона в карточке магазина: автопроигрываемое видео или градиент. */
+function BgPreview({
+  gradient,
+  video,
+  animated,
+}: {
+  gradient?: string;
+  video?: string;
+  animated: boolean;
+}) {
+  if (video) {
+    return (
+      <div className={styles.bgPreview}>
+        <video
+          className={styles.bgPreviewVideo}
+          src={video}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+        />
+        {animated && <span className={styles.bgPreviewTag}>анимир.</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={[styles.bgPreview, animated ? styles.bgPreviewAnimated : ''].join(' ')}
+      style={{ backgroundImage: gradient }}
+    >
+      {animated && <span className={styles.bgPreviewTag}>анимир.</span>}
+    </div>
+  );
+}
+
 function ShopItemCard({ item, user, onBuy, busy }: ItemCardProps) {
   const color = item.meta?.color;
+  const isBackground = item.kind === 'background';
+  const animated = item.meta?.animated === '1';
 
   return (
     <Card
@@ -125,13 +189,21 @@ function ShopItemCard({ item, user, onBuy, busy }: ItemCardProps) {
       className={[styles.itemCard, item.owned ? styles.itemCardOwned : ''].join(' ')}
     >
       <div className={styles.preview}>
-        <AvatarFramed
-          avatarUrl={user.avatarUrl}
-          displayName={user.displayName}
-          username={user.username}
-          frameId={item.id}
-          size={80}
-        />
+        {isBackground ? (
+          <BgPreview
+            gradient={item.meta?.gradient}
+            video={item.meta?.video}
+            animated={animated}
+          />
+        ) : (
+          <AvatarFramed
+            avatarUrl={user.avatarUrl}
+            displayName={user.displayName}
+            username={user.username}
+            frameId={item.id}
+            size={80}
+          />
+        )}
       </div>
       <div className={styles.itemTitle} style={color ? { color } : undefined}>
         {item.title}

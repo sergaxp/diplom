@@ -13,7 +13,7 @@ import { useAuthStore } from '../../store/authStore';
 import { api } from '../../lib/api';
 import styles from './page.module.scss';
 
-interface PublicStats { totalUsers: number; onlineUsers: number; deletedToday: number; }
+interface PublicStats { totalUsers: number; onlineUsers: number; registeredToday: number; }
 
 export default function Home() {
   const { user, ready } = useAuthStore();
@@ -76,8 +76,8 @@ export default function Home() {
               live
             />
             <StatCard
-              label="Удалили аккаунт сегодня"
-              value={stats ? stats.deletedToday.toLocaleString('ru-RU') : '—'}
+              label="Новые пользователи"
+              value={stats ? stats.registeredToday.toLocaleString('ru-RU') : '—'}
               hint="с начала суток"
             />
           </div>

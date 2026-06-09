@@ -29,6 +29,9 @@ import { AccountDeletion } from './users/entities/account-deletion.entity';
 import { FeedbackModule } from './feedback/feedback.module';
 import { BugReport } from './feedback/entities/bug-report.entity';
 import { FeatureRequest } from './feedback/entities/feature-request.entity';
+import { ProfileModule } from './profile/profile.module';
+import { Post } from './profile/entities/post.entity';
+import { Comment } from './profile/entities/comment.entity';
 
 @Module({
   imports: [
@@ -67,6 +70,8 @@ import { FeatureRequest } from './feedback/entities/feature-request.entity';
         AccountDeletion,
         BugReport,
         FeatureRequest,
+        Post,
+        Comment,
       ],
       synchronize: process.env.NODE_ENV !== 'production', // в проде схему накатывают миграции (см. src/migrations)
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
@@ -87,6 +92,7 @@ import { FeatureRequest } from './feedback/entities/feature-request.entity';
     ShopModule,
     NotificationsModule,
     FeedbackModule,
+    ProfileModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

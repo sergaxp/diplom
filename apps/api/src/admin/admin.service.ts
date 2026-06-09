@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../users/entities/user.entity';
@@ -59,6 +63,7 @@ export class AdminService {
         'u.avatarUrl',
         'u.role',
         'u.isActive',
+        'u.coins',
         'u.createdAt',
         'u.lastSeenAt',
       ])
@@ -93,6 +98,20 @@ export class AdminService {
   // ── Полное удаление пользователя ───────────────────────────
   async deleteUser(id: string): Promise<void> {
     await this.usersService.purgeUser(id);
+  }
+
+  // ── Выдать / списать монеты ────────────────────────────────
+  async grantCoins(id: string, amount: number): Promise<Partial<User>> {
+    if (!Number.isInteger(amount) || amount === 0) {
+      throw new BadRequestException('Укажите ненулевое целое число монет');
+    }
+    const user = await this.userRepo.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('Пользователь не найден');
+    user.coins = Math.max(0, (user.coins ?? 0) + amount);
+    const saved = await this.userRepo.save(user);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...result } = saved as User & { password: string };
+    return result;
   }
 
   // ── Выдать права администратора ────────────────────────────

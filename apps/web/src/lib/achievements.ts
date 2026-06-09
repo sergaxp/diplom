@@ -51,4 +51,8 @@ export const RANK_COINS: Record<AchievementRank, number> = {
 export const achievementsApi = {
   getAll: (): Promise<AchievementResult[]> =>
     api.get<AchievementResult[]>('/achievements').then(r => r.data),
+
+  /** Дерево достижений другого пользователя (публично). */
+  getPublic: (username: string): Promise<AchievementResult[]> =>
+    api.get<AchievementResult[]>(`/profile/achievements/${username}`).then(r => r.data),
 };

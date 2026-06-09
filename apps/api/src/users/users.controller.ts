@@ -157,6 +157,54 @@ export class UsersController {
     return this.usersService.updateCover(req.user.id, coverUrl);
   }
 
+  // POST /users/me/background – полностраничный фон профиля
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('me/background')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      fileFilter: avatarFilter,
+      limits: { fileSize: 8 * 1024 * 1024 }, // 8 МБ
+    }),
+  )
+  async uploadBackground(
+    @Request() req: AuthenticatedRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Файл не загружен');
+    const backgroundUrl = await this.storageService.uploadProfile(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+    );
+    return this.usersService.updateBackground(req.user.id, backgroundUrl);
+  }
+
+  // DELETE /users/me/avatar – удалить загруженный аватар
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Delete('me/avatar')
+  async deleteAvatar(@Request() req: AuthenticatedRequest) {
+    return this.usersService.updateAvatar(req.user.id, null);
+  }
+
+  // DELETE /users/me/cover – удалить загруженный баннер
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Delete('me/cover')
+  async deleteCover(@Request() req: AuthenticatedRequest) {
+    return this.usersService.updateCover(req.user.id, null);
+  }
+
+  // DELETE /users/me/background – удалить загруженный фон профиля
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Delete('me/background')
+  async deleteBackground(@Request() req: AuthenticatedRequest) {
+    return this.usersService.updateBackground(req.user.id, null);
+  }
+
   // POST /users/me/ping – обновить lastSeenAt (вызывается периодически с фронтенда)
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)

@@ -6,20 +6,18 @@ import { profileApi } from '../../../../lib/profile';
 import { Button, Input } from '../../../../components/ui';
 import styles from '../../page.module.scss';
 
-export function PasswordForm() {
+export function PasswordForm({ onDone }: { onDone?: () => void }) {
   const [currentPassword, setCurrent] = useState('');
   const [newPassword,     setNewPwd]  = useState('');
   const [confirmPassword, setConfirm] = useState('');
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
   const mut = useMutation({
     mutationFn: profileApi.changePassword,
     onSuccess: () => {
       setCurrent(''); setNewPwd(''); setConfirm('');
-      setSaved(true);
       setError('');
-      setTimeout(() => setSaved(false), 3000);
+      onDone?.();
     },
     onError: (err: { response?: { data?: { message?: string } } }) => {
       setError(err?.response?.data?.message ?? 'Не удалось изменить пароль');
@@ -35,11 +33,8 @@ export function PasswordForm() {
   };
 
   return (
-    <form className={styles.section} onSubmit={submit}>
-      <div className={styles.sectionHead}>
-        <span className={styles.sectionTitle}>Пароль</span>
-        <span className={styles.sectionDesc}>Минимум 8 символов.</span>
-      </div>
+    <form className={styles.form} onSubmit={submit}>
+      <p className={styles.sectionDesc}>Минимум 8 символов.</p>
 
       <Input
         label="Текущий пароль"
@@ -66,9 +61,9 @@ export function PasswordForm() {
       />
 
       {error && <div className={styles.error}>{error}</div>}
-      {saved && <div className={styles.success}>Пароль обновлён</div>}
 
       <div className={styles.actions}>
+        {onDone && <Button type="button" variant="secondary" onClick={onDone} disabled={mut.isPending}>Отмена</Button>}
         <Button
           type="submit"
           variant="accent"

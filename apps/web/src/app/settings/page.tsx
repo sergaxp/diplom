@@ -24,12 +24,22 @@ import { AppearanceTab } from './tabs/AppearanceTab';
 import { TagsTab } from './tabs/TagsTab';
 import styles from './page.module.scss';
 
-const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: 'profile',    label: 'Профиль',     icon: <UserIcon size={16} strokeWidth={1.75} /> },
-  { id: 'account',    label: 'Аккаунт',     icon: <Shield size={16} strokeWidth={1.75} /> },
-  { id: 'manager',    label: 'Менеджер',    icon: <SettingsIcon size={16} strokeWidth={1.75} /> },
-  { id: 'appearance', label: 'Внешний вид', icon: <Palette size={16} strokeWidth={1.75} /> },
-  { id: 'tags',       label: 'Теги',        icon: <TagsIcon size={16} strokeWidth={1.75} /> },
+const NAV_GROUPS: { title: string; items: { id: TabId; label: string; icon: React.ReactNode }[] }[] = [
+  {
+    title: 'Настройки пользователя',
+    items: [
+      { id: 'account',    label: 'Моя учётная запись', icon: <Shield size={16} strokeWidth={1.75} /> },
+      { id: 'profile',    label: 'Профиль',            icon: <UserIcon size={16} strokeWidth={1.75} /> },
+      { id: 'appearance', label: 'Внешний вид',        icon: <Palette size={16} strokeWidth={1.75} /> },
+    ],
+  },
+  {
+    title: 'Приложение',
+    items: [
+      { id: 'manager', label: 'Менеджер', icon: <SettingsIcon size={16} strokeWidth={1.75} /> },
+      { id: 'tags',    label: 'Теги',     icon: <TagsIcon size={16} strokeWidth={1.75} /> },
+    ],
+  },
 ];
 
 export default function SettingsPage() {
@@ -82,22 +92,29 @@ export default function SettingsPage() {
               />
               <div className={styles.sidebarUser}>
                 <span className={styles.sidebarName}>{user.displayName ?? user.username}</span>
-                <span className={styles.sidebarEmail}>{user.email}</span>
+                <button type="button" className={styles.sidebarEditLink} onClick={() => setTab('profile')}>
+                  Редактировать профиль
+                </button>
               </div>
             </div>
 
             <nav className={styles.navList}>
-              {TABS.map(t => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className={[styles.navItem, tab === t.id ? styles.navItemActive : ''].join(' ')}
-                  onClick={() => setTab(t.id)}
-                  aria-current={tab === t.id ? 'page' : undefined}
-                >
-                  <span className={styles.navIcon}>{t.icon}</span>
-                  <span>{t.label}</span>
-                </button>
+              {NAV_GROUPS.map(group => (
+                <div key={group.title} className={styles.navGroup}>
+                  <span className={styles.navGroupTitle}>{group.title}</span>
+                  {group.items.map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className={[styles.navItem, tab === t.id ? styles.navItemActive : ''].join(' ')}
+                      onClick={() => setTab(t.id)}
+                      aria-current={tab === t.id ? 'page' : undefined}
+                    >
+                      <span className={styles.navIcon}>{t.icon}</span>
+                      <span>{t.label}</span>
+                    </button>
+                  ))}
+                </div>
               ))}
             </nav>
 

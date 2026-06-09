@@ -11,5 +11,6 @@ export { Input, Textarea, type InputProps, type TextareaProps, type InputSize } 
 export { Badge, type BadgeProps, type BadgeVariant, type BadgeShape } from './Badge';
 export { PageContainer, type PageContainerProps, type PageContainerVariant } from './PageContainer';
 export { Modal, type ModalProps, type ModalSize } from './Modal';
+export { Switch, type SwitchProps } from './Switch';
 export { Skeleton, type SkeletonProps } from './Skeleton';
 export { EmptyState, type EmptyStateProps, type EmptyStateSize } from './EmptyState';

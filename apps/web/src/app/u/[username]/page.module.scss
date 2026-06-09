@@ -2,7 +2,10 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg-base);
+  // Прозрачный, чтобы сквозь него был виден полностраничный фон профиля
+  // (ProfileBackground, fixed, z-index:-1). Базовый цвет даёт body.
+  background: transparent;
+  position: relative;
 }
 
 /* .state → <Skeleton>/<EmptyState> в tsx */
@@ -14,30 +17,38 @@
 // ── Banner ────────────────────────────────────────────────────
 .banner {
   height: 240px;
-  background: var(--brand-subtle);
+  // По умолчанию (баннер не загружен) — прозрачный: сквозь него виден
+  // фон профиля / базовый фон страницы.
+  background: transparent;
   background-size: cover;
   background-position: center;
-  border-bottom: 1px solid var(--border-subtle);
 }
 
+// Баннер с загруженной картинкой — даём подложку и нижнюю границу.
 .bannerHasImage {
   background-color: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 // ── Hero strip (avatar + name + actions) ──────────────────────
+// Полоса hero обрезана по бокам: подложка только в центральной части
+// (выровнена по колонкам контента), края — прозрачные.
 .hero {
-  background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border-subtle);
+  max-width: var(--container-wide);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  background: transparent;
 }
 
 .heroInner {
-  max-width: var(--container-wide);
-  margin: 0 auto;
-  padding: 0 var(--space-6) var(--space-5);
+  padding: var(--space-4) var(--space-6) var(--space-5);
   display: flex;
   align-items: flex-end;
   gap: var(--space-5);
   position: relative;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
 }
 
 .avatarWrap {
@@ -392,10 +403,12 @@
 }
 
 @media (max-width: 640px) {
-  .banner { height: 160px; }
+  .banner { height: 140px; }
+
+  .hero { padding: 0 var(--space-3); }
 
   .heroInner {
-    padding: 0 var(--space-4) var(--space-4);
+    padding: var(--space-3) var(--space-4) var(--space-4);
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-3);
@@ -405,17 +418,32 @@
     margin-top: -46px;
   }
 
+  // Кнопки действий (Редактировать профиль) — на всю ширину
   .heroActions {
     width: 100%;
+  }
+  .heroActions > * {
+    width: 100%;
+  }
+
+  .nameRow {
+    gap: var(--space-2);
   }
 
   .displayName { font-size: var(--text-lg); }
 
   .columns {
     padding: var(--space-4) var(--space-3) var(--space-10);
+    gap: var(--space-4);
   }
 
   .achGrid {
     grid-template-columns: 1fr;
   }
+}
+
+// Совсем узкие экраны
+@media (max-width: 380px) {
+  .heroInner { padding: var(--space-3); }
+  .avatarWrap { margin-top: -40px; }
 }

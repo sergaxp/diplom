@@ -247,11 +247,12 @@
   text-align: center;
 }
 
-// Праздничный индикатор в ячейке сетки
+// Праздничный индикатор в ячейке сетки — зеркально номеру дня
+// (тот же отступ сверху, и справа = отступу слева у номера).
 .holBadge {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: var(--space-3);
+  right: var(--space-4);
   font-size: var(--text-2xs);
   color: var(--text-on-brand);
   border-radius: var(--radius-full);

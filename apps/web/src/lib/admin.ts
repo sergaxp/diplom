@@ -8,6 +8,7 @@ export interface AdminUser {
   avatarUrl: string | null;
   role: 'user' | 'admin';
   isActive: boolean;
+  coins: number;
   createdAt: string;
   lastSeenAt: string | null;
 }
@@ -57,6 +58,9 @@ export const adminApi = {
 
   deleteUser: (id: string): Promise<void> =>
     api.delete(`/admin/users/${id}`).then(() => undefined),
+
+  grantCoins: (id: string, amount: number): Promise<AdminUser> =>
+    api.patch<AdminUser>(`/admin/users/${id}/coins`, { amount }).then(r => r.data),
 
   getGlobalTasks: (): Promise<GlobalTask[]> =>
     api.get<GlobalTask[]>('/admin/events').then(r => r.data),

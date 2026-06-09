@@ -56,13 +56,10 @@ export function SocialLinksEditor({ user, setUser }: { user: User; setUser: (u: 
   };
 
   return (
-    <div className={styles.section}>
-      <div className={styles.sectionHead}>
-        <span className={styles.sectionTitle}>Ссылки на соцсети</span>
-        <span className={styles.sectionDesc}>
-          Будут отображаться на странице вашего профиля. Оставьте поле пустым, чтобы удалить ссылку.
-        </span>
-      </div>
+    <div className={styles.form}>
+      <p className={styles.sectionDesc}>
+        Будут отображаться на странице вашего профиля. Оставьте поле пустым, чтобы удалить ссылку.
+      </p>
 
       <div className={styles.socialEditList}>
         {SOCIAL_PROVIDERS.map(p => {

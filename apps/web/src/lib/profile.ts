@@ -1,5 +1,6 @@
 import { api, tokens } from './api';
 import { User } from './auth';
+import { ShowcaseBlock } from './showcases';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -9,13 +10,17 @@ export interface PublicProfile {
   displayName: string | null;
   avatarUrl: string | null;
   coverUrl: string | null;
+  backgroundUrl: string | null;
   bio: string | null;
   location: string | null;
   createdAt: string;
   xp: number;
+  coins?: number;
   level: number;
   selectedFrame?: string | null;
+  selectedBackground?: string | null;
   socialLinks?: Record<string, string> | null;
+  showcases?: ShowcaseBlock[] | null;
 }
 
 export interface UpdateProfilePayload {
@@ -28,7 +33,9 @@ export interface UpdateProfilePayload {
   showGlobalEvents?: boolean;
   showHolidays?: boolean;
   selectedFrame?: string | null;
+  selectedBackground?: string | null;
   socialLinks?: Record<string, string> | null;
+  showcases?: ShowcaseBlock[] | null;
 }
 
 export const profileApi = {
@@ -66,6 +73,31 @@ export const profileApi = {
     }
     return res.json();
   },
+
+  uploadBackground: async (file: File): Promise<User> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = tokens.getAccess();
+    const res = await fetch(`${API_URL}/users/me/background`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ message: 'Ошибка загрузки' }));
+      throw { response: { data: body } };
+    }
+    return res.json();
+  },
+
+  deleteAvatar: (): Promise<User> =>
+    api.delete<User>('/users/me/avatar').then(r => r.data),
+
+  deleteCover: (): Promise<User> =>
+    api.delete<User>('/users/me/cover').then(r => r.data),
+
+  deleteBackground: (): Promise<User> =>
+    api.delete<User>('/users/me/background').then(r => r.data),
 
   getPublic: (username: string): Promise<PublicProfile> =>
     api.get<PublicProfile>(`/users/${username}`).then(r => r.data),

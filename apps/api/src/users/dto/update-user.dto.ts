@@ -7,7 +7,9 @@ import {
   IsNumber,
   IsBoolean,
   IsObject,
+  IsArray,
 } from 'class-validator';
+import { ShowcaseBlock } from '../../profile/showcase.types';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -56,8 +58,19 @@ export class UpdateUserDto {
   @MaxLength(64)
   selectedFrame?: string | null;
 
+  /** ID экипированного фона профиля из магазина, или null для снятия */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  selectedBackground?: string | null;
+
   /** Ссылки на соцсети: { provider: url }. Передайте {} чтобы стереть все. */
   @IsOptional()
   @IsObject()
   socialLinks?: Record<string, string> | null;
+
+  /** Конфиг витрин профиля (упорядоченный массив блоков). [] — стереть все. */
+  @IsOptional()
+  @IsArray()
+  showcases?: ShowcaseBlock[] | null;
 }

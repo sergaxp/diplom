@@ -4,19 +4,23 @@ import { use, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { MapPin, Calendar as CalIcon, Trophy, UserX, GitBranch } from 'lucide-react';
-import { fadeInUp, EASE_OUT } from '../../../lib/motion';
+import { fadeInUp } from '../../../lib/motion';
 import { Header } from '../../../components/Header';
 import { AvatarFramed } from '../../../components/AvatarFramed';
 import { Button, Card, Badge, Skeleton, EmptyState, Modal } from '../../../components/ui';
 import { AchievementTree } from '../../../components/achievements/AchievementTree';
+import { ProfileBackground } from '../../../components/profile/ProfileBackground';
+import { PostComposer } from '../../../components/profile/PostComposer';
+import { PostFeed } from '../../../components/profile/PostFeed';
+import { ProfileWall } from '../../../components/profile/ProfileWall';
+import { Showcase } from '../../../components/profile/Showcase';
+import { ShowcaseEditor } from '../../../components/profile/ShowcaseEditor';
 import { profileApi } from '../../../lib/profile';
 import { achievementsApi } from '../../../lib/achievements';
 import { SOCIAL_PROVIDERS, resolveSocialHref } from '../../../lib/socials';
 import { Icon } from '../../../lib/icons';
 import { useAuthStore } from '../../../store/authStore';
 import styles from './page.module.scss';
-
-const XP_PER_LEVEL = 1000;
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('ru-RU', {
@@ -35,18 +39,11 @@ function ProfileSkeleton() {
           <div style={{ height: 6 }} />
           <Skeleton text width="80%" />
         </Card>
-        <Card padding="md">
-          <Skeleton text width="40%" height={20} />
-          <div style={{ height: 12 }} />
-          <Skeleton width="100%" height={10} />
-        </Card>
       </aside>
       <main className={styles.mainCol}>
         <Card padding="md">
           <Skeleton text width="30%" height={20} />
           <div style={{ height: 16 }} />
-          <Skeleton width="100%" height={60} />
-          <div style={{ height: 8 }} />
           <Skeleton width="100%" height={60} />
         </Card>
       </main>
@@ -70,16 +67,11 @@ export default function ProfilePage({
 
   const isOwn = me?.username === username;
 
+  // Дерево достижений доступно для просмотра у любого пользователя.
   const { data: achievements = [] } = useQuery({
-    queryKey: ['achievements'],
-    queryFn: achievementsApi.getAll,
-    enabled: isOwn && !!me,
+    queryKey: ['achievements', username],
+    queryFn: () => achievementsApi.getPublic(username),
   });
-
-  const xp        = profile?.xp ?? 0;
-  const level     = profile?.level ?? 0;
-  const xpInLevel = xp % XP_PER_LEVEL;
-  const xpPct     = (xpInLevel / XP_PER_LEVEL) * 100;
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
@@ -89,8 +81,11 @@ export default function ProfilePage({
         .filter((e): e is { provider: typeof e.provider; value: string } => !!e.value)
     : [];
 
+  const showcases = profile?.showcases ?? [];
+
   return (
     <div className={styles.root}>
+      <ProfileBackground selectedBackground={profile?.selectedBackground} url={profile?.backgroundUrl} />
       <Header />
 
       {isLoading && <ProfileSkeleton />}
@@ -128,7 +123,7 @@ export default function ProfilePage({
                   <h1 className={styles.displayName}>
                     {profile.displayName ?? profile.username}
                   </h1>
-                  <Badge variant="brand" shape="pill">Ур. {level}</Badge>
+                  <Badge variant="brand" shape="pill">Ур. {profile.level}</Badge>
                   {isOwn && me && (
                     <Badge variant="accent" shape="pill" title="Ваши монеты">
                       <span className={styles.coinDot} aria-hidden="true" /> {me.coins ?? 0}
@@ -169,6 +164,7 @@ export default function ProfilePage({
 
           <div className={styles.columns}>
             <aside className={styles.sideCol}>
+              {/* О себе */}
               <Card padding="md">
                 <h2 className={styles.cardTitle}>О себе</h2>
                 {profile.bio
@@ -189,40 +185,15 @@ export default function ProfilePage({
                 </ul>
               </Card>
 
+              {/* Достижения — кнопка под «О себе» (видна на любом профиле) */}
               <Card padding="md">
-                <h2 className={styles.cardTitle}>Опыт</h2>
-                <div className={styles.xpRow}>
-                  <span className={styles.xpLevel}>Ур. {level}</span>
-                  <span className={styles.xpLabel}>{xpInLevel} / {XP_PER_LEVEL} XP</span>
-                </div>
-                <div
-                  className={styles.xpBar}
-                  role="progressbar"
-                  aria-valuenow={xpInLevel}
-                  aria-valuemin={0}
-                  aria-valuemax={XP_PER_LEVEL}
-                  aria-label={`Прогресс XP: ${xpInLevel} из ${XP_PER_LEVEL}`}
-                >
-                  <motion.div
-                    className={styles.xpFill}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${xpPct}%` }}
-                    transition={{ duration: 0.7, ease: EASE_OUT, delay: 0.15 }}
-                  />
-                </div>
-              </Card>
-            </aside>
-
-            <main className={styles.mainCol}>
-              {isOwn && achievements.length > 0 ? (
-                <Card padding="md">
-                  <div className={styles.achHead}>
-                    <h2 className={styles.cardTitle}>Достижения</h2>
+                <div className={styles.achHead}>
+                  <h2 className={styles.cardTitle} style={{ margin: 0 }}>Достижения</h2>
+                  {achievements.length > 0 && (
                     <span className={styles.achCount}>{unlockedCount} / {achievements.length}</span>
-                  </div>
-                  <p className={styles.muted}>
-                    Открывайте достижения шаг за шагом — каждое ведёт к следующему.
-                  </p>
+                  )}
+                </div>
+                {achievements.length > 0 ? (
                   <Button
                     variant="primary"
                     onClick={() => setTreeOpen(true)}
@@ -230,39 +201,48 @@ export default function ProfilePage({
                   >
                     Дерево достижений
                   </Button>
-                </Card>
-              ) : isOwn && achievements.length === 0 ? (
-                <Card padding="md">
+                ) : (
                   <EmptyState
-                    icon={<Trophy size={48} strokeWidth={1.25} />}
-                    title="Достижения скоро появятся"
-                    description="Выполните первую задачу — и откроется ваше первое достижение."
+                    icon={<Trophy size={36} strokeWidth={1.25} />}
+                    title="Достижений пока нет"
+                    description={isOwn
+                      ? 'Выполните первую задачу — и откроется ваше первое достижение.'
+                      : 'Пользователь ещё не открыл достижений.'}
                   />
-                </Card>
-              ) : (
-                <Card padding="md">
-                  <h2 className={styles.cardTitle}>Профиль</h2>
-                  <p className={styles.muted}>Достижения видны только владельцу профиля.</p>
-                </Card>
+                )}
+              </Card>
+
+              {/* Витрины */}
+              {showcases.map((block) => (
+                <Showcase key={block.id} block={block} profile={profile} />
+              ))}
+
+              {/* Редактор витрин (только владельцу) */}
+              {isOwn && (
+                <ShowcaseEditor username={profile.username} current={showcases} />
               )}
+            </aside>
+
+            <main className={styles.mainCol}>
+              {isOwn && <PostComposer username={profile.username} />}
+              <PostFeed profile={profile} isOwn={isOwn} />
+              <ProfileWall username={profile.username} isOwn={isOwn} />
             </main>
           </div>
         </motion.div>
       )}
 
-      {isOwn && (
-        <Modal
-          open={treeOpen}
-          onClose={() => setTreeOpen(false)}
-          title="Дерево достижений"
-          size="xl"
-          noPadding
-          ariaLabel="Дерево достижений"
-          className={styles.treeModal}
-        >
-          <AchievementTree achievements={achievements} />
-        </Modal>
-      )}
+      <Modal
+        open={treeOpen}
+        onClose={() => setTreeOpen(false)}
+        title={isOwn ? 'Дерево достижений' : `Достижения @${username}`}
+        size="xl"
+        noPadding
+        ariaLabel="Дерево достижений"
+        className={styles.treeModal}
+      >
+        <AchievementTree achievements={achievements} />
+      </Modal>
     </div>
   );
 }

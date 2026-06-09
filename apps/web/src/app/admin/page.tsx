@@ -56,7 +56,7 @@ function AdminSetup({ username }: { username: string }) {
     setError(''); setBusy(true);
     try {
       const updated = await adminApi.promote(username, secret.trim());
-      setUser({ ...updated, email: '', bio: null, coverUrl: null, location: null, locationLat: null, locationLon: null, showGlobalEvents: true, showHolidays: true, isEmailVerified: false, createdAt: updated.createdAt });
+      setUser({ ...updated, email: '', bio: null, coverUrl: null, backgroundUrl: null, location: null, locationLat: null, locationLon: null, showGlobalEvents: true, showHolidays: true, isEmailVerified: false, createdAt: updated.createdAt });
       window.location.reload();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Ошибка');
@@ -108,13 +108,24 @@ function StatCard({ label, value }: { label: string; value: number }) {
 }
 
 // ── Строка пользователя ────────────────────────────────────────
-function UserRow({ user, isSelf, onToggleRole, onToggleActive, onDelete }: {
+function UserRow({ user, isSelf, onToggleRole, onToggleActive, onDelete, onGrant, granting }: {
   user: AdminUser; isSelf: boolean;
   onToggleRole: () => void; onToggleActive: () => void; onDelete: () => void;
+  onGrant: (amount: number) => void; granting: boolean;
 }) {
   const initial = (user.displayName || user.username)[0].toUpperCase();
   const status  = onlineStatus(user.lastSeenAt);
   const [confirmDel, setConfirmDel] = useState(false);
+  const [grantOpen, setGrantOpen] = useState(false);
+  const [amount, setAmount] = useState('');
+
+  const submitGrant = () => {
+    const n = parseInt(amount, 10);
+    if (!Number.isInteger(n) || n === 0) return;
+    onGrant(n);
+    setAmount('');
+    setGrantOpen(false);
+  };
 
   return (
     <tr className={[styles.row, !user.isActive ? styles.rowInactive : ''].join(' ')}>
@@ -154,46 +165,75 @@ function UserRow({ user, isSelf, onToggleRole, onToggleActive, onDelete }: {
           {user.isActive ? 'Активен' : 'Отключён'}
         </Badge>
       </td>
+      <td className={styles.tdCoins}>
+        <span className={styles.coinsCell} title="Баланс монет">
+          <span className={styles.coinDot} aria-hidden="true" /> {user.coins ?? 0}
+        </span>
+      </td>
       <td className={styles.tdDate}>
         {new Date(user.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
       </td>
       <td className={styles.tdActions}>
-        {!isSelf ? (
-          confirmDel ? (
-            <>
-              <Button variant="destructive" size="sm" onClick={onDelete}>Удалить навсегда</Button>
-              <Button variant="secondary" size="sm" onClick={() => setConfirmDel(false)}>Отмена</Button>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onToggleRole}
-                title={user.role === 'admin' ? 'Снять права' : 'Сделать админом'}
-              >
-                {user.role === 'admin' ? '⬇ Юзер' : '⬆ Админ'}
-              </Button>
-              <Button
-                variant={user.isActive ? 'destructive' : 'primary'}
-                size="sm"
-                onClick={onToggleActive}
-              >
-                {user.isActive ? 'Откл' : 'Вкл'}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={styles.deleteUserBtn}
-                onClick={() => setConfirmDel(true)}
-                title="Удалить пользователя"
-              >
-                Удалить
-              </Button>
-            </>
-          )
+        {grantOpen ? (
+          <span className={styles.grantRow}>
+            <input
+              type="number"
+              className={styles.grantInput}
+              value={amount}
+              placeholder="±монеты"
+              autoFocus
+              onChange={e => setAmount(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') submitGrant(); }}
+            />
+            <Button variant="accent" size="sm" onClick={submitGrant} loading={granting}>Выдать</Button>
+            <Button variant="secondary" size="sm" onClick={() => { setGrantOpen(false); setAmount(''); }}>Отмена</Button>
+          </span>
+        ) : confirmDel ? (
+          <>
+            <Button variant="destructive" size="sm" onClick={onDelete}>Удалить навсегда</Button>
+            <Button variant="secondary" size="sm" onClick={() => setConfirmDel(false)}>Отмена</Button>
+          </>
         ) : (
-          <span className={styles.selfLabel}>Это вы</span>
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setGrantOpen(true)}
+              title="Выдать или списать монеты"
+            >
+              Монеты
+            </Button>
+            {!isSelf ? (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={onToggleRole}
+                  title={user.role === 'admin' ? 'Снять права' : 'Сделать админом'}
+                >
+                  {user.role === 'admin' ? '⬇ Юзер' : '⬆ Админ'}
+                </Button>
+                <Button
+                  variant={user.isActive ? 'destructive' : 'primary'}
+                  size="sm"
+                  onClick={onToggleActive}
+                >
+                  {user.isActive ? 'Откл' : 'Вкл'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={styles.deleteUserBtn}
+                  onClick={() => setConfirmDel(true)}
+                  title="Удалить пользователя"
+                >
+                  Удалить
+                </Button>
+              </>
+            ) : (
+              <span className={styles.selfLabel}>Это вы</span>
+            )}
+          </>
         )}
       </td>
     </tr>
@@ -504,7 +544,7 @@ function AdminFeedbackSection() {
 
 // ── Главная страница ───────────────────────────────────────────
 export default function AdminPage() {
-  const { user, ready } = useAuthStore();
+  const { user, ready, setUser } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
   const searchDebRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -538,6 +578,16 @@ export default function AdminPage() {
   const deleteUserMut = useMutation({
     mutationFn: (id: string) => adminApi.deleteUser(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin'] }),
+  });
+
+  const grantCoinsMut = useMutation({
+    mutationFn: ({ id, amount }: { id: string; amount: number }) =>
+      adminApi.grantCoins(id, amount),
+    onSuccess: (updated) => {
+      qc.invalidateQueries({ queryKey: ['admin'] });
+      // если выдали себе — обновим монеты в шапке
+      if (updated.id === user?.id) setUser({ ...user!, coins: updated.coins });
+    },
   });
 
   const handleSearch = (val: string) => {
@@ -586,18 +636,19 @@ export default function AdminPage() {
                   <th className={styles.th}>Онлайн</th>
                   <th className={styles.th}>Роль</th>
                   <th className={styles.th}>Статус</th>
+                  <th className={styles.th}>Монеты</th>
                   <th className={styles.th}>Регистрация</th>
                   <th className={styles.th}>Действия</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading && (
-                  <tr><td colSpan={7} className={styles.loading}>
+                  <tr><td colSpan={8} className={styles.loading}>
                     <Skeleton width="100%" height={48} />
                   </td></tr>
                 )}
                 {!isLoading && users.length === 0 && (
-                  <tr><td colSpan={7}>
+                  <tr><td colSpan={8}>
                     <EmptyState size="sm" title="Ничего не найдено" description="Попробуйте другой поиск." />
                   </td></tr>
                 )}
@@ -606,6 +657,8 @@ export default function AdminPage() {
                     onToggleRole={() => updateMut.mutate({ id: u.id, data: { role: u.role === 'admin' ? 'user' : 'admin' } })}
                     onToggleActive={() => updateMut.mutate({ id: u.id, data: { isActive: !u.isActive } })}
                     onDelete={() => deleteUserMut.mutate(u.id)}
+                    onGrant={(amount) => grantCoinsMut.mutate({ id: u.id, amount })}
+                    granting={grantCoinsMut.isPending}
                   />
                 ))}
               </tbody>
