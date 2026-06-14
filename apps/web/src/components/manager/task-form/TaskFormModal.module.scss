@@ -288,7 +288,12 @@
     padding: 1.25rem 1rem 0.5rem;
   }
   .metaRow { gap: 0.4rem; }
-  .footer { padding: 0.65rem 1rem; flex-wrap: wrap; }
+  .footer {
+    padding: 0.65rem 1rem;
+    // Запас под жестовую панель/индикатор home (safe-area снизу).
+    padding-bottom: calc(0.65rem + env(safe-area-inset-bottom));
+    flex-wrap: wrap;
+  }
 }
 
 // ── Mobile weather strip (hidden on desktop) ──────────────────

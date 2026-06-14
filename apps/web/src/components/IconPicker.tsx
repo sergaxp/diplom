@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ICON_CATEGORIES, Icon, hasIcon } from '../lib/icons';
+import { clampDrop } from './manager/task-form/anchor';
 import styles from './IconPicker.module.scss';
 
 const ALL_CATEGORY = 'Все';
@@ -51,11 +52,7 @@ export function IconPicker({ value, onChange }: Props) {
       // На мобильных дропдаун шире кнопки –  зажимаем его в видимую область
       const dropW = Math.min(312, vw - 16);
       const dropH = 380; // высота с категориями + поиск + сетка
-      const left  = Math.min(Math.max(8, r.left), vw - dropW - 8);
-      const top   = r.bottom + 5 + dropH > vh
-        ? Math.max(8, r.top - dropH - 5)
-        : r.bottom + 5;
-      setDropPos({ top, left });
+      setDropPos(clampDrop(r, dropW, dropH, vw, vh));
     }
     setOpen(v => !v);
   };

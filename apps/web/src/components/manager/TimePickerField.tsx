@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { clampDrop } from './task-form/anchor';
 import styles from './TimePickerField.module.scss';
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -114,12 +115,9 @@ export function TimePickerField({ value, endValue, taskDate, hideEnd, onChange, 
     if (wrapRef.current) {
       const r   = wrapRef.current.getBoundingClientRect();
       const vw  = window.innerWidth;
-      const vh  = window.innerHeight;
       const dropW = Math.min(200, vw - 16);
-      const left  = Math.min(r.left, vw - dropW - 8);
       const dropH = ITEM_H * 5 + 16;
-      const top   = r.bottom + 4 + dropH > vh ? r.top - dropH - 4 : r.bottom + 4;
-      setDropPos({ top, left: Math.max(8, left) });
+      setDropPos(clampDrop(r, dropW, dropH, vw, window.innerHeight));
     }
     setEditing(which);
     setTimeout(() => { hrRef.current?.focus(); hrRef.current?.select(); }, 0);

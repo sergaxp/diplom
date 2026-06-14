@@ -26,6 +26,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#f59e0b',
+  // Раскрываем контент под вырезы/жесты, чтобы работали env(safe-area-inset-*)
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

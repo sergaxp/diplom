@@ -2,8 +2,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-6);
-  height: 52px;
+  // viewport-fit:cover пускает контент под вырез/статус-бар — резервируем
+  // safe-area сверху и по бокам (актуально для альбомной ориентации).
+  padding: env(safe-area-inset-top)
+           max(var(--space-6), env(safe-area-inset-right))
+           0
+           max(var(--space-6), env(safe-area-inset-left));
+  min-height: 52px;
   background: var(--bg-base);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -211,8 +216,11 @@
 // ─── Mobile ──────────────────────────────────────────────────
 @media (max-width: 768px) {
   .header {
-    padding: 0 var(--space-3);
-    height: 48px;
+    padding: env(safe-area-inset-top)
+             max(var(--space-3), env(safe-area-inset-right))
+             0
+             max(var(--space-3), env(safe-area-inset-left));
+    min-height: 48px;
   }
   .logo { font-size: var(--text-base); }
   .right { gap: var(--space-2); }

@@ -79,6 +79,9 @@
     border-right: none;
     border-top: 1px solid var(--border-subtle);
     overflow-y: auto;
+    // Запас под жестовую панель/индикатор home, чтобы последняя задача
+    // не пряталась под ним (root прижат к вьюпорту через fixed+inset).
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .mobileTop {

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Paperclip, File as FileIcon } from 'lucide-react';
 import { popLayer } from '../../lib/motion';
+import { clampDrop } from './task-form/anchor';
 import type { SubtaskItem, SubtaskAttachment } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { storageApi } from '../../lib/storage';
@@ -95,10 +96,7 @@ export function SubtaskCreatePopup({ initial, userTags, parentDate, seriesDays, 
     if (tagDropOpen) { setTagDropOpen(false); return; }
     if (tagBtnRef.current) {
       const r = tagBtnRef.current.getBoundingClientRect();
-      const dropW = 180;
-      const left  = Math.min(r.left, window.innerWidth - dropW - 8);
-      const top   = r.bottom + 4 + 200 > window.innerHeight ? r.top - 204 : r.bottom + 4;
-      setTagDropPos({ top, left: Math.max(8, left) });
+      setTagDropPos(clampDrop(r, 180, 200, window.innerWidth, window.innerHeight));
     }
     setTagDropOpen(true);
   };

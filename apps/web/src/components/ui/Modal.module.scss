@@ -104,4 +104,10 @@
     }
   }
   .header { padding-top: var(--space-5); }
+
+  /* Учитываем жестовую панель/индикатор home, чтобы кнопки футера
+   * не уезжали под него на телефонах с safe-area снизу. */
+  .footer {
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  }
 }
