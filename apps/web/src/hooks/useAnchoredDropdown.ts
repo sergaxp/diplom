@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { clampDrop } from '../components/manager/task-form/anchor';
 
 interface Pos { top: number; left: number }
+
+// useLayoutEffect на сервере не работает и шумит предупреждением — на SSR деградируем до useEffect.
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 interface UseAnchoredDropdownOptions {
   width?: number;
@@ -51,7 +54,7 @@ export function useAnchoredDropdown<B extends HTMLElement = HTMLButtonElement, P
   // лишь оценка для первого кадра. На устройствах с низким вьюпортом завышенная оценка
   // высоты приводила к ненужному «перевороту» вверх и прижатию к верху экрана.
   // ResizeObserver также ловит раскрытие вложенного контента (напр. «Произвольно…»).
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!open) return;
     const el = popoverRef.current;
     const anchor = anchorRef.current;

@@ -47,10 +47,16 @@
 
 // ─── MOBILE ───────────────────────────────────────────────────
 @media (max-width: 768px) {
+  // Прижимаем корень к вьюпорту через fixed+inset вместо height:100dvh.
+  // На части Android-устройств (напр. Tecno CAMON 20) 100dvh вычисляется
+  // чуть больше реальной видимой области → появлялась паразитная прокрутка
+  // страницы в PWA. position:fixed;inset:0 не зависит от арифметики dvh.
   .root {
-    height: 100dvh;
+    position: fixed;
+    inset: 0;
     min-height: unset;
     overflow: hidden;
+    overscroll-behavior: none;
   }
 
   .body {
