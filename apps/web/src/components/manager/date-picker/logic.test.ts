@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   buildIso, buildGrid, getDateButtonLabel, scRight,
   getNextMonday, getNextSaturday, nearestWeekday,
@@ -72,7 +72,15 @@ describe('getDateButtonLabel', () => {
   });
 
   it('обычная дата → "D месяца"', () => {
-    expect(getDateButtonLabel('2026-06-15')).toBe('15 июня');
+    // Фиксируем «сегодня», иначе тест падает, когда реальная дата = 14–16 июня
+    // (15 июня тогда попадает в Вчера/Сегодня/Завтра).
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 1, 12, 0, 0));
+    try {
+      expect(getDateButtonLabel('2026-06-15')).toBe('15 июня');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
