@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
-import { toDateStr } from './tasks';
+import { toDateStr, checkWeatherCondition, type WeatherCondition } from './tasks';
 
 export interface DayWeather {
   date: string;
@@ -29,6 +29,34 @@ export interface CurrentWeather {
   weatherCode: number;
   windSpeed: number;
   humidity: number;
+}
+
+// Одна точка почасового прогноза (для детального графика).
+export interface HourlyPoint {
+  time: string;            // ISO в локальном tz: '2026-06-16T14:00'
+  hour: number;            // 0..23
+  temp: number;
+  feelsLike: number;
+  precipProb: number | null; // в архиве (ERA5) недоступно → null
+  precip: number;          // мм
+  weatherCode: number;
+  windSpeed: number;       // км/ч
+  windGusts: number;
+  windDir: number;         // градусы
+  humidity: number;        // %
+  pressure: number;        // гПа
+  isDay: boolean;
+}
+
+// Детальный прогноз на один день: суточные «экстра» + почасовые точки.
+export interface DayDetail {
+  date: string;
+  sunrise?: string;
+  sunset?: string;
+  daylightDuration?: number; // секунды
+  uvIndexMax?: number;
+  windGustsMax?: number;
+  hours: HourlyPoint[];
 }
 
 // Координаты по умолчанию – Челябинск
@@ -226,6 +254,150 @@ async function fetchDayWeatherData(
   };
 }
 
+// ── Детальный прогноз (суточные экстра + почасовые) ───────────
+// Архив (ERA5) не отдаёт часть полей (вероятность осадков, UV) — поэтому
+// набор полей для forecast и archive разный, иначе archive-API падает 400-кой.
+const DETAIL_DAILY_FC = 'sunrise,sunset,daylight_duration,uv_index_max,wind_gusts_10m_max';
+const DETAIL_DAILY_AR = 'sunrise,sunset,daylight_duration,wind_gusts_10m_max';
+const DETAIL_HOURLY_FC = 'temperature_2m,apparent_temperature,precipitation,precipitation_probability,weathercode,wind_speed_10m,wind_gusts_10m,wind_direction_10m,relative_humidity_2m,surface_pressure,is_day';
+const DETAIL_HOURLY_AR = 'temperature_2m,apparent_temperature,precipitation,weathercode,wind_speed_10m,wind_gusts_10m,wind_direction_10m,relative_humidity_2m,surface_pressure,is_day';
+
+type Series = (number | null)[] | undefined;
+
+// Чистая функция (тестируется без сети): из ответа open-meteo собирает DayDetail,
+// оставляя только часы запрошенной даты. Фильтр по строке времени корректен по
+// часовому поясу локации и переживает переход на летнее время (день 23/25 часов).
+export function parseDayDetail(
+  json: { daily?: Record<string, unknown[]>; hourly?: Record<string, unknown[]> } | null | undefined,
+  date: string,
+): DayDetail | null {
+  const h = json?.hourly;
+  const times = h?.time as string[] | undefined;
+  if (!times) return null;
+
+  const temp = h!.temperature_2m as Series;
+  const feels = h!.apparent_temperature as Series;
+  const pProb = h!.precipitation_probability as Series;
+  const precip = h!.precipitation as Series;
+  const wc = h!.weathercode as Series;
+  const wind = h!.wind_speed_10m as Series;
+  const gust = h!.wind_gusts_10m as Series;
+  const wdir = h!.wind_direction_10m as Series;
+  const hum = h!.relative_humidity_2m as Series;
+  const pres = h!.surface_pressure as Series;
+  const isDay = h!.is_day as Series;
+
+  const r = (v: number | null | undefined, d = 0) => (v == null ? d : Math.round(v));
+
+  const hours: HourlyPoint[] = [];
+  times.forEach((t, i) => {
+    if (!t.startsWith(date)) return;
+    if (temp?.[i] == null) return; // незаполненный час (край прогноза)
+    hours.push({
+      time: t,
+      hour: Number(t.slice(11, 13)),
+      temp: r(temp[i]),
+      feelsLike: r(feels?.[i] ?? temp[i]),
+      precipProb: pProb?.[i] == null ? null : r(pProb[i]),
+      precip: precip?.[i] == null ? 0 : Math.round((precip[i] as number) * 10) / 10,
+      weatherCode: r(wc?.[i]),
+      windSpeed: r(wind?.[i]),
+      windGusts: r(gust?.[i]),
+      windDir: r(wdir?.[i]),
+      humidity: r(hum?.[i]),
+      pressure: r(pres?.[i]),
+      isDay: isDay ? isDay[i] === 1 : true,
+    });
+  });
+  if (!hours.length) return null;
+
+  const d = json?.daily;
+  const dNum = (key: string): number | undefined => {
+    const v = (d?.[key] as Series)?.[0];
+    return v == null ? undefined : v;
+  };
+  const dStr = (key: string): string | undefined =>
+    ((d?.[key] as (string | null)[] | undefined)?.[0] as string) ?? undefined;
+
+  return {
+    date,
+    sunrise: dStr('sunrise'),
+    sunset: dStr('sunset'),
+    daylightDuration: dNum('daylight_duration'),
+    uvIndexMax: dNum('uv_index_max'),
+    windGustsMax: dNum('wind_gusts_10m_max'),
+    hours,
+  };
+}
+
+// ── «Лучшее время» дня ────────────────────────────────────────
+export interface BestWindow {
+  bestHour: number;   // рекомендуемый час (для кнопки «перенести»)
+  startHour: number;  // границы непрерывного «хорошего» окна
+  endHour: number;
+  reason: string;
+}
+
+// Чистая функция (тестируется без сети). Если задано погодное условие задачи —
+// рассматриваем только часы, проходящие его (skipRain и т.п. на уровне часа);
+// иначе ранжируем относительно: ближе к комфортной «ощущается», суше, тише ветер,
+// днём предпочтительнее. Возвращает null, если подходящих часов нет.
+export function computeBestWindow(
+  hours: HourlyPoint[],
+  condition?: WeatherCondition | null,
+): BestWindow | null {
+  if (!hours.length) return null;
+
+  const hasCond = !!condition && Object.values(condition).some(v => v != null && v !== false);
+  const condOk = (h: HourlyPoint) =>
+    !hasCond ||
+    checkWeatherCondition({ tempMax: h.temp, tempMin: h.temp, weatherCode: h.weatherCode }, condition!).ok;
+
+  const candidates = hours.filter(condOk);
+  if (!candidates.length) return null;
+
+  const score = (h: HourlyPoint) =>
+    -Math.abs(h.feelsLike - 21)            // ближе к 21° — комфортнее
+    - ((h.precipProb ?? 0) / 100) * 12     // дождь сильно штрафует
+    - Math.max(0, h.windSpeed - 20) * 0.2  // сильный ветер чуть штрафует
+    + (h.isDay ? 1.5 : 0);                 // светлое время предпочтительнее
+
+  const best = candidates.reduce((a, b) => (score(b) > score(a) ? b : a));
+
+  // Расширяем окно вокруг лучшего часа по подряд идущим «хорошим» часам.
+  const good = (h: HourlyPoint) => condOk(h) && (h.precipProb == null || h.precipProb < 40);
+  const bi = hours.findIndex(h => h.hour === best.hour);
+  let s = bi, e = bi;
+  while (s > 0 && good(hours[s - 1])) s--;
+  while (e < hours.length - 1 && good(hours[e + 1])) e++;
+
+  const reason = hasCond
+    ? 'подходит под погодное условие задачи'
+    : (best.precipProb != null && best.precipProb < 20 ? 'сухое и комфортное окно' : 'самое комфортное окно');
+
+  return { bestHour: best.hour, startHour: hours[s].hour, endHour: hours[e].hour, reason };
+}
+
+async function fetchDayDetailData(
+  date: string, lat: number, lon: number, tz: string,
+): Promise<DayDetail | null> {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(date + 'T00:00:00');
+  const daysDiff = Math.round((target.getTime() - today.getTime()) / 86_400_000);
+
+  if (daysDiff > 15) return null; // дальше горизонта прогноза
+
+  // start/end = date: запрашиваем почасовые только на нужный день (а не 16×24).
+  const useArchive = daysDiff < -14;
+  const json = await apiGet(useArchive ? '/weather/archive' : '/weather/forecast', {
+    lat, lon, tz,
+    daily: useArchive ? DETAIL_DAILY_AR : DETAIL_DAILY_FC,
+    hourly: useArchive ? DETAIL_HOURLY_AR : DETAIL_HOURLY_FC,
+    start_date: date, end_date: date,
+  });
+  return parseDayDetail(json, date);
+}
+
 // ── Текущая погода ────────────────────────────────────────────
 async function fetchCurrentWeatherData(
   lat: number, lon: number, tz: string,
@@ -335,6 +507,30 @@ export function useDayWeather(date: string, locationData?: LocationData) {
     staleTime: 1000 * 60 * 30,
     retry: 1,
     enabled: !!date,
+  });
+}
+
+// ── Хук: детальный прогноз на день (ленивый) ─────────────────
+// enabled управляет загрузкой — почасовые тянем только когда открыта модалка,
+// а не для каждой карточки. staleTime синхронизирован с TTL бэкенда (15 мин).
+export function useDayDetail(
+  date: string,
+  locationData?: LocationData,
+  opts?: { enabled?: boolean },
+) {
+  const locKey = locationData?.lat != null
+    ? `${locationData.lat},${locationData.lon}`
+    : (locationData?.name ?? '');
+
+  return useQuery({
+    queryKey: ['weather', 'detail', date, locKey],
+    queryFn: async () => {
+      const { lat, lon, tz } = await resolveCoords(locationData);
+      return fetchDayDetailData(date, lat, lon, tz);
+    },
+    staleTime: 1000 * 60 * 15,
+    retry: 1,
+    enabled: (opts?.enabled ?? true) && !!date,
   });
 }
 

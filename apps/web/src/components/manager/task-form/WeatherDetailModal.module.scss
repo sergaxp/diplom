@@ -1,0 +1,204 @@
+.note {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+// ── Шапка с навигацией по дням ────────────────────────────────
+.navHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.navBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+
+  &:hover:not(:disabled) { background: var(--bg-alt); color: var(--text); }
+  &:disabled { opacity: 0.35; cursor: default; }
+}
+
+.navTitle {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+// ── «Лучшее время» + перенос ──────────────────────────────────
+.best {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  border-radius: 8px;
+
+  > svg { flex-shrink: 0; color: var(--brand); }
+}
+
+.bestText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.bestTitle {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.bestReason {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.bestBtn {
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.4rem 0.7rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--brand);
+  color: var(--text-on-brand);
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--ease-default);
+
+  &:hover { opacity: 0.9; }
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+// ── Шапка ─────────────────────────────────────────────────────
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.heroIcon {
+  flex-shrink: 0;
+  display: flex;
+  color: var(--text-muted);
+}
+
+.heroMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.heroCond {
+  font-size: 0.95rem;
+  color: var(--text-2);
+}
+
+.heroTemps {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.heroTempMax {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+
+.heroTempMin {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+}
+
+.heroFeels {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+// ── Метрики ───────────────────────────────────────────────────
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+.metricIcon {
+  flex-shrink: 0;
+  display: flex;
+  color: var(--text-muted);
+}
+
+.metricLabel {
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.metricValue {
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+// ── Почасовой график: скелетон / недоступность ───────────────
+.chartSkeleton {
+  height: 180px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--bg-alt) 25%, var(--bg-surface) 50%, var(--bg-alt) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+.chartPlaceholder {
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-4);
+  font-size: 0.8rem;
+}

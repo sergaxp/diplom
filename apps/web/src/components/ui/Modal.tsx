@@ -1,6 +1,7 @@
 'use client';
 
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { IconButton } from './IconButton';
@@ -50,6 +51,12 @@ export function Modal({
   children,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Портал монтируем только на клиенте: на сервере (SSR) нет document, а сам
+  // портал нужен, чтобы fixed-оверлей не «прилипал» к трансформированному
+  // предку (напр. модалке внутри модалки — у родителя есть transform от анимации).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   // Закрытие по Escape
   useEffect(() => {
@@ -119,7 +126,9 @@ export function Modal({
     };
   }, [open]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -171,6 +180,7 @@ export function Modal({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

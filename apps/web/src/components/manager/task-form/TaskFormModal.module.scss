@@ -601,6 +601,87 @@
   text-align: right;
 }
 
+// ── Кликабельность карточки (ПК + телефон) ────────────────────
+.weatherClickable {
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+  transition: border-color var(--duration-fast) var(--ease-default),
+              background var(--duration-fast) var(--ease-default);
+
+  &:hover { border-color: var(--border-strong); background: var(--bg-surface); }
+  &:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+}
+
+.weatherChevron {
+  flex-shrink: 0;
+  color: var(--text-4);
+}
+
+// ── Компактная карточка (мобильная, одна строка) ──────────────
+.weatherCompact {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.8rem;
+  color: var(--text-2);
+  overflow: hidden;
+}
+
+.weatherCompactIcon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  flex-shrink: 0;
+  max-width: 4.5rem;
+  color: var(--text-muted);
+}
+
+.weatherCompactCond {
+  font-size: 0.6rem;
+  line-height: 1;
+  color: var(--text-4);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weatherCompactDay {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.weatherCompactTemps {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  b { font-weight: 700; color: var(--text); }
+}
+
+.weatherCompactMin { color: var(--text-muted); }
+
+.weatherCompactFeels {
+  margin-left: auto;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 // ── Fields ────────────────────────────────────────────────────
 .field {
   display: flex;

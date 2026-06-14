@@ -17,6 +17,7 @@ import { useTaskDraft } from '../../../hooks/useTaskDraft';
 import { useAnchoredDropdown } from '../../../hooks/useAnchoredDropdown';
 import { useOptimisticTagCreate } from '../../../hooks/useOptimisticTagCreate';
 import { WeatherWidget } from './WeatherWidget';
+import { WeatherDetailModal } from './WeatherDetailModal';
 import { SubtaskSectionComp } from './SubtaskSection';
 import { MetaDropdowns } from './MetaDropdowns';
 import { ReminderDropdown } from './ReminderDropdown';
@@ -63,6 +64,9 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   const [reminders,       setReminders]       = useState<ReminderRule[]>(task?.reminders ?? draft?.reminders ?? []);
   const [datePickerOpen,  setDatePickerOpen]  = useState(false);
   const [repeatConfigOpen, setRepeatConfigOpen] = useState(false);
+  // Дата открытого подробного прогноза (null — модалка закрыта). Состояние
+  // поднято в форму, чтобы оба инстанса WeatherWidget (моб./десктоп) делили одну модалку.
+  const [weatherDetailDate, setWeatherDetailDate] = useState<string | null>(null);
   const [creatingTag,      setCreatingTag]      = useState(false);
   const dateBtnRef      = useRef<HTMLButtonElement>(null);
 
@@ -255,7 +259,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     >
         {/* Mobile-only: weather at the very top */}
         <div className={styles.weatherTopMobile}>
-          <WeatherWidget date={isEdit ? toDateStr(date) : formDate} />
+          <WeatherWidget date={isEdit ? toDateStr(date) : formDate} variant="compact" onOpenDetail={setWeatherDetailDate} />
         </div>
 
         {/* ── Top: иконка + название + описание + мета-поля + теги ── */}
@@ -438,7 +442,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
 
             {/* RIGHT – погода */}
             <div className={styles.right}>
-              <WeatherWidget date={isEdit ? toDateStr(date) : formDate} />
+              <WeatherWidget date={isEdit ? toDateStr(date) : formDate} variant="full" onOpenDetail={setWeatherDetailDate} />
             </div>
           </div>
 
@@ -527,6 +531,17 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
         onClose={() => setRepeatConfigOpen(false)}
       />
     )}
+
+    <WeatherDetailModal
+      date={weatherDetailDate}
+      condition={repeatConfig?.weatherCondition}
+      onPickTime={(d, h) => {
+        setFormDate(d);
+        setTime(`${String(h).padStart(2, '0')}:00`);
+        setWeatherDetailDate(null);
+      }}
+      onClose={() => setWeatherDetailDate(null)}
+    />
   </>
   );
 }
