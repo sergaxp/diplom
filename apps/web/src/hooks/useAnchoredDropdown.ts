@@ -47,5 +47,32 @@ export function useAnchoredDropdown<B extends HTMLElement = HTMLButtonElement, P
     return () => document.removeEventListener('mousedown', h);
   }, [open]);
 
+  // Перепозиционирование по ФАКТИЧЕСКИМ размерам поповера: переданные width/height —
+  // лишь оценка для первого кадра. На устройствах с низким вьюпортом завышенная оценка
+  // высоты приводила к ненужному «перевороту» вверх и прижатию к верху экрана.
+  // ResizeObserver также ловит раскрытие вложенного контента (напр. «Произвольно…»).
+  useEffect(() => {
+    if (!open) return;
+    const el = popoverRef.current;
+    const anchor = anchorRef.current;
+    if (!el || !anchor) return;
+    const reposition = () => {
+      const rect = el.getBoundingClientRect();
+      const next = clampDrop(
+        anchor.getBoundingClientRect(),
+        rect.width  || width,
+        rect.height || height,
+        window.innerWidth,
+        window.innerHeight,
+      );
+      setPos(prev => (prev && prev.top === next.top && prev.left === next.left ? prev : next));
+    };
+    reposition();
+    const ro = new ResizeObserver(reposition);
+    ro.observe(el);
+    window.addEventListener('resize', reposition);
+    return () => { ro.disconnect(); window.removeEventListener('resize', reposition); };
+  }, [open, width, height]);
+
   return { open, pos, toggle, close, anchorRef, popoverRef };
 }
