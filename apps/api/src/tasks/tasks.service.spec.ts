@@ -7,6 +7,7 @@ import { GlobalTask } from './entities/global-task.entity';
 import { TagsService } from '../tags/tags.service';
 import { AchievementsService } from '../achievements/achievements.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RemindersService } from '../reminders/reminders.service';
 
 type RepoMock<T extends ObjectLiteral> = jest.Mocked<Repository<T>>;
 
@@ -29,6 +30,7 @@ describe('TasksService', () => {
   let tags: jest.Mocked<TagsService>;
   let achievements: jest.Mocked<AchievementsService>;
   let notifications: jest.Mocked<NotificationsService>;
+  let reminders: jest.Mocked<RemindersService>;
 
   beforeEach(() => {
     taskRepo = repoMock<Task>();
@@ -43,6 +45,9 @@ describe('TasksService', () => {
     notifications = {
       create: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<NotificationsService>;
+    reminders = {
+      deleteForTask: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<RemindersService>;
 
     service = new TasksService(
       taskRepo,
@@ -51,6 +56,7 @@ describe('TasksService', () => {
       tags,
       achievements,
       notifications,
+      reminders,
     );
   });
 

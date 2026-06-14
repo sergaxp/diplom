@@ -32,6 +32,16 @@ export interface HolidaySettings {
   onlyOnHolidays?: boolean;
 }
 
+export type ReminderType = 'at_time' | 'before' | 'custom';
+
+export interface ReminderRule {
+  id: string;                 // uid() — стабильный ключ правила
+  type: ReminderType;
+  offsetMinutes?: number;     // для 'at_time' (0) и 'before' (5/1440/10080)
+  at?: string;                // для 'custom': 'YYYY-MM-DD' (без времени → DEFAULT_ALLDAY_TIME)
+                              //              или 'YYYY-MM-DDTHH:MM' (с временем). Локальное.
+}
+
 export interface RepeatConfig {
   every?: number;
   unit?: 'day' | 'week' | 'month' | 'year';
@@ -129,6 +139,8 @@ export interface Task {
   icon?: string | null;
   tags?: Tag[];
   subtasks?: SubtaskSection[] | null;
+  /** Правила напоминаний (массив; пресеты + произвольные) */
+  reminders?: ReminderRule[] | null;
   /** Переопределения по дням (для многодневных/повторяющихся задач) */
   dayOverrides?: Record<string, DayOverride> | null;
   /** Runtime-only: дата конкретного вхождения, к которому относится этот объект (YYYY-MM-DD) */
@@ -909,6 +921,7 @@ interface ApiTask {
   icon: string | null;
   tags?: Tag[];
   subtasks?: object[] | null;
+  reminders?: object[] | null;
   dayOverrides?: Record<string, object> | null;
 }
 
@@ -928,6 +941,7 @@ function fromApi(t: ApiTask): Task {
     icon: t.icon ?? null,
     tags: t.tags ?? [],
     subtasks: (t.subtasks ?? null) as SubtaskSection[] | null,
+    reminders: (t.reminders ?? null) as ReminderRule[] | null,
     dayOverrides: (t.dayOverrides ?? null) as Record<string, DayOverride> | null,
     status: 'pending',
   };
@@ -968,6 +982,7 @@ export const tasksApi = {
       icon:         p.icon         ?? null,
       tagIds:       p.tags?.map(t => t.id) ?? [],
       subtasks:     p.subtasks     ?? null,
+      reminders:    p.reminders    ?? null,
       dayOverrides: p.dayOverrides ?? null,
     }).then(r => ({ task: fromApi(r.data), newAchievements: r.data.newAchievements ?? [] })),
 
@@ -987,6 +1002,7 @@ export const tasksApi = {
       icon:         p.icon         ?? null,
       tagIds:       p.tags?.map(t => t.id) ?? [],
       subtasks:     p.subtasks     ?? null,
+      reminders:    p.reminders    ?? null,
       dayOverrides: p.dayOverrides ?? null,
     }).then(r => fromApi(r.data)),
 

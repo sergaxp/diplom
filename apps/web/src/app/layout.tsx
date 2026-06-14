@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Onest } from 'next/font/google';
 import { Providers } from '../providers/Providers';
 import '../styles/globals.scss';
@@ -13,6 +13,19 @@ const onest = Onest({
 export const metadata: Metadata = {
   title: 'Warmingtea – твоё личное пространство',
   description: 'Менеджер задач, почта, списки и многое другое.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'Warmingtea',
+    statusBarStyle: 'default',
+  },
+  icons: {
+    apple: '/apple-touch-icon.png',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#f59e0b',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

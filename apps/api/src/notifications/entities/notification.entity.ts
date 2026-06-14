@@ -10,7 +10,8 @@ export type NotificationKind =
   | 'achievement'
   | 'task_completed'
   | 'daily_bonus'
-  | 'purchase';
+  | 'purchase'
+  | 'reminder';
 
 @Entity('notifications')
 @Index(['userId', 'createdAt'])
@@ -41,6 +42,8 @@ export class Notification {
   @Column({ type: 'boolean', default: false })
   read: boolean;
 
-  @CreateDateColumn()
+  // timestamptz: иначе naive-время трактуется клиентом как локальное и «уезжает»
+  // на величину часового пояса пользователя (баг «N часов назад» сразу после создания).
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

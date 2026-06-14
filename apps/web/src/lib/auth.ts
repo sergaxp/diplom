@@ -14,6 +14,7 @@ export interface User {
   locationLon: number | null;
   showGlobalEvents: boolean;
   showHolidays: boolean;
+  reminderDefaultTime?: string;
   role: 'user' | 'admin';
   isEmailVerified: boolean;
   createdAt: string;

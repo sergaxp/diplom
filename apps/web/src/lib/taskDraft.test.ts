@@ -17,6 +17,7 @@ function mkDraft(over: Partial<Draft> = {}): Draft {
     repeat: 'none', hasEnd: false, repeatUntil: '',
     type: 'normal', priority: 'none', tagId: null, multiDay: false, endDate: '',
     sections: [],
+    reminders: [],
     savedAt: Date.now(),
     ...over,
   };

@@ -8,6 +8,7 @@ import { ManagerCalendar } from '../components/manager/calendar';
 import { MobileDayStrip } from '../components/manager/MobileDayStrip';
 import { TaskList } from '../components/manager/TaskList';
 import { Task, DayOverride, tasksApi, completionKey, toDateStr, isSeriesTask, mergeSeriesSubtasks, prevDayStr } from '../lib/tasks';
+import { syncTaskReminders } from '../lib/reminders';
 import { DeleteScopeModal } from '../components/manager/DeleteScopeModal';
 import { Tag, tagsApi } from '../lib/tags';
 import { useAuthStore } from '../store/authStore';
@@ -35,6 +36,17 @@ export default function ManagerPage() {
   useEffect(() => {
     if (ready && !user) router.replace('/auth');
   }, [ready, user, router]);
+
+  // Deep-link из push-уведомления: ?date=YYYY-MM-DD → выбрать день и очистить query
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const param = new URLSearchParams(window.location.search).get('date');
+    if (param && /^\d{4}-\d{2}-\d{2}$/.test(param)) {
+      const d = new Date(param + 'T00:00:00');
+      if (!Number.isNaN(d.getTime())) setSelectedDate(d);
+      router.replace('/');
+    }
+  }, [router]);
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
@@ -68,6 +80,22 @@ export default function ManagerPage() {
 
   const completions = useMemo(() => new Set(completionKeys), [completionKeys]);
 
+  // Продление горизонта напоминаний при заходе в менеджер (не чаще раза в сутки).
+  useEffect(() => {
+    if (!user || !tasks.length) return;
+    const KEY = 'wt_reminders_synced_at';
+    const today = toDateStr(new Date());
+    try {
+      if (localStorage.getItem(KEY) === today) return;
+      localStorage.setItem(KEY, today);
+    } catch { /* ignore */ }
+    const withReminders = tasks.filter(t => t.reminders && t.reminders.length);
+    if (!withReminders.length) return;
+    void Promise.all(
+      withReminders.map(t => syncTaskReminders(t, { defaultAllDayTime: user.reminderDefaultTime })),
+    );
+  }, [user, tasks]);
+
   // ── Optimistic helpers ────────────────────────────────────────
   const cancelAndSnap = async (key: string[]) => {
     await qc.cancelQueries({ queryKey: key });
@@ -83,7 +111,9 @@ export default function ManagerPage() {
       qc.setQueryData<Task[]>(['tasks'], old => [...(old ?? []), optimistic]);
       return { prev };
     },
-    onSuccess: ({ newAchievements }) => {
+    onSuccess: ({ task, newAchievements }) => {
+      // Материализуем напоминания созданной задачи (зная реальный id)
+      void syncTaskReminders(task, { defaultAllDayTime: user?.reminderDefaultTime });
       newAchievements.forEach(pushAchievement);
       if (newAchievements.length > 0) {
         qc.invalidateQueries({ queryKey: ['achievements'] });
@@ -131,6 +161,8 @@ export default function ManagerPage() {
         qc.setQueryData<Task[]>(['tasks'], old =>
           (old ?? []).map(t => t.id === id ? serverTask : t),
         );
+        // Пересчитываем напоминания после изменения задачи
+        void syncTaskReminders(serverTask, { defaultAllDayTime: user?.reminderDefaultTime });
       }
     },
     onError: (_, __, ctx) => qc.setQueryData(['tasks'], ctx?.prev),

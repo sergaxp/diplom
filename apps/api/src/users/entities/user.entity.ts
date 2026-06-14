@@ -85,6 +85,10 @@ export class User {
   @Column({ type: 'boolean', default: true })
   showHolidays: boolean;
 
+  /** Время срабатывания напоминаний у задач без `time` (HH:MM) */
+  @Column({ type: 'varchar', length: 5, default: '09:00' })
+  reminderDefaultTime: string;
+
   @Column({ type: 'integer', default: 0 })
   xp: number;
 

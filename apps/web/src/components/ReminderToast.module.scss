@@ -1,0 +1,104 @@
+.toast {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-3) var(--space-2) calc(var(--space-3) + 4px);
+  min-width: 300px;
+  max-width: 380px;
+  overflow: hidden;
+  animation: toast-in var(--duration-medium) var(--ease-out);
+  box-shadow: inset 4px 0 0 var(--accent, var(--brand));
+}
+
+@keyframes toast-in {
+  from { transform: translateX(calc(100% + var(--space-6))); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  min-width: 0;
+  text-align: left;
+  font-family: inherit;
+}
+
+.iconWrap {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  padding: var(--space-1);
+  align-self: flex-start;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-fast) var(--ease-default),
+              background var(--duration-fast) var(--ease-default);
+  &:hover { color: var(--text-primary); background: var(--bg-subtle); }
+}
+
+@media (max-width: 768px) {
+  .toast {
+    bottom: auto;
+    right: var(--space-3);
+    left: var(--space-3);
+    top: var(--space-3);
+    width: auto;
+    max-width: none;
+    animation: slideInTop var(--duration-medium) var(--ease-out);
+  }
+}
+
+@keyframes slideInTop {
+  from { transform: translateY(-120%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}

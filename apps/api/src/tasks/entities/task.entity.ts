@@ -86,6 +86,10 @@ export class Task {
   @Column({ type: 'json', nullable: true, default: null })
   subtasks: object[] | null;
 
+  /** Правила напоминаний (конфиг): массив ReminderRule. Инстансы материализует клиент. */
+  @Column({ type: 'json', nullable: true, default: null })
+  reminders: object[] | null;
+
   /**
    * Переопределения по конкретным дням многодневной/повторяющейся задачи:
    * { "YYYY-MM-DD": { title?, description?, time?, endTime?, priority?, icon?,

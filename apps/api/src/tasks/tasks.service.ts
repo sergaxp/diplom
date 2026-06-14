@@ -17,6 +17,7 @@ import {
   AchievementDef,
 } from '../achievements/achievements.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RemindersService } from '../reminders/reminders.service';
 
 @Injectable()
 export class TasksService {
@@ -30,6 +31,7 @@ export class TasksService {
     private readonly tagsService: TagsService,
     private readonly achievementsService: AchievementsService,
     private readonly notifications: NotificationsService,
+    private readonly reminders: RemindersService,
   ) {}
 
   findGlobalTasks(): Promise<GlobalTask[]> {
@@ -67,6 +69,7 @@ export class TasksService {
       endTime: dto.endTime ?? null,
       endDate: dto.endDate ?? null,
       subtasks: dto.subtasks ?? null,
+      reminders: dto.reminders ?? null,
       dayOverrides: dto.dayOverrides ?? null,
       tags,
     });
@@ -115,6 +118,7 @@ export class TasksService {
     }
     if (dto.icon !== undefined) task.icon = dto.icon ?? null;
     if (dto.subtasks !== undefined) task.subtasks = dto.subtasks ?? null;
+    if (dto.reminders !== undefined) task.reminders = dto.reminders ?? null;
     if (dto.dayOverrides !== undefined)
       task.dayOverrides = dto.dayOverrides ?? null;
 
@@ -126,6 +130,7 @@ export class TasksService {
     if (!task) throw new NotFoundException('Задача не найдена');
     await this.taskRepo.remove(task);
     await this.completionRepo.delete({ taskId: id });
+    await this.reminders.deleteForTask(id);
   }
 
   async toggleCompletion(

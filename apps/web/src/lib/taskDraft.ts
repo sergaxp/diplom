@@ -1,4 +1,4 @@
-import { TaskRepeat, TaskType, TaskPriority, SubtaskSection } from './tasks';
+import { TaskRepeat, TaskType, TaskPriority, SubtaskSection, ReminderRule } from './tasks';
 
 export const DRAFT_TTL = 10 * 60 * 1000;
 
@@ -7,6 +7,7 @@ export interface Draft {
   repeat: TaskRepeat; hasEnd: boolean; repeatUntil: string;
   type: TaskType; priority: TaskPriority; tagId: string | null; multiDay: boolean; endDate: string;
   sections: SubtaskSection[];
+  reminders: ReminderRule[];
   savedAt: number;
 }
 

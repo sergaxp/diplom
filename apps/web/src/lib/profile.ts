@@ -32,6 +32,7 @@ export interface UpdateProfilePayload {
   locationLon?: number;
   showGlobalEvents?: boolean;
   showHolidays?: boolean;
+  reminderDefaultTime?: string;
   selectedFrame?: string | null;
   selectedBackground?: string | null;
   socialLinks?: Record<string, string> | null;

@@ -64,6 +64,13 @@ services:
       ADMIN_SECRET: ${ADMIN_SECRET}
       # Google OAuth (публичный client id)
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      # Web Push (напоминания у задач)
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_SUBJECT: ${VAPID_SUBJECT}
+      REMINDER_TOKEN_SECRET: ${REMINDER_TOKEN_SECRET}
+      # Origin API для ссылок snooze/done в Service Worker
+      API_PUBLIC_URL: https://manager.warmingtea.su/api
     ports:
       - "127.0.0.1:3001:3001"
     depends_on:
@@ -80,6 +87,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: https://manager.warmingtea.su/api
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"

@@ -8,6 +8,7 @@ import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { api } from '../lib/api';
 import { AchievementToast } from '../components/AchievementToast';
+import { ReminderToast } from '../components/ReminderToast';
 import { LevelUpCelebration } from '../components/LevelUpCelebration';
 
 const PING_INTERVAL = 2 * 60 * 1000; // 2 минуты
@@ -75,6 +76,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <AuthInitializer />
         {children}
         <AchievementToast />
+        <ReminderToast />
         <LevelUpCelebration />
       </MotionConfig>
     </QueryClientProvider>

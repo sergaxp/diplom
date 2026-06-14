@@ -52,6 +52,12 @@ export class UpdateUserDto {
   @IsBoolean()
   showHolidays?: boolean;
 
+  /** Время напоминаний для задач без времени (HH:MM) */
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{2}:\d{2}$/)
+  reminderDefaultTime?: string;
+
   /** ID экипированной рамки из магазина, или null для снятия */
   @IsOptional()
   @IsString()

@@ -23,6 +23,7 @@ function mkState(over: Partial<TaskFormState> = {}): TaskFormState {
     repeatConfig: null,
     selectedTag: undefined,
     sections: [],
+    reminders: [],
     ...over,
   };
 }

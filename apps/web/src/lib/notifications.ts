@@ -1,6 +1,6 @@
 import { api } from './api';
 
-export type NotificationKind = 'achievement' | 'task_completed' | 'daily_bonus' | 'purchase';
+export type NotificationKind = 'achievement' | 'task_completed' | 'daily_bonus' | 'purchase' | 'reminder';
 
 export interface NotificationItem {
   id: string;

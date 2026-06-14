@@ -301,6 +301,19 @@
   white-space: nowrap;
 }
 
+.timeInput {
+  height: 34px;
+  padding: 0 10px;
+  background: var(--bg-alt, var(--bg-subtle));
+  border: 1px solid var(--border-input, var(--border-default));
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  cursor: pointer;
+  &:focus { outline: none; border-color: var(--brand); }
+}
+
 .rowValueClamp {
   display: -webkit-box;
   -webkit-line-clamp: 2;

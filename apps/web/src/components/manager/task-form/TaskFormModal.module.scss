@@ -814,6 +814,152 @@
   color: var(--text-muted);
 }
 
+// ── Reminder dropdown ─────────────────────────────────────────
+.reminderDrop {
+  position: fixed;
+  z-index: var(--z-popover);
+  width: 264px;
+  max-height: 460px;
+  overflow-y: auto;
+  background: var(--bg-popover);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px var(--shadow-lg);
+  padding: 4px;
+}
+
+.reminderBox,
+.reminderBoxEmpty {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.reminderBoxEmpty {
+  border: 1.5px solid var(--border-strong);
+}
+
+.reminderBox {
+  background: var(--brand);
+  border: 1.5px solid var(--brand);
+}
+
+.reminderDivider {
+  height: 1px;
+  background: var(--border-input);
+  margin: 4px 2px;
+}
+
+.reminderRuleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.reminderRuleLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reminderRuleDel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  border-radius: 5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
+  &:hover { background: var(--bg-hover); color: var(--danger, #ef4444); }
+}
+
+.reminderCustomToggle {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  background: none;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  color: var(--brand);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  &:hover { background: var(--brand-subtle); }
+}
+
+.reminderCustomPanel {
+  padding: 6px 4px 4px;
+}
+
+.reminderTimeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 6px 4px;
+}
+
+.reminderTimeLabel {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.reminderTimeInput {
+  flex: 1;
+  height: 30px;
+  padding: 0 8px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
+  border-radius: 5px;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-family: inherit;
+  &:focus { outline: none; border-color: var(--brand); }
+}
+
+.reminderCustomActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 6px 6px 2px;
+}
+
+.reminderCancelBtn,
+.reminderAddBtn {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 5px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.reminderCancelBtn {
+  background: var(--bg-alt);
+  border: 1px solid var(--border-input);
+  color: var(--text);
+  &:hover { border-color: var(--border-strong); }
+}
+
+.reminderAddBtn {
+  background: var(--brand);
+  border: 1px solid var(--brand);
+  color: #fff;
+  &:hover { filter: brightness(1.05); }
+}
+
 // ── 3-button action row replacing the old "+ Добавить подзадачу" input ──
 .addActions {
   display: flex;

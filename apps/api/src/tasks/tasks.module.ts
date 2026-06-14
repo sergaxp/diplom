@@ -8,6 +8,7 @@ import { TasksController } from './tasks.controller';
 import { TagsModule } from '../tags/tags.module';
 import { AchievementsModule } from '../achievements/achievements.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { RemindersModule } from '../reminders/reminders.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     TagsModule,
     AchievementsModule,
     NotificationsModule,
+    RemindersModule,
   ],
   controllers: [TasksController],
   providers: [TasksService],

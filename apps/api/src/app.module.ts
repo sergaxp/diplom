@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -32,6 +33,10 @@ import { FeatureRequest } from './feedback/entities/feature-request.entity';
 import { ProfileModule } from './profile/profile.module';
 import { Post } from './profile/entities/post.entity';
 import { Comment } from './profile/entities/comment.entity';
+import { PushModule } from './push/push.module';
+import { PushSubscription } from './push/entities/push-subscription.entity';
+import { RemindersModule } from './reminders/reminders.module';
+import { ReminderInstance } from './reminders/entities/reminder-instance.entity';
 
 @Module({
   imports: [
@@ -39,6 +44,9 @@ import { Comment } from './profile/entities/comment.entity';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
+    // Планировщик cron-задач (напоминания тикают раз в минуту)
+    ScheduleModule.forRoot(),
 
     // Глобальный рейт-лимит: 100 запросов / минуту с одного IP по умолчанию
     // (отдельные эндпоинты — например /auth/* — переопределяют лимит через @Throttle)
@@ -72,6 +80,8 @@ import { Comment } from './profile/entities/comment.entity';
         FeatureRequest,
         Post,
         Comment,
+        PushSubscription,
+        ReminderInstance,
       ],
       synchronize: process.env.NODE_ENV !== 'production', // в проде схему накатывают миграции (см. src/migrations)
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
@@ -93,6 +103,8 @@ import { Comment } from './profile/entities/comment.entity';
     NotificationsModule,
     FeedbackModule,
     ProfileModule,
+    PushModule,
+    RemindersModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

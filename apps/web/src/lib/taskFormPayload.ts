@@ -1,4 +1,4 @@
-import { Task, TaskRepeat, TaskType, TaskPriority, RepeatConfig, SubtaskSection } from './tasks';
+import { Task, TaskRepeat, TaskType, TaskPriority, RepeatConfig, SubtaskSection, ReminderRule } from './tasks';
 import type { Tag } from './tags';
 
 export interface TaskFormState {
@@ -17,12 +17,13 @@ export interface TaskFormState {
   repeatConfig: RepeatConfig | null;
   selectedTag?: Tag;
   sections: SubtaskSection[];
+  reminders: ReminderRule[];
 }
 
 export function buildTaskPayload(state: TaskFormState): Omit<Task, 'id' | 'status'> {
   const {
     title, description, formDate, multiDay, endDate, time, endTime,
-    repeat, hasEnd, repeatUntil, type, priority, repeatConfig, selectedTag, sections,
+    repeat, hasEnd, repeatUntil, type, priority, repeatConfig, selectedTag, sections, reminders,
   } = state;
 
   const resolvedEndDate = multiDay && endDate && endDate > formDate ? endDate : undefined;
@@ -42,5 +43,6 @@ export function buildTaskPayload(state: TaskFormState): Omit<Task, 'id' | 'statu
     icon:        selectedTag?.icon ?? null,
     tags:        selectedTag ? [selectedTag] : [],
     subtasks:    sections,
+    reminders:   reminders.length ? reminders : null,
   };
 }

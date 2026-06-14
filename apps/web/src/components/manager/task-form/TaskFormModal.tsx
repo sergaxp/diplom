@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { X } from 'lucide-react';
-import { Task, TaskRepeat, TaskType, TaskPriority, RepeatConfig, SubtaskSection, toDateStr, getSeriesDays } from '../../../lib/tasks';
+import { X, Bell } from 'lucide-react';
+import { Task, TaskRepeat, TaskType, TaskPriority, RepeatConfig, SubtaskSection, ReminderRule, toDateStr, getSeriesDays } from '../../../lib/tasks';
 import { DatePickerPopup, getDateButtonLabel } from '../date-picker';
 import { RepeatConfigModal } from '../repeat-config';
 import { TimePickerField } from '../TimePickerField';
@@ -19,6 +19,8 @@ import { useOptimisticTagCreate } from '../../../hooks/useOptimisticTagCreate';
 import { WeatherWidget } from './WeatherWidget';
 import { SubtaskSectionComp } from './SubtaskSection';
 import { MetaDropdowns } from './MetaDropdowns';
+import { ReminderDropdown } from './ReminderDropdown';
+import { registerPush } from '../../../lib/push';
 import styles from './TaskFormModal.module.scss';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -58,6 +60,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   const [priority,      setPriority]      = useState<TaskPriority>(task?.priority ?? draft?.priority ?? 'none');
   const [repeatConfig,    setRepeatConfig]    = useState<RepeatConfig | null>(task?.repeatConfig ?? null);
   const [selectedTagId,   setSelectedTagId]   = useState<string | null>(task?.tags?.[0]?.id ?? draft?.tagId ?? null);
+  const [reminders,       setReminders]       = useState<ReminderRule[]>(task?.reminders ?? draft?.reminders ?? []);
   const [datePickerOpen,  setDatePickerOpen]  = useState(false);
   const [repeatConfigOpen, setRepeatConfigOpen] = useState(false);
   const [creatingTag,      setCreatingTag]      = useState(false);
@@ -75,6 +78,10 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     open: typeDropOpen, pos: typeDropPos, toggle: toggleTypeDrop, close: closeTypeDrop,
     anchorRef: typeBtnRef, popoverRef: typeDropRef,
   } = useAnchoredDropdown();
+  const {
+    open: reminderDropOpen, pos: reminderDropPos, toggle: toggleReminderDrop,
+    anchorRef: reminderBtnRef, popoverRef: reminderDropRef,
+  } = useAnchoredDropdown({ width: 280, height: 380 });
 
   const { allTags, selectedTag, createTag, awaitPendingCreate } =
     useOptimisticTagCreate(userTags, selectedTagId, setSelectedTagId, onCreateTag);
@@ -121,6 +128,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     setMultiDay(false);
     setEndDate('');
     setSections(makeDefaultSections());
+    setReminders([]);
     clearDraft();
   };
 
@@ -129,10 +137,10 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     saveDraftFields({
       title, description, time, endTime, multiDay, endDate,
       repeat, hasEnd, repeatUntil, type, priority, tagId: selectedTagId,
-      sections,
+      sections, reminders,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, description, time, endTime, multiDay, endDate, repeat, hasEnd, repeatUntil, type, priority, selectedTagId, sections, isEdit, initialDate]);
+  }, [title, description, time, endTime, multiDay, endDate, repeat, hasEnd, repeatUntil, type, priority, selectedTagId, sections, reminders, isEdit, initialDate]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -227,7 +235,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
 
     const payload = buildTaskPayload({
       title, description, formDate, multiDay, endDate, time, endTime,
-      repeat, hasEnd, repeatUntil, type, priority, repeatConfig, selectedTag, sections,
+      repeat, hasEnd, repeatUntil, type, priority, repeatConfig, selectedTag, sections, reminders,
     });
 
     onSave(payload);
@@ -389,6 +397,17 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               {TYPE_LABELS[type]}
             </button>
 
+            {/* Напоминание */}
+            <button
+              ref={reminderBtnRef}
+              type="button"
+              className={[styles.metaBtn, reminders.length ? styles.metaBtnColored : ''].join(' ')}
+              onClick={toggleReminderDrop}
+            >
+              <Bell size={14} strokeWidth={1.75} />
+              {reminders.length ? `Напоминание · ${reminders.length}` : 'Напоминание'}
+            </button>
+
           </div>
         </div>
 
@@ -477,6 +496,17 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
       creatingTag={creatingTag}
       onStartCreatingTag={() => setCreatingTag(true)}
       onCreateTag={handleCreateNewTag}
+    />
+
+    <ReminderDropdown
+      reminders={reminders}
+      onChange={setReminders}
+      hasTime={!!time}
+      minDate={toDateStr(new Date())}
+      open={reminderDropOpen}
+      pos={reminderDropPos}
+      dropRef={reminderDropRef}
+      onFirstAdd={() => { void registerPush(); }}
     />
 
     {repeatConfigOpen && (
