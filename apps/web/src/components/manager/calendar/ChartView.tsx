@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Task } from '../../../lib/tasks';
 import { HolidayMap } from '../../../lib/holidays';
 import {
-  WEEKDAYS, MONTHS, MONTHS_SHORT, MONTHS_GEN, QUARTERS,
+  MONTHS, MONTHS_SHORT, MONTHS_GEN, QUARTERS,
   ChartPeriod, PERIOD_LABELS, PickerType,
   getWeekDays,
 } from '../../../lib/calendarLayout';
@@ -140,10 +140,7 @@ export function ChartView({ selectedDate, tasks, onSelect, holidayMap }: ChartPr
         </div>
       )}
       {period === 'quarter' && (
-        <div className={styles.chartQuarterStack}>
-          <div className={styles.spanMonthHead}>
-            {WEEKDAYS.map(d => <span key={d} className={styles.spanMonthWd}>{d}</span>)}
-          </div>
+        <div className={styles.chartQuarterCols}>
           {quarterMonths.map(({ year, month }) => (
             <SpanMonthView key={month} year={year} month={month} tasks={tasks} selectedDate={selectedDate} onSelect={onSelect} holidayMap={holidayMap} showMonthLabel />
           ))}

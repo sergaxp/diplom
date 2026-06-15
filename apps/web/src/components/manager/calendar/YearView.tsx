@@ -52,9 +52,9 @@ export function YearView({ year, tasks, selectedDate, onSelect, holidayMap }: Ye
         const { spans: vis, overflow: ovfl } = computeMonthSpans(year, mi, tasks, holidayMap);
 
         return (
-          <div key={mi} className={styles.yearRow}>
+          <div key={mi} className={styles.yearRow} style={{ minHeight: rowH }}>
             <div className={styles.yearLabelCell}>{MONTHS_SHORT[mi]}</div>
-            <div className={styles.yearRowArea} style={{ height: rowH }}>
+            <div className={styles.yearRowArea}>
               {/* Day cells positioned by weekday */}
               {Array.from({ length: YR_COLS }, (_, ci) => {
                 const dayNum = ci - firstDow + 1;

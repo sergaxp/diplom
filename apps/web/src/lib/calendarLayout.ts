@@ -21,7 +21,8 @@ export const PERIOD_LABELS: Record<ChartPeriod, string> = {
 export type PickerType = 'month' | 'year';
 
 export const HOURS         = Array.from({ length: 17 }, (_, i) => i + 7); // 7–23
-export const HOUR_H        = 52;
+export const HOUR_H        = 52;                                           // дефолт/фолбэк до измерения
+export const MIN_HOUR_H    = 30;                                           // ниже — часы сливаются, включаем скролл
 export const TASK_H        = Math.max(Math.round(HOUR_H * 0.65), 30);      // ~34px
 export const TASK_MINS     = Math.ceil((TASK_H / HOUR_H) * 60);             // ~40 мин – окно перекрытия
 export const ALLDAY_TASK_H = 22;
@@ -80,16 +81,16 @@ export function taskColorStyle(t: Task): CSSProperties | undefined {
   return undefined;
 }
 
-/** Высота блока задачи в пикселях исходя из длительности */
-export function taskBlockHeight(t: Task): number {
+/** Высота блока задачи в пикселях исходя из длительности (hourH — измеренная высота часа) */
+export function taskBlockHeight(t: Task, hourH: number = HOUR_H): number {
   if (!t.time) return ALLDAY_TASK_H;
   if (t.endTime) {
     const [sh, sm] = t.time.split(':').map(Number);
     const [eh, em] = t.endTime.split(':').map(Number);
     const dur = (eh * 60 + em) - (sh * 60 + sm);
-    if (dur > 0) return Math.max(dur / 60 * HOUR_H, 24);
+    if (dur > 0) return Math.max(dur / 60 * hourH, 24);
   }
-  return TASK_H;
+  return Math.max(Math.round(hourH * 0.65), 28);
 }
 
 /** Активна ли повторяющаяся многодневная задача на dateStr */

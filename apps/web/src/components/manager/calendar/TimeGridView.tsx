@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Task, toDateStr, getTasksForDate } from '../../../lib/tasks';
 import { HolidayMap, getHolidayColor } from '../../../lib/holidays';
 import {
-  DAY_SHORT, HOURS, HOUR_H, ALLDAY_TASK_H, ALLDAY_GAP,
+  DAY_SHORT, HOURS, HOUR_H, MIN_HOUR_H, ALLDAY_TASK_H, ALLDAY_GAP,
   pad, getISOWeek, taskColorStyle, taskBlockHeight, computeLayout,
 } from '../../../lib/calendarLayout';
 import { TYPE_CLS } from './taskTypeStyles';
@@ -25,7 +25,6 @@ export function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, 
   const todStr = toDateStr(today);
   const selStr = toDateStr(selectedDate);
   const now    = new Date();
-  const nowTop = ((now.getHours() + now.getMinutes()/60) - 7) * HOUR_H;
   const showNow = now.getHours() >= 7 && now.getHours() < 23;
 
   // Считаем задачи дня один раз на колонку — переиспользуем и для общей
@@ -58,7 +57,26 @@ export function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, 
   }
   const maxAllDay = adSorted.length ? Math.max(...adSorted.map(({ task }) => adSlot.get(task.id)!)) + 1 : 0;
   const alldaySectH = maxAllDay > 0 ? 6 + maxAllDay * (ALLDAY_TASK_H + ALLDAY_GAP) + 4 : 0;
-  const colH = HOURS.length * HOUR_H + alldaySectH;
+
+  // Высота часа считается от реальной высоты тела: 17 часов делят доступное
+  // пространство (минус секция «весь день»), чтобы день/неделя влезали без
+  // скролла. MIN_HOUR_H — пол читаемости: ниже него включается вертикальный скролл.
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [bodyH, setBodyH] = useState(0);
+  useLayoutEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const measure = () => setBodyH(el.clientHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const hourH = bodyH > 0
+    ? Math.max(MIN_HOUR_H, (bodyH - alldaySectH) / HOURS.length)
+    : HOUR_H;
+  const nowTop = ((now.getHours() + now.getMinutes()/60) - 7) * hourH;
+  const colH = HOURS.length * hourH + alldaySectH;
 
   return (
     <>
@@ -98,7 +116,7 @@ export function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, 
         })}
       </div>
 
-      <div className={styles.chartBody}>
+      <div className={styles.chartBody} ref={bodyRef}>
         <div className={styles.chartGutter}>
           {/* All-day label first (above hours) */}
           {alldaySectH > 0 && (
@@ -107,7 +125,7 @@ export function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, 
             </div>
           )}
           {HOURS.map(h => (
-            <div key={h} className={styles.chartHourLabel} style={{ height: HOUR_H }}>
+            <div key={h} className={styles.chartHourLabel} style={{ height: hourH }}>
               {pad(h)}:00
             </div>
           ))}
@@ -129,7 +147,7 @@ export function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, 
                 {/* Hour lines – start below the all-day section */}
                 {HOURS.map(h => (
                   <div key={h} className={styles.chartHourLine}
-                    style={{ top: alldaySectH + (h - 7) * HOUR_H, height: HOUR_H }}
+                    style={{ top: alldaySectH + (h - 7) * hourH, height: hourH }}
                   />
                 ))}
 
@@ -188,7 +206,7 @@ export function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, 
                   const [h, m] = t.time!.split(':').map(Number);
                   if (h < 7) return null;
 
-                  const height = taskBlockHeight(t);
+                  const height = taskBlockHeight(t, hourH);
                   const isStripe = !!t.endDate || t.repeat === 'daily';
                   // Соединяем с соседним днём только если задача там реально есть
                   // (удалённые дни серии разрывают полосу).
@@ -211,7 +229,7 @@ export function TimeGridView({ days, tasks, selectedDate, onSelect, holidayMap, 
                         isStripe ? styles.chartTaskStripe : '',
                       ].join(' ')}
                       style={{
-                        top:    alldaySectH + (h - 7 + m / 60) * HOUR_H,
+                        top:    alldaySectH + (h - 7 + m / 60) * hourH,
                         height,
                         left:   connL ? -1 : `calc(2px + ${col * pct}%)`,
                         width:  connL && connR ? 'calc(100% + 2px)'

@@ -28,12 +28,9 @@ export function SpanMonthView({ year, month, tasks, selectedDate, onSelect, holi
   return (
     <div className={styles.spanMonth}>
       {showMonthLabel && <div className={styles.spanMonthTitle}>{MONTHS[month]}</div>}
-      {/* Weekday headers – only show when not in stacked quarter mode */}
-      {!showMonthLabel && (
-        <div className={styles.spanMonthHead}>
-          {WEEKDAYS.map(d => <span key={d} className={styles.spanMonthWd}>{d}</span>)}
-        </div>
-      )}
+      <div className={styles.spanMonthHead}>
+        {WEEKDAYS.map(d => <span key={d} className={styles.spanMonthWd}>{d}</span>)}
+      </div>
       {weeks.map((week, wi) => {
         const { spans, overflow } = computeWeekSpans(week, tasks, holidayMap);
         return (
