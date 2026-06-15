@@ -10,6 +10,7 @@ import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { clearAuth } from '../lib/auth';
 import { AvatarFramed } from './AvatarFramed';
+import { OwlMark } from './OwlMark';
 import { NotificationBell } from './NotificationBell';
 import { FeedbackDropdown } from './feedback/FeedbackDropdown';
 import { Button } from './ui';
@@ -41,7 +42,10 @@ export function Header() {
 
   return (
     <header className={styles.header}>
-      <Link href="/" className={styles.logo}>WT</Link>
+      <Link href="/" className={styles.logo} aria-label="Warmingtea — на главную">
+        <OwlMark size={28} className={styles.logoMark} />
+        <span className={styles.logoWord}>warming<span className={styles.logoAccent}>tea</span></span>
+      </Link>
       <div className={styles.right}>
         {ready && user && <FeedbackDropdown />}
 

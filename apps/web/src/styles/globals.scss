@@ -10,24 +10,36 @@
 :root {
   /* Шрифт (значение задаётся next/font в layout.tsx через --font-onest) */
   --font-primary: var(--font-onest), 'Onest', system-ui, sans-serif;
+  --font-display: var(--font-unbounded), 'Unbounded', var(--font-primary); /* заголовки, hero, лого */
   --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   --font-app: var(--font-primary); /* legacy alias */
 
-  /* ── Бренд: Еловый зелёный (Spruce) ───────────────────────── */
-  --spruce-50:  #E8EFEC;
-  --spruce-100: #C5D5CE;
-  --spruce-200: #93B0A4;
-  --spruce-300: #5F8678;
-  --spruce-400: #3D6557;
-  --spruce-600: #213D34;  /* PRIMARY BRAND */
-  --spruce-700: #182E27;
-  --spruce-900: #0A1612;
+  /* ── Бренд: Хвойный (Pine) ────────────────────────────────── */
+  --pine-50:  #ECF2EF;
+  --pine-100: #D2E0DB;
+  --pine-200: #A6C2B9;
+  --pine-300: #6E978B;
+  --pine-400: #3F6E61;
+  --pine-500: #2A574C;
+  --pine-600: #1F4A40;  /* PRIMARY BRAND */
+  --pine-700: #173A32;
+  --pine-800: #102B25;
+  --pine-900: #0A1C18;
 
-  /* ── Акцент: Чайный янтарь (Amber) ────────────────────────── */
-  --amber-100: #F5E8D6;
-  --amber-400: #E8B87A;
-  --amber-500: #C9914F;   /* PRIMARY ACCENT (CTA) */
-  --amber-600: #B07A38;
+  /* ── Акцент: Янтарь (Amber) ───────────────────────────────── */
+  --amber-50:  #FBF1DF;
+  --amber-100: #F6E2C0;
+  --amber-200: #EFCB93;
+  --amber-300: #E6B266;
+  --amber-400: #D99A45;
+  --amber-500: #C8862F;   /* PRIMARY ACCENT */
+  --amber-600: #A86C24;
+  --amber-700: #855420;
+
+  /* ── Вторичный тёплый: Глина (Clay) ───────────────────────── */
+  --clay-400: #D08C6B;
+  --clay-500: #C2724F;
+  --clay-600: #A35C3D;
 
   /* ── Ранги достижений (одни и те же в обеих темах) ────────── */
   --rank-mist:        #8EA69B;   /* Туман     — Обычное (500 XP) */
@@ -74,11 +86,11 @@
   --space-16: 64px;
   --space-20: 80px;
 
-  /* ── Скругления ───────────────────────────────────────────── */
-  --radius-sm: 4px;    /* badges, pills, теги */
-  --radius-md: 8px;    /* кнопки, инпуты, dropdown */
-  --radius-lg: 12px;   /* карточки */
-  --radius-xl: 16px;   /* модалки */
+  /* ── Скругления (чуть крупнее — «уютнее») ─────────────────── */
+  --radius-sm: 6px;    /* badges, pills, теги */
+  --radius-md: 10px;   /* кнопки, инпуты, dropdown */
+  --radius-lg: 14px;   /* карточки */
+  --radius-xl: 20px;   /* модалки */
   --radius-full: 9999px;
 
   /* ── Анимации ─────────────────────────────────────────────── */
@@ -126,47 +138,46 @@
   /* Фоны.
    * Контраст: bg-base → surface заметная дельта (~8 пунктов яркости),
    * чтобы карточки явно отделялись от фона страницы. */
-  --bg-base:     #F2E8D5;  /* фон страницы (тёплый кремовый, чуть темнее) */
-  --bg-surface:  #FBF6EC;  /* фон карточек (явно светлее base) */
+  --bg-base:     #F4EFE6;  /* фон страницы (тёплый «фарфор/овёс») */
+  --bg-surface:  #FBF8F2;  /* фон карточек (явно светлее base) */
   --bg-elevated: #FFFFFF;  /* модалки, popover (чисто белый) */
-  --bg-subtle:   #E8DCC0;  /* зебра, инпуты, разделители (темнее base) */
+  --bg-subtle:   #ECE5D8;  /* зебра, инпуты, разделители (темнее base) */
 
-  /* Текст.
-   * text-muted затемнён с #7A8A82 до #66756C для контраста ~4:1
-   * на кремовом фоне (ближе к WCAG AA для вторичного текста). */
-  --text-primary:   #182E27;
-  --text-secondary: #4A5C53;
-  --text-muted:     #66756C;  /* placeholder, helper */
-  --text-disabled:  #B3BEB7;  /* недоступные элементы (заметно светлее muted) */
-  --text-on-brand:  #FAF3E8;
-  --text-on-accent: #FAF3E8;
+  /* Текст. */
+  --text-primary:   #18211E;
+  --text-secondary: #4C5A54;
+  --text-muted:     #6B776F;  /* placeholder, helper */
+  --text-disabled:  #B6BEB6;  /* недоступные элементы (заметно светлее muted) */
+  --text-on-brand:  #FAF6EC;
+  --text-on-accent: #1E1407;  /* ТЁМНЫЙ текст на янтаре — контраст AA */
+  --text-on-error:  #FAF6EC;  /* светлый текст на тёмно-красном (#B84040) */
 
   /* Границы.
    * border-card — для карточек с явной границей,
    * border-default — для инпутов/кнопок (чуть светлее),
    * border-subtle — для лёгких разделителей. */
-  --border-card:    #D0C3A8;  /* НОВЫЙ: карточки, видимая граница */
-  --border-default: #D8CBB0;
-  --border-subtle:  #E5DCC4;
-  --border-strong:  #B8A983;
+  --border-card:    #D9CFBB;  /* карточки, видимая граница */
+  --border-default: #E2D9C8;
+  --border-subtle:  #ECE5D8;
+  --border-strong:  #D2C6B0;
 
   /* Бренд */
-  --brand:        var(--spruce-600);   /* #213D34 */
-  --brand-hover:  var(--spruce-700);   /* #182E27 */
-  --brand-subtle: var(--spruce-50);    /* #E8EFEC */
-  --brand-muted:  var(--spruce-300);   /* #5F8678 */
+  --brand:        var(--pine-600);   /* #1F4A40 */
+  --brand-hover:  var(--pine-700);   /* #173A32 */
+  --brand-subtle: var(--pine-50);    /* #ECF2EF */
+  --brand-muted:  var(--pine-300);   /* #6E978B */
 
   /* Акцент */
-  --accent:        var(--amber-500);   /* #C9914F */
-  --accent-hover:  var(--amber-600);   /* #B07A38 */
-  --accent-subtle: var(--amber-100);   /* #F5E8D6 */
+  --accent:        var(--amber-500);   /* #C8862F */
+  --accent-hover:  var(--amber-600);   /* #A86C24 */
+  --accent-subtle: var(--amber-100);   /* #F6E2C0 */
 
   /* Семантика */
-  --success:        #3B7A5C;
+  --success:        #2F7D5B;
   --success-subtle: #E4F0EA;
   --error:          #B84040;
   --error-subtle:   #F7E8E8;
-  --warning:        #C9914F;  /* = accent, намеренно */
+  --warning:        #C8862F;  /* = accent, намеренно */
   --warning-subtle: var(--amber-100);
   --info:           #4A7898;
   --info-subtle:    #E5EEF4;
@@ -177,8 +188,12 @@
 
   /* Календарь: цвета номера дня для рабочих/сокращённых дней.
    * Затемнены для читаемости на светлом кремовом фоне. */
-  --cal-shortday: #B07A38;
+  --cal-shortday: #A86C24;
   --cal-workday:  #2F6BB0;
+
+  /* Линии сетки календаря/графика. Заметно темнее обычного фона И темнее
+   * подсветки «сегодня» (--brand-subtle) — чтобы часы/колонки читались везде. */
+  --cal-gridline: #D6CBB4;
 
   /* Color-scheme для нативного UI (скроллбары, форм-элементы) */
   color-scheme: light;
@@ -186,37 +201,36 @@
 
 /* ── Тёмная тема ────────────────────────────────────────────── */
 [data-theme='dark'] {
-  /* Фоны — аналогично разнесены для контраста */
-  --bg-base:     #161A18;  /* фон страницы (темнее) */
-  --bg-surface:  #232826;  /* карточки (явно светлее base) */
-  --bg-elevated: #2D3331;  /* модалки */
-  --bg-subtle:   #1C201E;  /* инпуты, тонкие зоны */
+  /* Фоны — тёплый зелёно-угольный, не «холодный» серый */
+  --bg-base:     #141A18;  /* фон страницы (темнее) */
+  --bg-surface:  #1E2421;  /* карточки (явно светлее base) */
+  --bg-elevated: #28302C;  /* модалки */
+  --bg-subtle:   #191F1C;  /* инпуты, тонкие зоны */
 
-  /* Текст.
-   * text-muted поднят с #6A7570 до #8A938D для контраста ≥4.5:1
-   * на --bg-surface (#232826) — соответствие WCAG AA. */
-  --text-primary:   #E5E2D9;
-  --text-secondary: #A5ADA6;
-  --text-muted:     #8A938D;
+  /* Текст. */
+  --text-primary:   #ECE6DA;
+  --text-secondary: #A7B0AA;
+  --text-muted:     #828C86;
   --text-disabled:  #4A544F;  /* заметно темнее muted */
-  --text-on-brand:  #E5E2D9;
-  --text-on-accent: #1A1F1D;
+  --text-on-brand:  #0A1612;  /* тёмный текст на светлом хвойном */
+  --text-on-accent: #1E1407;
+  --text-on-error:  #2A1310;  /* тёмный текст на светло-красном (#D96060) */
 
   /* Границы */
-  --border-card:    #3A413E;  /* НОВЫЙ */
-  --border-default: #2E3432;
-  --border-subtle:  #232826;
-  --border-strong:  #4D5552;
+  --border-card:    #343D39;
+  --border-default: #2C3531;
+  --border-subtle:  #232A27;
+  --border-strong:  #3C4641;
 
   /* Бренд (светлее для читабельности на тёмном) */
-  --brand:        var(--spruce-300);   /* #5F8678 */
-  --brand-hover:  #72A090;
+  --brand:        #5E9384;
+  --brand-hover:  #6CA493;
   --brand-subtle: #1E2E2A;
-  --brand-muted:  var(--spruce-400);   /* #3D6557 */
+  --brand-muted:  var(--pine-400);   /* #3F6E61 */
 
-  /* Акцент (не меняется) */
-  --accent:        var(--amber-500);   /* #C9914F */
-  --accent-hover:  #D9A560;
+  /* Акцент (чуть светлее на тёмном) */
+  --accent:        var(--amber-400);   /* #D99A45 */
+  --accent-hover:  var(--amber-300);   /* #E6B266 */
   --accent-subtle: #2A2218;
 
   /* Семантика */
@@ -224,7 +238,7 @@
   --success-subtle: #1A2E24;
   --error:          #D96060;
   --error-subtle:   #2E1A1A;
-  --warning:        var(--amber-500);
+  --warning:        var(--amber-400);
   --warning-subtle: #2A2218;
   --info:           #6EA8CC;
   --info-subtle:    #1A2530;
@@ -235,8 +249,11 @@
 
   /* Календарь: номер дня для рабочих/сокращённых дней —
    * осветлён для читаемости на тёмном фоне. */
-  --cal-shortday: #E8B87A;
+  --cal-shortday: #E6B266;
   --cal-workday:  #6EA8CC;
+
+  /* Линии сетки — светлее всех фонов (base/surface И --brand-subtle «сегодня»). */
+  --cal-gridline: #38423D;
 
   color-scheme: dark;
 }

@@ -11,7 +11,7 @@ import { AvatarFramed } from '../../components/AvatarFramed';
 import { useAuthStore } from '../../store/authStore';
 import { shopApi, ShopItem } from '../../lib/shop';
 import { authApi } from '../../lib/auth';
-import { Button, Card, Badge, Skeleton, EmptyState } from '../../components/ui';
+import { Button, Card, Badge, Skeleton, EmptyState, CoinIcon } from '../../components/ui';
 import styles from './page.module.scss';
 
 export default function ShopPage() {
@@ -56,7 +56,7 @@ export default function ShopPage() {
           <div className={styles.head}>
             <h1 className={styles.title}>Магазин</h1>
             <Badge variant="accent" shape="pill" title="Ваши монеты">
-              <span className={styles.coinIcon} aria-hidden="true">●</span>
+              <CoinIcon className={styles.coinIcon} />
               <span className={styles.coinsValue}>{coins}</span>
             </Badge>
           </div>
@@ -98,7 +98,7 @@ export default function ShopPage() {
                       item={item}
                       user={user}
                       onBuy={() => buyMut.mutate(item.id)}
-                      busy={buyMut.isPending}
+                      busy={buyMut.isPending && buyMut.variables === item.id}
                     />
                   </motion.div>
                 ))}
@@ -211,7 +211,7 @@ function ShopItemCard({ item, user, onBuy, busy }: ItemCardProps) {
       <div className={styles.itemDesc}>{item.description}</div>
       <div className={styles.itemFooter}>
         <span className={styles.itemPrice}>
-          <span className={styles.coinIcon} aria-hidden="true">●</span> {item.price}
+          <CoinIcon className={styles.coinIcon} /> {item.price}
         </span>
         {item.owned ? (
           <Badge variant="success">Куплено</Badge>

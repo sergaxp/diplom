@@ -193,9 +193,12 @@ $pill-h: 32px;
   position: fixed;
   z-index: var(--z-popover);
   width: 165px;
-  background: var(--bg-elevated);
+  // --bg-popover (в тёмной теме светлее модалки) + тень: дропдаун должен
+  // «парить» над модалкой задачи (она сама на --bg-elevated, иначе сливается).
+  background: var(--bg-popover);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop);
   max-height: calc(#{$pill-h} * 5 + 8px);
   overflow-y: auto;
   list-style: none;

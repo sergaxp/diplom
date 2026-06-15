@@ -14,14 +14,28 @@
 }
 
 .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  transition: opacity var(--duration-fast) var(--ease-default);
+  &:hover { opacity: 0.82; }
+}
+
+.logoMark {
+  display: block;
+  flex-shrink: 0;
+}
+
+.logoWord {
+  font-family: var(--font-display);
   font-size: var(--text-md);
   font-weight: var(--weight-semibold);
-  color: var(--brand);
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  transition: color var(--duration-fast) var(--ease-default);
-  &:hover { color: var(--brand-hover); }
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
+
+.logoAccent { color: var(--accent); }
 
 .right {
   display: flex;
@@ -222,7 +236,7 @@
              max(var(--space-3), env(safe-area-inset-left));
     min-height: 48px;
   }
-  .logo { font-size: var(--text-base); }
+  .logoWord { font-size: var(--text-base); }
   .right { gap: var(--space-2); }
   .themeToggle { padding: 4px 6px; }
 }

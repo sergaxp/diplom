@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Менеджер задач, почта, списки и многое другое.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#f59e0b',
+    background_color: '#F4EFE6',
+    theme_color: '#1F4A40',
     lang: 'ru',
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },

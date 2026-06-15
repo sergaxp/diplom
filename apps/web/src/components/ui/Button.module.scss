@@ -131,7 +131,7 @@
 /* Destructive — красный. Удаление, опасные действия. */
 .variant-destructive {
   background: var(--error);
-  color: #FFFFFF;
+  color: var(--text-on-error);
   border-color: var(--error);
 
   &:hover:not(:disabled):not(.loading) {

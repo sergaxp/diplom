@@ -12,6 +12,7 @@ import { AlertCircle } from 'lucide-react';
 import { authApi, saveAuth } from '../../lib/auth';
 import { useAuthStore } from '../../store/authStore';
 import { Button, Input } from '../../components/ui';
+import { OwlMark } from '../../components/OwlMark';
 import { GoogleSignInButton } from '../../components/GoogleSignInButton';
 import styles from './page.module.scss';
 
@@ -145,7 +146,10 @@ export default function AuthPage() {
     <div className={styles.root}>
       <div className={styles.grain} aria-hidden />
 
-      <Link href="/welcome" className={styles.logo}>WT</Link>
+      <Link href="/welcome" className={styles.logo} aria-label="Warmingtea — на главную">
+        <OwlMark size={28} className={styles.logoMark} />
+        <span className={styles.logoWord}>warming<span className={styles.logoAccent}>tea</span></span>
+      </Link>
 
       <div className={styles.card}>
         {googleSignup ? (

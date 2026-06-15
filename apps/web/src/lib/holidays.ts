@@ -182,11 +182,14 @@ export function useHolidayMap(...years: number[]): HolidayMap {
 
 // ── Helpers ───────────────────────────────────────────────────
 
+// Тематические токены вместо фикс-хексов: адаптируются к светлой/тёмной теме,
+// согласованы с брендом и с уже существующими --cal-* (контраст в обеих темах).
+// Возвращаем var(...) — значения используются только в инлайн-style.
 export function getHolidayColor(type: HolidayType): string {
   switch (type) {
-    case 'holiday':  return '#ef4444';
-    case 'shortday': return '#f59e0b';
-    case 'workday':  return '#3b82f6';
+    case 'holiday':  return 'var(--error)';
+    case 'shortday': return 'var(--cal-shortday)';
+    case 'workday':  return 'var(--cal-workday)';
   }
 }
 

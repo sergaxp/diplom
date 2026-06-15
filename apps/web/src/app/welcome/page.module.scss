@@ -53,16 +53,17 @@
 }
 
 .heroTitle {
+  font-family: var(--font-display);
   font-size: clamp(32px, 5.5vw, 48px);
   font-weight: var(--weight-semibold);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
   margin: 0 0 var(--space-4);
   color: var(--text-primary);
 }
 
 .heroAccent {
-  color: var(--brand);
+  color: var(--accent);
   font-weight: var(--weight-semibold);
 }
 
@@ -141,9 +142,10 @@
 }
 
 .sectionTitle {
+  font-family: var(--font-display);
   font-size: clamp(var(--text-lg), 3vw, var(--text-xl));
   font-weight: var(--weight-semibold);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   margin: 0 0 var(--space-8);
   text-align: center;
   color: var(--text-primary);
@@ -247,8 +249,10 @@
 }
 
 .footerCtaTitle {
+  font-family: var(--font-display);
   font-size: var(--text-xl);
   font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
   margin: 0 0 var(--space-2);
   color: var(--text-primary);
 }

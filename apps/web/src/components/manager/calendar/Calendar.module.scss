@@ -13,7 +13,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--cal-gridline);
   flex-shrink: 0;
 }
 
@@ -131,7 +131,7 @@
   height: var(--cell-max);
   padding: var(--space-3) var(--space-4);
   background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--cal-gridline);
   border-radius: 14px;
   cursor: pointer;
   gap: 6px;
@@ -498,8 +498,8 @@
   display: flex;
   gap: 0;
   overflow-y: auto;
-  border-top: 1px solid var(--border-subtle);
-  & > * { border-right: 1px solid var(--border-subtle); &:last-child { border-right: none; } }
+  border-top: 1px solid var(--cal-gridline);
+  & > * { border-right: 1px solid var(--cal-gridline); &:last-child { border-right: none; } }
 }
 
 .chartYear {
@@ -508,7 +508,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 0;
   overflow-y: auto;
-  & > * { border-right: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+  & > * { border-right: 1px solid var(--cal-gridline); border-bottom: 1px solid var(--cal-gridline); }
 }
 
 // Period buttons
@@ -567,7 +567,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--cal-gridline);
   flex-shrink: 0;
   gap: var(--space-2);
   background: var(--bg-subtle);
@@ -613,7 +613,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  border-left: 1px solid var(--border-subtle);
+  border-left: 1px solid var(--cal-gridline);
   transition: background var(--duration-fast) var(--ease-default);
   &:hover { background: var(--bg-elevated); }
 }
@@ -656,7 +656,7 @@
   width: 56px;
   flex-shrink: 0;
   background: var(--bg-subtle);
-  border-right: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--cal-gridline);
 }
 
 .chartHourLabel {
@@ -681,7 +681,7 @@
 .chartCol {
   flex: 1;
   position: relative;
-  border-left: 1px solid var(--border-subtle);
+  border-left: 1px solid var(--cal-gridline);
   min-width: 0;
 }
 
@@ -693,7 +693,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--cal-gridline);
   box-sizing: border-box;
 }
 
@@ -782,14 +782,14 @@
 .chartTaskMandatory {
   background: var(--error-subtle);
   color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--cal-gridline);
   box-shadow: inset 3px 0 0 var(--error);
   padding-left: calc(var(--space-2) + 3px);
 }
 .chartTaskEvent {
   background: var(--info-subtle);
   color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--cal-gridline);
   box-shadow: inset 3px 0 0 var(--info);
   padding-left: calc(var(--space-2) + 3px);
 }
@@ -862,12 +862,12 @@
   grid-template-columns: repeat(7, 1fr);
   flex: 1;
   min-height: 80px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--cal-gridline);
   &:last-child { border-bottom: none; }
 }
 
 .monthGridCell {
-  border-right: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--cal-gridline);
   padding: 4px 5px;
   cursor: pointer;
   display: flex;
@@ -880,7 +880,7 @@
 }
 
 .monthGridCellEmpty {
-  border-right: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--cal-gridline);
   min-height: 80px;
   background: var(--bg-subtle);
   opacity: 0.5;
@@ -948,7 +948,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--cal-gridline);
   overflow: hidden;
   &:last-child { border-right: none; }
 }
@@ -958,7 +958,7 @@
   font-weight: var(--weight-semibold);
   color: var(--text-muted);
   padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--cal-gridline);
   flex-shrink: 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1011,14 +1011,14 @@
   position: relative;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--cal-gridline);
   flex: 1 1 0;          // недели делят высоту месяца поровну — без пустоты внизу
   min-height: 0;
   &:last-child { border-bottom: none; }
 }
 
 .spanCell {
-  border-right: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--cal-gridline);
   padding: 4px 5px 2px;
   cursor: pointer;
   display: flex;
@@ -1138,7 +1138,7 @@
   font-weight: var(--weight-semibold);
   letter-spacing: 0.02em;
   padding: 6px 0;
-  border-right: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--cal-gridline);
   &:last-child { border-right: none; }
 }
 
@@ -1152,7 +1152,7 @@
   color: var(--text-muted);
   font-weight: var(--weight-medium);
   padding: 4px 0;
-  border-right: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--cal-gridline);
   font-variant-numeric: tabular-nums;
   &:last-child { border-right: none; }
 }
@@ -1160,7 +1160,7 @@
 .yearRow {
   display: grid;
   grid-template-columns: 56px 1fr;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--cal-gridline);
   flex: 1 1 0;          // 12 месяцев делят высоту года поровну — без пустоты внизу
   min-height: 0;
   &:last-child { border-bottom: none; }
@@ -1176,7 +1176,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-secondary);
-  border-right: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--cal-gridline);
   flex-shrink: 0;
   background: var(--bg-subtle);
 }
@@ -1198,7 +1198,7 @@
   align-items: center;
   font-size: var(--text-2xs);
   color: var(--text-secondary);
-  border-right: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--cal-gridline);
   box-sizing: border-box;
   font-variant-numeric: tabular-nums;
   transition: background var(--duration-fast) var(--ease-default);
@@ -1214,7 +1214,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  border-right: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--cal-gridline);
   box-sizing: border-box;
   cursor: default;
   background: var(--bg-subtle);

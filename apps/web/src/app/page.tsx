@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Header } from '../components/Header';
+import { Skeleton } from '../components/ui';
 import { ManagerCalendar } from '../components/manager/calendar';
 import { MobileDayStrip } from '../components/manager/MobileDayStrip';
 import { TaskList } from '../components/manager/TaskList';
@@ -392,7 +393,15 @@ export default function ManagerPage() {
     return (
       <div className={styles.root}>
         <Header />
-        <div className={styles.loading}>Загрузка...</div>
+        <div className={styles.body}>
+          <div className={styles.left} style={{ padding: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <Skeleton text width="45%" height={22} />
+            {[0, 1, 2, 3, 4].map(i => <Skeleton key={i} width="100%" height={66} />)}
+          </div>
+          <div className={styles.right} style={{ padding: 'var(--space-4)' }}>
+            <Skeleton width="100%" height={460} />
+          </div>
+        </div>
       </div>
     );
   }

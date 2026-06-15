@@ -14,3 +14,4 @@ export { Modal, type ModalProps, type ModalSize } from './Modal';
 export { Switch, type SwitchProps } from './Switch';
 export { Skeleton, type SkeletonProps } from './Skeleton';
 export { EmptyState, type EmptyStateProps, type EmptyStateSize } from './EmptyState';
+export { CoinIcon } from './CoinIcon';

@@ -429,6 +429,9 @@
   align-items: center;
   justify-content: center;
   color: #fff;
+  // Иконка белая, но фон — произвольный цвет рамки (включая светло-жёлтый):
+  // тёмная тень-обводка держит читаемость на любом фоне.
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.45));
 }
 
 .favLabel {

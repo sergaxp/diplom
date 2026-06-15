@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Onest } from 'next/font/google';
+import { Onest, Unbounded } from 'next/font/google';
 import { Providers } from '../providers/Providers';
 import '../styles/globals.scss';
 
@@ -7,6 +7,14 @@ const onest = Onest({
   subsets: ['latin', 'cyrillic'],
   weight: ['400', '500', '600'],
   variable: '--font-onest',
+  display: 'swap',
+});
+
+// Дисплейный шрифт бренда: заголовки, hero, логотип
+const unbounded = Unbounded({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['500', '600', '700'],
+  variable: '--font-unbounded',
   display: 'swap',
 });
 
@@ -25,14 +33,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#f59e0b',
+  themeColor: '#1F4A40',
   // Раскрываем контент под вырезы/жесты, чтобы работали env(safe-area-inset-*)
   viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={onest.variable} suppressHydrationWarning>
+    <html lang="ru" className={`${onest.variable} ${unbounded.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
