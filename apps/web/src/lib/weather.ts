@@ -338,15 +338,20 @@ export interface BestWindow {
   reason: string;
 }
 
-// Чистая функция (тестируется без сети). Если задано погодное условие задачи —
-// рассматриваем только часы, проходящие его (skipRain и т.п. на уровне часа);
+// Минимальный разнос между предложениями (часы), чтобы чипы не дублировались.
+const BEST_TIME_GAP = 3;
+
+// Чистая функция (тестируется без сети). Возвращает до `max` предложений времени,
+// отсортированных по «качеству» и разнесённых по дню. Если задано погодное условие
+// задачи — рассматриваем только часы, проходящие его (skipRain и т.п. на уровне часа);
 // иначе ранжируем относительно: ближе к комфортной «ощущается», суше, тише ветер,
-// днём предпочтительнее. Возвращает null, если подходящих часов нет.
-export function computeBestWindow(
+// днём предпочтительнее. Пустой массив, если подходящих часов нет.
+export function computeBestTimes(
   hours: HourlyPoint[],
   condition?: WeatherCondition | null,
-): BestWindow | null {
-  if (!hours.length) return null;
+  max = 3,
+): BestWindow[] {
+  if (!hours.length) return [];
 
   const hasCond = !!condition && Object.values(condition).some(v => v != null && v !== false);
   const condOk = (h: HourlyPoint) =>
@@ -354,7 +359,7 @@ export function computeBestWindow(
     checkWeatherCondition({ tempMax: h.temp, tempMin: h.temp, weatherCode: h.weatherCode }, condition!).ok;
 
   const candidates = hours.filter(condOk);
-  if (!candidates.length) return null;
+  if (!candidates.length) return [];
 
   const score = (h: HourlyPoint) =>
     -Math.abs(h.feelsLike - 21)            // ближе к 21° — комфортнее
@@ -362,20 +367,33 @@ export function computeBestWindow(
     - Math.max(0, h.windSpeed - 20) * 0.2  // сильный ветер чуть штрафует
     + (h.isDay ? 1.5 : 0);                 // светлое время предпочтительнее
 
-  const best = candidates.reduce((a, b) => (score(b) > score(a) ? b : a));
-
-  // Расширяем окно вокруг лучшего часа по подряд идущим «хорошим» часам.
   const good = (h: HourlyPoint) => condOk(h) && (h.precipProb == null || h.precipProb < 40);
-  const bi = hours.findIndex(h => h.hour === best.hour);
-  let s = bi, e = bi;
-  while (s > 0 && good(hours[s - 1])) s--;
-  while (e < hours.length - 1 && good(hours[e + 1])) e++;
+  const reasonFor = (h: HourlyPoint) =>
+    hasCond
+      ? 'подходит под погодное условие задачи'
+      : (h.precipProb != null && h.precipProb < 20 ? 'сухое и комфортное окно' : 'самое комфортное окно');
 
-  const reason = hasCond
-    ? 'подходит под погодное условие задачи'
-    : (best.precipProb != null && best.precipProb < 20 ? 'сухое и комфортное окно' : 'самое комфортное окно');
+  const ranked = [...candidates].sort((a, b) => score(b) - score(a));
+  const out: BestWindow[] = [];
 
-  return { bestHour: best.hour, startHour: hours[s].hour, endHour: hours[e].hour, reason };
+  for (const h of ranked) {
+    if (out.length >= max) break;
+    if (out.some(p => Math.abs(p.bestHour - h.hour) < BEST_TIME_GAP)) continue;
+    const bi = hours.findIndex(x => x.hour === h.hour);
+    let s = bi, e = bi;
+    while (s > 0 && good(hours[s - 1])) s--;
+    while (e < hours.length - 1 && good(hours[e + 1])) e++;
+    out.push({ bestHour: h.hour, startHour: hours[s].hour, endHour: hours[e].hour, reason: reasonFor(h) });
+  }
+  return out;
+}
+
+/** Лучшее единственное окно (для подсветки на графике/ленте). */
+export function computeBestWindow(
+  hours: HourlyPoint[],
+  condition?: WeatherCondition | null,
+): BestWindow | null {
+  return computeBestTimes(hours, condition, 1)[0] ?? null;
 }
 
 async function fetchDayDetailData(

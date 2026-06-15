@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { authApi, hasToken, clearAuth } from '../lib/auth';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
+import { useWeatherPrefs } from '../store/weatherPrefsStore';
 import { api } from '../lib/api';
 import { AchievementToast } from '../components/AchievementToast';
 import { ReminderToast } from '../components/ReminderToast';
@@ -57,7 +58,8 @@ function AuthInitializer() {
 
 function ThemeInitializer() {
   const { init } = useThemeStore();
-  useEffect(() => { init(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const initWeatherPrefs = useWeatherPrefs(s => s.init);
+  useEffect(() => { init(); initWeatherPrefs(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
 }
 

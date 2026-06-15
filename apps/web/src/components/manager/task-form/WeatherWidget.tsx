@@ -3,6 +3,8 @@
 import { Cloud, Wind, Thermometer, CloudRain, ChevronRight } from 'lucide-react';
 import { useDayWeather, weatherCodeToInfo } from '../../../lib/weather';
 import { useAuthStore } from '../../../store/authStore';
+import { useWeatherPrefs } from '../../../store/weatherPrefsStore';
+import { fmtTemp, fmtWind } from '../../../lib/weatherUnits';
 import { Icon, hasIcon } from '../../../lib/icons';
 import { MONTHS_GEN } from './constants';
 import styles from './TaskFormModal.module.scss';
@@ -15,11 +17,10 @@ interface WeatherWidgetProps {
   onOpenDetail?: (date: string) => void;
 }
 
-const fmt = (t: number) => `${t > 0 ? '+' : ''}${t}`;
-
 export function WeatherWidget({ date, variant = 'full', onOpenDetail }: WeatherWidgetProps) {
   const user = useAuthStore(s => s.user);
   const location = { lat: user?.locationLat, lon: user?.locationLon, name: user?.location };
+  const units = useWeatherPrefs(s => s.units);
   const { data: weather, isLoading, isError } = useDayWeather(date, location);
 
   const today      = new Date(); today.setHours(0, 0, 0, 0);
@@ -73,10 +74,10 @@ export function WeatherWidget({ date, variant = 'full', onOpenDetail }: WeatherW
       </span>
       <span className={styles.weatherCompactDay}>{dateLabel}</span>
       <span className={styles.weatherCompactTemps}>
-        <b>{fmt(weather.tempMax)}°</b>
-        <span className={styles.weatherCompactMin}>{fmt(weather.tempMin)}°</span>
+        <b>{fmtTemp(weather.tempMax, units.temp)}</b>
+        <span className={styles.weatherCompactMin}>{fmtTemp(weather.tempMin, units.temp)}</span>
       </span>
-      <span className={styles.weatherCompactFeels}>ощущается {fmt(weather.feelsLikeMax)}°</span>
+      <span className={styles.weatherCompactFeels}>ощущается {fmtTemp(weather.feelsLikeMax, units.temp)}</span>
       {onOpenDetail && <ChevronRight size={16} className={styles.weatherChevron} />}
     </>
   ) : (
@@ -89,15 +90,15 @@ export function WeatherWidget({ date, variant = 'full', onOpenDetail }: WeatherW
       </div>
 
       <div className={styles.weatherTemps}>
-        <span className={styles.weatherTempMax}>{fmt(weather.tempMax)}°</span>
-        <span className={styles.weatherTempMin}>{fmt(weather.tempMin)}°</span>
+        <span className={styles.weatherTempMax}>{fmtTemp(weather.tempMax, units.temp)}</span>
+        <span className={styles.weatherTempMin}>{fmtTemp(weather.tempMin, units.temp)}</span>
       </div>
 
       <div className={styles.weatherRows}>
         <div className={styles.weatherRow}>
           <Thermometer size={12} strokeWidth={1.75} />
           <span>Ощущается</span>
-          <span className={styles.weatherRowVal}>{fmt(weather.feelsLikeMax)}°</span>
+          <span className={styles.weatherRowVal}>{fmtTemp(weather.feelsLikeMax, units.temp)}</span>
         </div>
         <div className={styles.weatherRow}>
           <CloudRain size={12} strokeWidth={1.75} />
@@ -107,7 +108,7 @@ export function WeatherWidget({ date, variant = 'full', onOpenDetail }: WeatherW
         <div className={styles.weatherRow}>
           <Wind size={12} strokeWidth={1.75} />
           <span>Ветер</span>
-          <span className={styles.weatherRowVal}>{weather.windSpeedMax} км/ч</span>
+          <span className={styles.weatherRowVal}>{fmtWind(weather.windSpeedMax, units.wind)}</span>
         </div>
       </div>
     </>

@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { HourlyPoint } from '../../../lib/weather';
+import { useWeatherPrefs } from '../../../store/weatherPrefsStore';
+import { fmtTemp, tempVal } from '../../../lib/weatherUnits';
 import styles from './HourlyChart.module.scss';
 
 const HEIGHT = 180;
 const PAD = { top: 16, right: 10, bottom: 24, left: 28 };
-
-const fmt = (t: number) => `${t > 0 ? '+' : ''}${t}`;
 
 interface HourlyChartProps {
   hours: HourlyPoint[];
@@ -19,6 +19,7 @@ export function HourlyChart({ hours, highlight }: HourlyChartProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [idx, setIdx] = useState<number | null>(null);
+  const tempUnit = useWeatherPrefs(s => s.units.temp);
 
   // Ширину берём из DOM (ResizeObserver), рисуем SVG в реальных px → линии не
   // искажаются (без растяжения viewBox).
@@ -99,7 +100,7 @@ export function HourlyChart({ hours, highlight }: HourlyChartProps) {
   const tMinAll = Math.min(...hours.map(h => h.temp));
   const probMax = Math.max(...hours.map(h => h.precipProb ?? 0));
   const ariaSummary =
-    `Почасовой прогноз на ${n} ч: температура от ${fmt(tMinAll)}° до ${fmt(tMaxAll)}°` +
+    `Почасовой прогноз на ${n} ч: температура от ${fmtTemp(tMinAll, tempUnit)} до ${fmtTemp(tMaxAll, tempUnit)}` +
     (geo?.hasPrecip ? `, макс. вероятность осадков ${probMax}%` : '');
 
   return (
@@ -122,8 +123,8 @@ export function HourlyChart({ hours, highlight }: HourlyChartProps) {
           {hl && <rect x={hl.x} y={PAD.top} width={hl.w} height={geo.innerH} className={styles.highlight} />}
 
           {/* Подписи температурной оси */}
-          <text x={4} y={geo.yT(geo.tMax) + 4} className={styles.axisLabel}>{fmt(Math.round(geo.tMax))}°</text>
-          <text x={4} y={geo.yT(geo.tMin) + 4} className={styles.axisLabel}>{fmt(Math.round(geo.tMin))}°</text>
+          <text x={4} y={geo.yT(geo.tMax) + 4} className={styles.axisLabel}>{tempVal(Math.round(geo.tMax), tempUnit)}°</text>
+          <text x={4} y={geo.yT(geo.tMin) + 4} className={styles.axisLabel}>{tempVal(Math.round(geo.tMin), tempUnit)}°</text>
 
           {/* Столбики вероятности осадков */}
           {geo.hasPrecip && hours.map((h, i) => {
@@ -169,7 +170,7 @@ export function HourlyChart({ hours, highlight }: HourlyChartProps) {
           style={{ left: Math.min(Math.max(geo.x(idx!), 60), width - 60) }}
         >
           <span className={styles.tooltipHour}>{String(active.hour).padStart(2, '0')}:00</span>
-          <span className={styles.tooltipTemp}>{fmt(active.temp)}° <i>ощущ. {fmt(active.feelsLike)}°</i></span>
+          <span className={styles.tooltipTemp}>{fmtTemp(active.temp, tempUnit)} <i>ощущ. {fmtTemp(active.feelsLike, tempUnit)}</i></span>
           {active.precipProb != null && <span>Осадки {active.precipProb}% · {active.precip} мм</span>}
           <span>Ветер {active.windSpeed} км/ч</span>
         </div>
@@ -183,8 +184,8 @@ export function HourlyChart({ hours, highlight }: HourlyChartProps) {
           {hours.map(h => (
             <tr key={h.time}>
               <td>{String(h.hour).padStart(2, '0')}:00</td>
-              <td>{fmt(h.temp)}°</td>
-              <td>{fmt(h.feelsLike)}°</td>
+              <td>{fmtTemp(h.temp, tempUnit)}</td>
+              <td>{fmtTemp(h.feelsLike, tempUnit)}</td>
               <td>{h.precipProb != null ? `${h.precipProb}%` : '—'}</td>
               <td>{h.windSpeed} км/ч</td>
             </tr>

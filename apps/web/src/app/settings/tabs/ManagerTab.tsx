@@ -10,12 +10,36 @@ import { SettingsSection } from '../components/SettingsSection';
 import { SettingsRow } from '../components/SettingsRow';
 import { LocationForm } from '../modals/LocationForm';
 import { getPushState, registerPush, unregisterPush, type PushState } from '../../../lib/push';
+import {
+  useWeatherPrefs, WEATHER_METRIC_LABELS,
+  type WeatherMetric, type TempUnit, type WindUnit, type PressureUnit,
+} from '../../../store/weatherPrefsStore';
 import styles from '../page.module.scss';
+
+const METRIC_ORDER: WeatherMetric[] = ['precip', 'wind', 'gusts', 'humidity', 'pressure', 'uv', 'sun'];
+
+// Маленький сегментированный переключатель (2-3 варианта) на базе Button.
+function Seg({ value, options, onChange }: {
+  value: string;
+  options: { v: string; label: string }[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+      {options.map(o => (
+        <Button key={o.v} size="sm" variant={value === o.v ? 'accent' : 'secondary'} onClick={() => onChange(o.v)}>
+          {o.label}
+        </Button>
+      ))}
+    </div>
+  );
+}
 
 export function ManagerTab({ user, setUser }: { user: User; setUser: (u: User | null) => void }) {
   const [locationOpen, setLocationOpen] = useState(false);
   const [pushState, setPushState] = useState<PushState | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
+  const { units, metrics, setUnit, toggleMetric } = useWeatherPrefs();
 
   useEffect(() => { void getPushState().then(setPushState); }, []);
 
@@ -58,6 +82,27 @@ export function ManagerTab({ user, setUser }: { user: User; setUser: (u: User | 
           </span>
           <Button variant="secondary" size="sm" onClick={() => setLocationOpen(true)}>Изменить</Button>
         </SettingsRow>
+      </SettingsSection>
+
+      <SettingsSection title="Карточка погоды">
+        <SettingsRow label="Температура">
+          <Seg value={units.temp} onChange={v => setUnit('temp', v as TempUnit)}
+            options={[{ v: 'c', label: '°C' }, { v: 'f', label: '°F' }]} />
+        </SettingsRow>
+        <SettingsRow label="Скорость ветра">
+          <Seg value={units.wind} onChange={v => setUnit('wind', v as WindUnit)}
+            options={[{ v: 'kmh', label: 'км/ч' }, { v: 'ms', label: 'м/с' }]} />
+        </SettingsRow>
+        <SettingsRow label="Давление">
+          <Seg value={units.pressure} onChange={v => setUnit('pressure', v as PressureUnit)}
+            options={[{ v: 'hpa', label: 'гПа' }, { v: 'mmhg', label: 'мм рт.ст.' }]} />
+        </SettingsRow>
+
+        {METRIC_ORDER.map(m => (
+          <SettingsRow key={m} label={WEATHER_METRIC_LABELS[m]} description="Показывать в подробном прогнозе">
+            <Switch checked={metrics[m]} onChange={() => toggleMetric(m)} />
+          </SettingsRow>
+        ))}
       </SettingsSection>
 
       <SettingsSection title="Отображение">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { clampDrop } from './task-form/anchor';
 import styles from './TimePickerField.module.scss';
 
@@ -63,8 +64,8 @@ export function TimePickerField({ value, endValue, taskDate, hideEnd, onChange, 
   const [dropPos, setDropPos] = useState<{ top: number; left: number } | null>(null);
 
   const wrapRef = useRef<HTMLDivElement>(null);
-  const hrRef   = useRef<HTMLInputElement>(null);
-  const minRef  = useRef<HTMLInputElement>(null);
+  const hrRef   = useRef<HTMLTextAreaElement>(null);
+  const minRef  = useRef<HTMLTextAreaElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
   const isToday = todayIso() === taskDate;
@@ -242,7 +243,7 @@ export function TimePickerField({ value, endValue, taskDate, hideEnd, onChange, 
     }
   };
 
-  const handleKeyDown = (seg: 'hr' | 'min', e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (seg: 'hr' | 'min', e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter')  { e.preventDefault(); handleSpace(seg); return; }
     if (e.key === 'Escape') { e.preventDefault(); setEditing(null); setDropPos(null); return; }
     if (e.key === ' ')      { e.preventDefault(); handleSpace(seg); return; }
@@ -285,27 +286,34 @@ export function TimePickerField({ value, endValue, taskDate, hideEnd, onChange, 
   // ── Segment inputs (shared for start & end) ───────────────────
   // inGroup=true → no outer border (group container provides it)
 
+  // textarea (1 строка) вместо input: на мобиле input показывает панель
+  // автозаполнения над клавиатурой (как для логина/пароля) даже с
+  // autocomplete=off; у textarea её нет (как у поля названия задачи).
   const renderSegments = (inGroup = false) => (
     <div className={inGroup ? styles.groupSegWrap : styles.pillWrap}>
-      <input
+      <textarea
         ref={hrRef}
         className={styles.segInput}
         value={hrVal}
         placeholder="--"
+        rows={1}
         inputMode="numeric"
         autoComplete="off"
+        autoCorrect="off"
         onChange={e => handleHrChange(e.target.value)}
         onKeyDown={e => handleKeyDown('hr', e)}
         onFocus={e => e.target.select()}
       />
       <span className={styles.segSep}>:</span>
-      <input
+      <textarea
         ref={minRef}
         className={styles.segInput}
         value={minVal}
         placeholder="--"
+        rows={1}
         inputMode="numeric"
         autoComplete="off"
+        autoCorrect="off"
         onChange={e => handleMinChange(e.target.value)}
         onKeyDown={e => handleKeyDown('min', e)}
         onFocus={e => e.target.select()}
@@ -321,7 +329,11 @@ export function TimePickerField({ value, endValue, taskDate, hideEnd, onChange, 
     const curVal = editing === 'start' ? value : endValue;
 
     const dropW = typeof window !== 'undefined' ? Math.min(200, window.innerWidth - 16) : 165;
-    return (
+    if (typeof document === 'undefined') return null;
+    // Портал в body: поповер не должен жить внутри модалки — у её контента есть
+    // transform (framer-motion), а transform-предок ломает позиционирование
+    // position:fixed (координаты от вьюпорта применялись бы относительно модалки).
+    return createPortal(
       <ul
         ref={listRef}
         className={styles.dropdown}
@@ -343,7 +355,8 @@ export function TimePickerField({ value, endValue, taskDate, hideEnd, onChange, 
             </li>
           );
         })}
-      </ul>
+      </ul>,
+      document.body,
     );
   };
 

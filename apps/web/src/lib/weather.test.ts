@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseDayDetail, computeBestWindow, type HourlyPoint } from './weather';
+import { parseDayDetail, computeBestWindow, computeBestTimes, type HourlyPoint } from './weather';
 
 const hp = (over: Partial<HourlyPoint>): HourlyPoint => ({
   time: '2026-06-16T12:00', hour: 12, temp: 21, feelsLike: 21, precipProb: 0,
@@ -131,5 +131,38 @@ describe('computeBestWindow', () => {
 
   it('пустой ввод → null', () => {
     expect(computeBestWindow([])).toBeNull();
+  });
+});
+
+describe('computeBestTimes', () => {
+  it('возвращает до max предложений, разнесённых по времени (≥3ч)', () => {
+    // Три комфортных «пика» в 9, 13, 17 и провалы между ними.
+    const hours = [
+      hp({ hour: 9, feelsLike: 21, precipProb: 0 }),
+      hp({ hour: 10, feelsLike: 16, precipProb: 0 }),
+      hp({ hour: 13, feelsLike: 21, precipProb: 0 }),
+      hp({ hour: 14, feelsLike: 15, precipProb: 0 }),
+      hp({ hour: 17, feelsLike: 21, precipProb: 0 }),
+    ];
+    const r = computeBestTimes(hours, undefined, 3);
+    expect(r.length).toBe(3);
+    const picked = r.map(x => x.bestHour).sort((a, b) => a - b);
+    expect(picked).toEqual([9, 13, 17]);
+    // все попарно разнесены минимум на 3 часа
+    for (let i = 1; i < picked.length; i++) expect(picked[i] - picked[i - 1]).toBeGreaterThanOrEqual(3);
+  });
+
+  it('не выдаёт соседние часы как разные предложения', () => {
+    const hours = [
+      hp({ hour: 12, feelsLike: 21 }),
+      hp({ hour: 13, feelsLike: 21 }),
+      hp({ hour: 14, feelsLike: 21 }),
+    ];
+    const r = computeBestTimes(hours, undefined, 3);
+    expect(r.length).toBe(1); // все в пределах 3ч → одно предложение
+  });
+
+  it('пустой ввод → []', () => {
+    expect(computeBestTimes([])).toEqual([]);
   });
 });

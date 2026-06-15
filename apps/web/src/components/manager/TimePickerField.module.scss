@@ -74,7 +74,16 @@ $pill-h: 32px;
   padding: 0 1px;
   width: 2ch;
   min-width: 20px;
-  align-self: stretch;
+  // Однострочная textarea вместо input (без панели автозаполнения на мобиле):
+  // фикс. высота + line-height центрируют строку, align-self центрирует поле
+  // по вертикали в pill (контейнер — align-items: stretch).
+  box-sizing: content-box;
+  height: 1.4em;
+  line-height: 1.4em;
+  align-self: center;
+  resize: none;
+  overflow: hidden;
+  white-space: nowrap;
 
   &::placeholder { color: var(--text-muted); font-size: var(--text-xs); }
   &:focus { background: var(--brand-subtle); border-radius: 3px; }
@@ -246,11 +255,7 @@ $pill-h: 32px;
     padding: 0 7px;
   }
 
-  .dropdown {
-    width: calc(100vw - 16px) !important;
-    left: 8px !important;
-    box-sizing: border-box;
-  }
-
+  // Полноэкранный оверрайд больше не нужен: дропдаун теперь порталится в body
+  // и позиционируется через clampDrop (ширина ≤200px, привязка к полю).
   .dropItemRel { display: none; }
 }

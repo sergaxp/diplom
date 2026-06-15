@@ -535,6 +535,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     <WeatherDetailModal
       date={weatherDetailDate}
       condition={repeatConfig?.weatherCondition}
+      hasTime={!!time}
       onPickTime={(d, h) => {
         setFormDate(d);
         setTime(`${String(h).padStart(2, '0')}:00`);

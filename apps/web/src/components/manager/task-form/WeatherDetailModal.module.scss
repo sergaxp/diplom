@@ -5,96 +5,10 @@
   font-size: 0.9rem;
 }
 
-// ── Шапка с навигацией по дням ────────────────────────────────
-.navHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.navBtn {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background var(--duration-fast) var(--ease-default),
-              color var(--duration-fast) var(--ease-default);
-
-  &:hover:not(:disabled) { background: var(--bg-alt); color: var(--text); }
-  &:disabled { opacity: 0.35; cursor: default; }
-}
-
-.navTitle {
-  flex: 1;
-  text-align: center;
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-// ── «Лучшее время» + перенос ──────────────────────────────────
-.best {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem 0.75rem;
-  background: var(--bg-alt);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--brand);
-  border-radius: 8px;
-
-  > svg { flex-shrink: 0; color: var(--brand); }
-}
-
-.bestText {
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.bestTitle {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.bestReason {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
-
-.bestBtn {
-  flex-shrink: 0;
-  font-family: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.4rem 0.7rem;
-  border: none;
-  border-radius: 6px;
-  background: var(--brand);
-  color: var(--text-on-brand);
-  cursor: pointer;
-  transition: opacity var(--duration-fast) var(--ease-default);
-
-  &:hover { opacity: 0.9; }
-}
-
 .body {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1rem;
 }
 
 // ── Шапка ─────────────────────────────────────────────────────
@@ -128,20 +42,75 @@
 }
 
 .heroTempMax {
-  font-size: 2.2rem;
+  font-size: 2.1rem;
   font-weight: 700;
   line-height: 1;
   color: var(--text);
 }
 
 .heroTempMin {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   color: var(--text-muted);
 }
 
 .heroFeels {
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+
+// ── «Лучшее время» + чипы ─────────────────────────────────────
+.best {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  border-radius: 8px;
+
+  > svg { flex-shrink: 0; margin-top: 0.1rem; color: var(--brand); }
+}
+
+.bestBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.bestTitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.bestChips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.bestVerb {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.chip {
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--brand);
+  border-radius: 999px;
+  background: none;
+  color: var(--brand);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+
+  &:hover { background: var(--brand); color: var(--text-on-brand); }
 }
 
 // ── Метрики ───────────────────────────────────────────────────
@@ -155,11 +124,12 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.55rem 0.7rem;
+  padding: 0.5rem 0.7rem;
   background: var(--bg-alt);
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 0.8rem;
+  min-width: 0;
 }
 
 .metricIcon {
@@ -171,11 +141,14 @@
 .metricLabel {
   flex: 1;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .metricValue {
   font-weight: 600;
   color: var(--text-2);
+  text-align: right;
+  white-space: nowrap;
 }
 
 // ── Почасовой график: скелетон / недоступность ───────────────
@@ -193,7 +166,7 @@
 }
 
 .chartPlaceholder {
-  height: 140px;
+  height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -201,4 +174,21 @@
   border-radius: 8px;
   color: var(--text-4);
   font-size: 0.8rem;
+}
+
+// ── Телефон: компактнее, чтобы влезало без вертикальной прокрутки ──
+@media (max-width: 768px) {
+  .body { gap: 0.7rem; }
+
+  .hero { gap: 0.75rem; }
+  .heroIcon > svg { width: 36px; height: 36px; }
+  .heroTempMax { font-size: 1.8rem; }
+  .heroTempMin { font-size: 1.05rem; }
+
+  .best { padding: 0.5rem 0.6rem; }
+
+  .metrics { gap: 0.4rem; }
+  .metric { padding: 0.4rem 0.55rem; font-size: 0.76rem; }
+
+  .chartSkeleton { height: 96px; }
 }
