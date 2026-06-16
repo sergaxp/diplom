@@ -7,14 +7,18 @@ import styles from './RepeatConfigModal.module.scss';
 
 interface MiniCalProps {
   value: string;
-  minDate: string;
+  /** Минимальная выбираемая дата. Опционально — без неё ничего не блокируется. */
+  minDate?: string;
   onChange: (iso: string) => void;
+  /** Доп. класс на корень (для отступов в месте использования). */
+  className?: string;
 }
 
-export function MiniCalendar({ value, minDate, onChange }: MiniCalProps) {
-  const seed = value || minDate;
-  const seedDate = new Date(seed + 'T00:00:00');
-  const minD     = new Date(minDate + 'T00:00:00');
+export function MiniCalendar({ value, minDate, onChange, className }: MiniCalProps) {
+  const seedRaw  = value || minDate || '';
+  const parsed   = seedRaw ? new Date(seedRaw + 'T00:00:00') : new Date();
+  const seedDate = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  const minD     = minDate ? new Date(minDate + 'T00:00:00') : null;
 
   const [viewYear,  setViewYear]  = useState(seedDate.getFullYear());
   const [viewMonth, setViewMonth] = useState(seedDate.getMonth());
@@ -30,7 +34,7 @@ export function MiniCalendar({ value, minDate, onChange }: MiniCalProps) {
   };
 
   return (
-    <div className={styles.miniCal}>
+    <div className={[styles.miniCal, className].filter(Boolean).join(' ')}>
       <div className={styles.miniCalHead}>
         <button type="button" className={styles.miniCalNav} onClick={prevMonth}>‹</button>
         <span className={styles.miniCalTitle}>{RU_MONTHS[viewMonth]} {viewYear}</span>
@@ -43,7 +47,7 @@ export function MiniCalendar({ value, minDate, onChange }: MiniCalProps) {
         {cells.map((d, i) => {
           if (!d) return <span key={i} className={styles.miniCalEmpty} />;
           const iso = toDateStr(d);
-          const isDisabled = d < minD;
+          const isDisabled = minD ? d < minD : false;
           const isSelected = iso === value;
           return (
             <button

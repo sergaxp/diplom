@@ -41,6 +41,7 @@ export function EndingSection({ r }: Props) {
             value={r.endDate}
             minDate={r.minRepeatUntil}
             onChange={r.setEndDate}
+            className={styles.endDateCalIndent}
           />
         )}
       </div>

@@ -394,13 +394,13 @@
 .sectionDeleteBtn {
   background: none;
   border: none;
-  color: var(--border);
-  font-size: 1rem;
+  color: var(--text-muted);
+  font-size: 1.1rem;
   cursor: pointer;
   padding: 0 0.1rem;
   line-height: 1;
   transition: color var(--duration-fast) var(--ease-default);
-  &:hover { color: var(--text-2); }
+  &:hover { color: var(--error); }
 }
 
 // ── Subtask items ─────────────────────────────────────────────
@@ -464,14 +464,13 @@
   flex-shrink: 0;
   background: none;
   border: none;
-  color: var(--border-input);
-  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-size: 1.1rem;
   cursor: pointer;
   padding: 0 0.2rem;
-  opacity: 0;
   line-height: 1;
-  transition: opacity var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
-  &:hover { color: var(--text-2); }
+  transition: color var(--duration-fast) var(--ease-default);
+  &:hover { color: var(--error); }
 }
 
 .addSubtask {
@@ -1546,21 +1545,23 @@
 }
 
 .tileX {
+  flex-shrink: 0;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
+  // Тёмный кружок + светлый значок — видно в обеих темах (оверлей над контентом).
+  background: rgba(0, 0, 0, 0.6);
   border: none;
-  color: var(--bg);
-  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.95);
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
+  line-height: 0;
   padding: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   transition: background var(--duration-fast) var(--ease-default);
-  &:hover { background: var(--text-2); }
+  &:hover { background: rgba(0, 0, 0, 0.8); }
 }
 
 .tileConfirmBtn {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Clock, Paperclip, Play, FileText, Link as LinkIcon, Plus, CalendarDays } from 'lucide-react';
+import { Clock, Paperclip, Play, FileText, Link as LinkIcon, Plus, CalendarDays, X } from 'lucide-react';
 import { SubtaskSection, SubtaskItem } from '../../../lib/tasks';
 import { storageApi } from '../../../lib/storage';
 import type { Tag } from '../../../lib/tags';
@@ -152,6 +152,10 @@ export function SubtaskSectionComp({ section, collapsed, canDelete, userTags, pa
             ref={titleInputRef}
             className={styles.sectionTitleInput}
             value={titleVal}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             onChange={e => setTitleVal(e.target.value)}
             onBlur={commitTitle}
             onKeyDown={e => {
@@ -252,7 +256,7 @@ export function SubtaskSectionComp({ section, collapsed, canDelete, userTags, pa
                       className={styles.tileX}
                       onClick={(e) => { e.stopPropagation(); setConfirmId(prev => prev === item.id ? null : item.id); }}
                       title="Удалить"
-                    >×</button>
+                    ><X size={14} strokeWidth={2.5} /></button>
                   </div>
                 );
 

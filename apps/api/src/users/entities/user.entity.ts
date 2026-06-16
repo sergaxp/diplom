@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ShowcaseBlock } from '../../profile/showcase.types';
+import { BoardColumn } from '../../board/board.types';
 
 export enum UserRole {
   USER = 'user',
@@ -115,6 +116,10 @@ export class User {
   /** Упорядоченный список блоков-витрин профиля (Steam-style showcases). */
   @Column({ type: 'json', nullable: true, default: null })
   showcases: ShowcaseBlock[] | null;
+
+  /** Раскладка колонок доски (Kanban). null = базовые колонки. */
+  @Column({ type: 'json', nullable: true, default: null })
+  boardColumns: BoardColumn[] | null;
 
   @CreateDateColumn()
   createdAt: Date;

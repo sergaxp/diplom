@@ -9,6 +9,7 @@
            0
            max(var(--space-6), env(safe-area-inset-left));
   min-height: 52px;
+  gap: var(--space-2);
   background: var(--bg-base);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -17,6 +18,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0; // позволяем логотипу сжиматься, а не распирать строку
   text-decoration: none;
   transition: opacity var(--duration-fast) var(--ease-default);
   &:hover { opacity: 0.82; }
@@ -33,6 +35,7 @@
   font-weight: var(--weight-semibold);
   letter-spacing: -0.02em;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .logoAccent { color: var(--accent); }
@@ -41,6 +44,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  flex-shrink: 0; // контролы не сжимаются и не уезжают за экран
 }
 
 /* .loginBtn → <Button variant="primary" size="sm" href="/auth"> */
@@ -239,4 +243,10 @@
   .logoWord { font-size: var(--text-base); }
   .right { gap: var(--space-2); }
   .themeToggle { padding: 4px 6px; }
+}
+
+// Узкие экраны (напр. Tecno CAMON 20): не обрезаем «warmingtea», а уменьшаем шрифт.
+@media (max-width: 400px) {
+  .logoWord { font-size: var(--text-sm); }
+  .right { gap: 6px; }
 }

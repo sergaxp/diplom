@@ -8,7 +8,13 @@ import { Skeleton } from '../components/ui';
 import { ManagerCalendar } from '../components/manager/calendar';
 import { MobileDayStrip } from '../components/manager/MobileDayStrip';
 import { TaskList } from '../components/manager/TaskList';
-import { Task, DayOverride, tasksApi, completionKey, toDateStr, isSeriesTask, mergeSeriesSubtasks, prevDayStr } from '../lib/tasks';
+import { WorkspaceSwitcher, type Workspace } from '../components/manager/WorkspaceSwitcher';
+import { BoxView } from '../components/manager/box/BoxView';
+import { countOverdue } from '../components/manager/box/boxLogic';
+import { dayedSubtasks } from '../lib/board';
+import { BoardView } from '../components/manager/board/BoardView';
+import { ProjectsView } from '../components/manager/projects/ProjectsView';
+import { Task, DayOverride, SubtaskItem, tasksApi, completionKey, toDateStr, isSeriesTask, mergeSeriesSubtasks, prevDayStr } from '../lib/tasks';
 import { syncTaskReminders } from '../lib/reminders';
 import { DeleteScopeModal } from '../components/manager/DeleteScopeModal';
 import { Tag, tagsApi } from '../lib/tags';
@@ -33,6 +39,19 @@ export default function ManagerPage() {
     const d = new Date(); d.setHours(0, 0, 0, 0); return d;
   });
   const [mobileExpanded, setMobileExpanded] = useState(false);
+
+  // Активная рабочая область (только десктоп). Персистим выбор.
+  const [workspace, setWorkspace] = useState<Workspace>('manager');
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('wt_workspace') as Workspace | null;
+      if (saved && ['manager', 'board', 'projects', 'box'].includes(saved)) setWorkspace(saved);
+    } catch { /* ignore */ }
+  }, []);
+  const changeWorkspace = (w: Workspace) => {
+    setWorkspace(w);
+    try { localStorage.setItem('wt_workspace', w); } catch { /* ignore */ }
+  };
 
   useEffect(() => {
     if (ready && !user) router.replace('/auth');
@@ -80,6 +99,12 @@ export default function ManagerPage() {
   });
 
   const completions = useMemo(() => new Set(completionKeys), [completionKeys]);
+
+  // Бейдж «Коробки» — число просрочённых среди собственных задач.
+  const overdueCount = useMemo(
+    () => countOverdue(tasks, completions, toDateStr(new Date())),
+    [tasks, completions],
+  );
 
   // Продление горизонта напоминаний при заходе в менеджер (не чаще раза в сутки).
   useEffect(() => {
@@ -244,6 +269,9 @@ export default function ManagerPage() {
     setDelReq({ id, date });
   };
 
+  // Удаление задачи целиком (вся серия) — для «Коробки», где строка = задача.
+  const deleteTaskWhole = (id: string) => deleteMut.mutate(id);
+
   // Снять отметку выполнения для удаляемого(ых) дня(ей), чтобы не оставались
   // «осиротевшие» отметки (искажают достижения/серии и воскресают при восстановлении).
   const clearCompletion = (taskId: string, date: string) => {
@@ -384,6 +412,76 @@ export default function ManagerPage() {
     }});
   };
 
+  // ── Board: выполнение подзадач (для доски) ────────────────────
+  // Отметка выполнения дня приводится в соответствие с подзадачами:
+  // все подзадачи дня выполнены ⇒ день выполнен, и наоборот.
+  const reconcileDayCompletion = (taskId: string, date: string, doneIds: Set<string>, dayItemIds: string[]) => {
+    const allDone = dayItemIds.length > 0 && dayItemIds.every(id => doneIds.has(id));
+    const isDone  = completions.has(completionKey(taskId, date));
+    if (allDone !== isDone) toggleMut.mutate({ taskId, date });
+  };
+
+  const setSubtaskDone = (taskId: string, date: string, itemId: string, done: boolean) => {
+    const base = tasks.find(t => t.id === taskId);
+    if (!base) return;
+    const dayItemIds = dayedSubtasks(base, date).map(i => i.id);
+    if (isSeriesTask(base)) {
+      const prevOv = base.dayOverrides?.[date] ?? {};
+      const set = new Set(prevOv.doneIds ?? []);
+      if (done) set.add(itemId); else set.delete(itemId);
+      const overrides = { ...(base.dayOverrides ?? {}), [date]: { ...prevOv, doneIds: [...set] } };
+      updateMut.mutate({ id: taskId, data: { ...stripRuntime(base), dayOverrides: overrides } });
+      reconcileDayCompletion(taskId, date, set, dayItemIds);
+    } else {
+      const subtasks = (base.subtasks ?? []).map(s => ({
+        ...s, items: s.items.map(i => i.id === itemId ? { ...i, done } : i),
+      }));
+      updateMut.mutate({ id: taskId, data: { ...stripRuntime(base), subtasks } });
+      const doneSet = new Set(
+        subtasks.flatMap(s => s.items)
+          .filter(i => (i.kind ?? 'subtask') === 'subtask' && i.done).map(i => i.id),
+      );
+      reconcileDayCompletion(taskId, date, doneSet, dayItemIds);
+    }
+  };
+
+  const setAllSubtasksDone = (taskId: string, date: string, done: boolean) => {
+    const base = tasks.find(t => t.id === taskId);
+    if (!base) return;
+    const dayItemIds = dayedSubtasks(base, date).map(i => i.id);
+    const target = new Set<string>(done ? dayItemIds : []);
+    if (isSeriesTask(base)) {
+      const prevOv = base.dayOverrides?.[date] ?? {};
+      const overrides = { ...(base.dayOverrides ?? {}), [date]: { ...prevOv, doneIds: [...target] } };
+      updateMut.mutate({ id: taskId, data: { ...stripRuntime(base), dayOverrides: overrides } });
+    } else {
+      const ids = new Set(dayItemIds);
+      const subtasks = (base.subtasks ?? []).map(s => ({
+        ...s, items: s.items.map(i => ids.has(i.id) ? { ...i, done } : i),
+      }));
+      updateMut.mutate({ id: taskId, data: { ...stripRuntime(base), subtasks } });
+    }
+    reconcileDayCompletion(taskId, date, target, dayItemIds);
+  };
+
+  // Создание задачи с возвратом созданной (для доски — чтобы разместить в колонке).
+  const createTask = async (data: Omit<Task, 'id' | 'status'>): Promise<Task> =>
+    (await createMut.mutateAsync(data)).task;
+
+  // Правка/удаление отдельной подзадачи (определения общие для серии).
+  const updateSubtaskItem = (taskId: string, item: SubtaskItem) => {
+    const base = tasks.find(t => t.id === taskId);
+    if (!base) return;
+    const subtasks = (base.subtasks ?? []).map(s => ({ ...s, items: s.items.map(i => i.id === item.id ? item : i) }));
+    updateMut.mutate({ id: taskId, data: { ...stripRuntime(base), subtasks } });
+  };
+  const deleteSubtaskItem = (taskId: string, itemId: string) => {
+    const base = tasks.find(t => t.id === taskId);
+    if (!base) return;
+    const subtasks = (base.subtasks ?? []).map(s => ({ ...s, items: s.items.filter(i => i.id !== itemId) }));
+    updateMut.mutate({ id: taskId, data: { ...stripRuntime(base), subtasks } });
+  };
+
   const goToToday = () => {
     const d = new Date(); d.setHours(0, 0, 0, 0); setSelectedDate(d);
   };
@@ -425,28 +523,69 @@ export default function ManagerPage() {
 
       <div className={styles.body}>
         <div className={styles.left}>
-          <TaskList
-            selectedDate={selectedDate}
-            tasks={allTasks}
-            completions={completions}
-            isAdmin={user.role === 'admin'}
-            userTags={userTags}
-            onCreateTag={handleCreateTag}
-            onToggle={handleToggle}
-            onDelete={requestDelete}
-            onAdd={handleAdd}
-            onUpdate={handleUpdate}
-            onPostpone={handlePostpone}
-            onGoToToday={goToToday}
-          />
+          <div className={styles.leftMain}>
+            <TaskList
+              selectedDate={selectedDate}
+              tasks={allTasks}
+              completions={completions}
+              isAdmin={user.role === 'admin'}
+              userTags={userTags}
+              onCreateTag={handleCreateTag}
+              onToggle={handleToggle}
+              onDelete={requestDelete}
+              onAdd={handleAdd}
+              onUpdate={handleUpdate}
+              onPostpone={handlePostpone}
+              onGoToToday={goToToday}
+            />
+          </div>
+          <div className={styles.switcher}>
+            <WorkspaceSwitcher active={workspace} onChange={changeWorkspace} boxBadge={overdueCount} />
+          </div>
         </div>
         <div className={styles.right}>
-          <ManagerCalendar
-            selectedDate={selectedDate}
-            onSelect={setSelectedDate}
-            tasks={allTasks}
-            completions={completions}
-          />
+          {workspace === 'manager' && (
+            <ManagerCalendar
+              selectedDate={selectedDate}
+              onSelect={setSelectedDate}
+              tasks={allTasks}
+              completions={completions}
+            />
+          )}
+          {workspace === 'box' && (
+            <BoxView
+              tasks={tasks}
+              completions={completions}
+              userTags={userTags}
+              isAdmin={user.role === 'admin'}
+              selectedDate={selectedDate}
+              onAdd={handleAdd}
+              onUpdate={handleUpdate}
+              onDeleteTask={deleteTaskWhole}
+              onToggle={handleToggle}
+              onCreateTag={handleCreateTag}
+            />
+          )}
+          {workspace === 'board' && (
+            <BoardView
+              tasks={tasks}
+              completions={completions}
+              selectedDate={selectedDate}
+              isAdmin={user.role === 'admin'}
+              userTags={userTags}
+              onSelectDate={setSelectedDate}
+              onToggleTask={handleToggle}
+              onSetSubtaskDone={setSubtaskDone}
+              onSetAllSubtasksDone={setAllSubtasksDone}
+              onCreateTask={createTask}
+              onUpdate={handleUpdate}
+              onDeleteTask={deleteTaskWhole}
+              onCreateTag={handleCreateTag}
+              onUpdateSubtask={updateSubtaskItem}
+              onDeleteSubtask={deleteSubtaskItem}
+            />
+          )}
+          {workspace === 'projects' && <ProjectsView />}
         </div>
       </div>
 

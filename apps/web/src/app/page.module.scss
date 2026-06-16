@@ -1,14 +1,17 @@
+// Фикс-высота «оболочки»: страница никогда не скроллится целиком —
+// высоту держит шапка (auto) + тело (flex:1). Скролл только внутри панелей.
 .root {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--bg-base);
+  overflow: hidden;
 }
 
 .body {
   flex: 1;
   display: flex;
-  height: calc(100dvh - 52px); // 52px = header height
+  min-height: 0; // позволить детям скроллиться вместо распирания страницы
   overflow: hidden;
 }
 
@@ -18,14 +21,29 @@
 .left {
   flex: 0 0 clamp(380px, 34%, 460px);
   border-right: 1px solid var(--border-subtle);
-  overflow-y: auto;
   background: var(--bg-base);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// Зона списка задач — растягивается, скроллится внутри (TaskList сам скроллит).
+.leftMain {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// Переключатель рабочих областей — прижат к низу левой панели (только десктоп).
+.switcher {
+  flex-shrink: 0;
 }
 
 // ── Right panel (calendar) ────────────────────────────────────
 .right {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
   background: var(--bg-subtle);
 }
@@ -54,6 +72,7 @@
   .root {
     position: fixed;
     inset: 0;
+    height: auto; // высоту задаёт inset:0 (надёжнее 100dvh на Android)
     min-height: unset;
     overflow: hidden;
     overscroll-behavior: none;
@@ -78,10 +97,18 @@
     min-height: 0;
     border-right: none;
     border-top: 1px solid var(--border-subtle);
-    overflow-y: auto;
+    overflow: hidden;
+  }
+
+  .leftMain {
     // Запас под жестовую панель/индикатор home, чтобы последняя задача
     // не пряталась под ним (root прижат к вьюпорту через fixed+inset).
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  // Переключатель областей пока только для десктопа.
+  .switcher {
+    display: none;
   }
 
   .mobileTop {

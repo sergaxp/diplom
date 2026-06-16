@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Cloud, CloudRain, Wind, Sun, Droplets, Gauge, Sunrise, Clock } from 'lucide-react';
+import { Cloud, CloudRain, Wind, Sun, Droplets, Gauge, Sunrise, Sunset, Clock } from 'lucide-react';
 import { Modal } from '../../../components/ui';
 import { useDayWeather, useDayDetail, weatherCodeToInfo, computeBestTimes } from '../../../lib/weather';
 import type { WeatherCondition } from '../../../lib/tasks';
@@ -51,6 +51,12 @@ export function WeatherDetailModal({ date, condition, hasTime, onPickTime, onClo
     () => (detail ? computeBestTimes(detail.hours, condition, 3) : []),
     [detail, condition],
   );
+  // Чипы показываем по времени (0→23), хотя ранжирование «по качеству» сохраняем
+  // для подсветки лучшего окна (bestTimes[0]).
+  const orderedChips = useMemo(
+    () => [...bestTimes].sort((a, b) => a.bestHour - b.bestHour),
+    [bestTimes],
+  );
 
   const { label, icon } = weather ? weatherCodeToInfo(weather.weatherCode) : { label: '', icon: 'Cloud' };
 
@@ -63,7 +69,10 @@ export function WeatherDetailModal({ date, condition, hasTime, onPickTime, onClo
     if (show.humidity && detail && detail.hours.length) metricRows.push({ icon: <Droplets size={16} strokeWidth={1.75} />, label: 'Влажность', value: `${avg(detail.hours.map(h => h.humidity))}%` });
     if (show.pressure && detail && detail.hours.length) metricRows.push({ icon: <Gauge size={16} strokeWidth={1.75} />, label: 'Давление', value: fmtPressure(avg(detail.hours.map(h => h.pressure)), units.pressure) });
     if (show.uv) metricRows.push({ icon: <Sun size={16} strokeWidth={1.75} />, label: 'УФ-индекс', value: String(detail?.uvIndexMax ?? weather.uvIndex) });
-    if (show.sun && detail?.sunrise) metricRows.push({ icon: <Sunrise size={16} strokeWidth={1.75} />, label: 'Восход / закат', value: `${fmtTime(detail.sunrise)} / ${fmtTime(detail.sunset)}` });
+    if (show.sun && detail?.sunrise) {
+      metricRows.push({ icon: <Sunrise size={16} strokeWidth={1.75} />, label: 'Восход', value: fmtTime(detail.sunrise) });
+      metricRows.push({ icon: <Sunset size={16} strokeWidth={1.75} />, label: 'Закат', value: fmtTime(detail.sunset) });
+    }
   }
 
   const verb = hasTime ? 'Перенести на' : 'Назначить на';
@@ -101,7 +110,7 @@ export function WeatherDetailModal({ date, condition, hasTime, onPickTime, onClo
                 <span className={styles.bestTitle}>Лучшее время · {bestTimes[0].reason}</span>
                 <div className={styles.bestChips}>
                   <span className={styles.bestVerb}>{verb}</span>
-                  {bestTimes.map(t => (
+                  {orderedChips.map(t => (
                     <button key={t.bestHour} type="button" className={styles.chip} onClick={() => onPickTime(day, t.bestHour)}>
                       {hhmm(t.bestHour)}
                     </button>

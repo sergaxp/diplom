@@ -90,6 +90,10 @@ export function SubtaskLinkForm({ onSave, onCancel }: Props) {
           value={url}
           onChange={e => setUrl(e.target.value)}
           placeholder="Вставьте ссылку (изображение, YouTube, и т.д.)"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
         />
 
         <Input
@@ -97,6 +101,10 @@ export function SubtaskLinkForm({ onSave, onCancel }: Props) {
           onChange={e => { setTitle(e.target.value); setTitleTouched(true); }}
           placeholder={fetching ? 'Загружаем подпись...' : 'Подпись (необязательно)'}
           suffix={fetching ? <Loader2 size={14} className={styles.titleLoader} /> : undefined}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
         />
 
         {info && (

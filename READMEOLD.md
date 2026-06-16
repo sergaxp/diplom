@@ -7,7 +7,7 @@ docker compose -f docker-compose.dev.yml up -d
 cd ..
 Затем приложения (в разных терминалах)
 В двух отдельных терминалах запустите:
-pnpm dev:api
+pnpm dev:api (cd apps/api  WEATHER_MOCK=1 npm run start:dev)
 pnpm dev:web
 Доступность
 
