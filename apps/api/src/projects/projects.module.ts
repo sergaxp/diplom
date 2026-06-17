@@ -7,12 +7,14 @@ import { ProjectsService } from './projects.service';
 import { ProjectsController } from './projects.controller';
 import { TasksModule } from '../tasks/tasks.module';
 import { ActivityModule } from '../activity/activity.module';
+import { CollabModule } from '../collab/collab.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Project, ProjectBoardPlacement, Task]),
     TasksModule,
     ActivityModule,
+    CollabModule,
   ],
   controllers: [ProjectsController],
   providers: [ProjectsService],

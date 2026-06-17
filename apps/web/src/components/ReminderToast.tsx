@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useReminderToastStore } from '../store/reminderToastStore';
+import { useAuthStore } from '../store/authStore';
 import { registerServiceWorker } from '../lib/push';
 import { primeReminderSound, playReminderSound } from '../lib/reminderSound';
 import styles from './ReminderToast.module.scss';
@@ -19,6 +20,7 @@ const ACCENT = '#f59e0b';
 export function ReminderToast() {
   const router = useRouter();
   const { queue, push, pop } = useReminderToastStore();
+  const meId = useAuthStore((s) => s.user?.id);
   const current = queue[0];
   const currentId = current?.id;
 
@@ -45,13 +47,15 @@ export function ReminderToast() {
     const handler = (e: MessageEvent) => {
       if (e.data?.type !== 'reminder') return;
       const p = e.data.payload ?? {};
+      // Не показываем тост автору собственного действия (комментарий/приглашение).
+      if (p.fromUserId && p.fromUserId === meId) return;
       playReminderSound();
       navigator.vibrate?.([200, 100, 200]);
       push({ title: p.title || 'Напоминание', body: p.body || '', url: p.url });
     };
     navigator.serviceWorker.addEventListener('message', handler);
     return () => navigator.serviceWorker.removeEventListener('message', handler);
-  }, [push]);
+  }, [push, meId]);
 
   useEffect(() => {
     if (!currentId) return;

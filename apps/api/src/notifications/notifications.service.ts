@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Notification, NotificationKind } from './entities/notification.entity';
+import {
+  Notification,
+  NotificationKind,
+  NotificationData,
+  NotificationActionState,
+} from './entities/notification.entity';
 
 const MAX_PER_USER = 100; // ограничение, чтобы не разрасталось бесконечно
 
@@ -12,6 +17,8 @@ export interface CreateNotificationPayload {
   body?: string | null;
   icon?: string | null;
   color?: string | null;
+  data?: NotificationData | null;
+  actionState?: NotificationActionState | null;
 }
 
 @Injectable()
@@ -29,6 +36,8 @@ export class NotificationsService {
       body: p.body ?? null,
       icon: p.icon ?? null,
       color: p.color ?? null,
+      data: p.data ?? null,
+      actionState: p.actionState ?? null,
     });
     const saved = await this.repo.save(n);
 
@@ -46,6 +55,22 @@ export class NotificationsService {
       }
     }
     return saved;
+  }
+
+  /**
+   * Закрывает actionable-приглашение: проставляет actionState и помечает
+   * прочитанным у всех уведомлений с данным inviteId (после ответа кнопки скрываются).
+   */
+  async resolveInviteAction(
+    inviteId: string,
+    state: NotificationActionState,
+  ): Promise<void> {
+    await this.repo
+      .createQueryBuilder()
+      .update(Notification)
+      .set({ actionState: state, read: true })
+      .where(`("data" ->> 'inviteId') = :inviteId`, { inviteId })
+      .execute();
   }
 
   async list(userId: string): Promise<Notification[]> {

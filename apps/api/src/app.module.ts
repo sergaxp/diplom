@@ -44,6 +44,10 @@ import { Project } from './projects/entities/project.entity';
 import { ProjectBoardPlacement } from './projects/entities/project-board-placement.entity';
 import { ActivityModule } from './activity/activity.module';
 import { ActivityEvent } from './activity/entities/activity-event.entity';
+import { CollabModule } from './collab/collab.module';
+import { TaskCollaborator } from './collab/entities/task-collaborator.entity';
+import { ProjectCollaborator } from './collab/entities/project-collaborator.entity';
+import { CollabComment } from './collab/entities/collab-comment.entity';
 
 @Module({
   imports: [
@@ -93,6 +97,9 @@ import { ActivityEvent } from './activity/entities/activity-event.entity';
         Project,
         ProjectBoardPlacement,
         ActivityEvent,
+        TaskCollaborator,
+        ProjectCollaborator,
+        CollabComment,
       ],
       synchronize: process.env.NODE_ENV !== 'production', // в проде схему накатывают миграции (см. src/migrations)
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
@@ -119,6 +126,7 @@ import { ActivityEvent } from './activity/entities/activity-event.entity';
     BoardModule,
     ProjectsModule,
     ActivityModule,
+    CollabModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

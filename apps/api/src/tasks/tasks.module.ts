@@ -10,6 +10,7 @@ import { AchievementsModule } from '../achievements/achievements.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { RemindersModule } from '../reminders/reminders.module';
 import { ActivityModule } from '../activity/activity.module';
+import { CollabModule } from '../collab/collab.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ActivityModule } from '../activity/activity.module';
     NotificationsModule,
     RemindersModule,
     ActivityModule,
+    CollabModule,
   ],
   controllers: [TasksController],
   providers: [TasksService],

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, AlignLeft, CheckCircle2, Bell } from 'lucide-react';
 import { popLayer, listContainer, listItem, layoutTransition } from '../../lib/motion';
-import { Task, TaskPriority, TaskStatus, toDateStr, getTasksForDate, completionKey, applyDayOverride } from '../../lib/tasks';
+import { Task, TaskPriority, TaskStatus, toDateStr, getTasksForDate, completionKey, applyDayOverride, isSeriesTask } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
 import { TaskFormModal } from './task-form';
 import { useCurrentWeather, useDayWeather, weatherCodeToInfo } from '../../lib/weather';
@@ -13,6 +13,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useHolidays, getHolidayName } from '../../lib/holidays';
 import { Icon, hasIcon } from '../../lib/icons';
 import { Button, IconButton, EmptyState } from '../../components/ui';
+import { AvatarFramed } from '../AvatarFramed';
 import styles from './TaskList.module.scss';
 
 const DAY_SHORT = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
@@ -188,6 +189,20 @@ function TaskItem({ task, dateStr, dateLabel, hidePostpone, onToggle, onDelete, 
         )}
         {dateLabel && (
           <span className={styles.taskDateBadge}>{dateLabel}</span>
+        )}
+        {task.collaborators && task.collaborators.length > 0 && (
+          <span className={styles.collabStack} title={`Совместная задача · участников: ${task.collaborators.length}`}>
+            {task.collaborators.slice(0, 3).map(c => (
+              <AvatarFramed
+                key={c.id}
+                avatarUrl={c.avatarUrl}
+                displayName={c.displayName}
+                username={c.username}
+                frameId={null}
+                size={18}
+              />
+            ))}
+          </span>
         )}
         {task.tags?.slice(0, 2).map(tag => (
           <span key={tag.id} className={styles.taskTag} style={{ borderColor: tag.color }}>
@@ -546,6 +561,16 @@ export function TaskList({
             const { id, status, ...rest } = editingTask;
             void id; void status;
             onUpdate(editingTask.id, { ...rest, subtasks: sections }, editingTask.occurrenceDate);
+            // Реконсиляция «выполнено» по подзадачам (как в Доске/Коробке):
+            // все подзадачи отмечены → задача done; сняли одну → снова не done.
+            // Для серий per-day done живёт в dayOverrides — не трогаем здесь.
+            if (!isSeriesTask(editingTask)) {
+              const dateStr = editingTask.occurrenceDate ?? editingTask.date ?? toDateStr(selectedDate);
+              const items = sections.flatMap(s => s.items).filter(i => (i.kind ?? 'subtask') === 'subtask');
+              const allDone = items.length > 0 && items.every(i => i.done);
+              const isDone = completions.has(completionKey(editingTask.id, dateStr));
+              if (allDone !== isDone) onToggle(editingTask.id, dateStr);
+            }
           }}
         />
       )}

@@ -22,6 +22,10 @@ import { SubtaskSectionComp } from './SubtaskSection';
 import { MetaDropdowns } from './MetaDropdowns';
 import { ReminderDropdown } from './ReminderDropdown';
 import { registerPush } from '../../../lib/push';
+import { useCollab } from '../../../hooks/useCollab';
+import { useAuthStore } from '../../../store/authStore';
+import { CollaboratorsSection, type MemberChip } from '../../collab/CollaboratorsSection';
+import { CommentsSection } from '../../collab/CommentsSection';
 import styles from './TaskFormModal.module.scss';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -42,6 +46,10 @@ interface Props {
 
 export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, onDelete, onCreateTag, onSectionsLiveUpdate }: Props) {
   const isEdit      = !!task;
+  const me          = useAuthStore(s => s.user);
+  // Владелец задачи: для личных ownerId совпадает с me; для совместных — создатель.
+  const isOwner     = !task?.ownerId || task.ownerId === me?.id;
+  const collab      = useCollab('task', task?.id, isEdit);
   const initialDate = useMemo(() => toDateStr(date), [date]);
   const { draft, save: saveDraftFields, clear: clearDraft } = useTaskDraft(initialDate, isEdit);
 
@@ -256,6 +264,63 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     onClose();
   };
 
+  // ── Совместный режим: участники + комментарии под погодой ──────
+  const chips: MemberChip[] = useMemo(
+    () =>
+      collab.members.map(m => ({
+        id: m.id,
+        username: m.username,
+        displayName: m.displayName,
+        avatarUrl: m.avatarUrl,
+        selectedFrame: m.selectedFrame,
+        status: m.status,
+        isOwner: m.isOwner,
+        removable: isOwner && !m.isOwner,
+      })),
+    [collab.members, isOwner],
+  );
+  const excludeIds = useMemo(
+    () => [...chips.map(c => c.id), me?.id ?? ''],
+    [chips, me],
+  );
+
+  const renderCollab = () => {
+    if (!isEdit) return null;
+    return (
+      <div className={styles.collabWrap}>
+        <CollaboratorsSection
+          chips={chips}
+          canInvite={isOwner}
+          entityType="task"
+          entityId={task!.id}
+          excludeIds={excludeIds}
+          onInvite={u => collab.invite.mutate(u.username)}
+          onRemove={id => collab.removeMember.mutate(id)}
+          inviting={collab.invite.isPending}
+          canLeave={!isOwner}
+          onLeave={async () => {
+            if (!me) return;
+            // Сначала дожидаемся выхода (инвалидация ['tasks']), затем закрываем —
+            // иначе размонтирование оборвёт onSuccess и задача останется в списке.
+            await collab.removeMember.mutateAsync(me.id);
+            onClose();
+          }}
+        />
+        {collab.acceptedCount > 0 && (
+          <CommentsSection
+            comments={collab.comments}
+            meId={me?.id}
+            ownerId={collab.ownerId}
+            onSend={t => collab.addComment.mutate(t)}
+            onDelete={id => collab.removeComment.mutate(id)}
+            sending={collab.addComment.isPending}
+            loading={collab.commentsLoading}
+          />
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
     <Modal
@@ -267,9 +332,10 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
       ariaLabel={isEdit ? 'Редактирование задачи' : 'Новая задача'}
       className={styles.taskModalChrome}
     >
-        {/* Mobile-only: weather at the very top */}
+        {/* Mobile-only: weather at the very top + collab panel under it */}
         <div className={styles.weatherTopMobile}>
           <WeatherWidget date={isEdit ? toDateStr(date) : formDate} variant="compact" onOpenDetail={setWeatherDetailDate} />
+          {renderCollab()}
         </div>
 
         {/* ── Top: иконка + название + описание + мета-поля + теги ── */}
@@ -451,16 +517,17 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               </button>
             </div>
 
-            {/* RIGHT – погода */}
+            {/* RIGHT – погода + участники/комментарии */}
             <div className={styles.right}>
               <WeatherWidget date={isEdit ? toDateStr(date) : formDate} variant="full" onOpenDetail={setWeatherDetailDate} />
+              {renderCollab()}
             </div>
           </div>
 
           {/* Footer */}
           <div className={styles.footer}>
             <div className={styles.footerLeft}>
-              {isEdit && onDelete && (
+              {isEdit && onDelete && isOwner && (
                 <Button
                   variant="ghost"
                   size="sm"

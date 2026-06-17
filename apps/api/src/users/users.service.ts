@@ -158,6 +158,39 @@ export class UsersService {
     });
   }
 
+  /** Поиск пользователей по началу username (автокомплит @упоминаний). */
+  async searchByUsername(
+    q: string,
+    excludeId: string,
+    limit = 8,
+  ): Promise<
+    {
+      id: string;
+      username: string;
+      displayName: string | null;
+      avatarUrl: string | null;
+      selectedFrame: string | null;
+    }[]
+  > {
+    const term = q.trim().replace(/^@/, '');
+    if (!term) return [];
+    return this.usersRepository
+      .createQueryBuilder('u')
+      .select([
+        'u.id',
+        'u.username',
+        'u.displayName',
+        'u.avatarUrl',
+        'u.selectedFrame',
+      ])
+      .where('u.isActive = :active', { active: true })
+      .andWhere('u.id != :excludeId', { excludeId })
+      .andWhere('u.username ILIKE :term', { term: `${term}%` })
+      .orderBy('u.username', 'ASC')
+      .limit(limit)
+      .getMany();
+  }
+
   // ── Найти по email (с паролем – для аутентификации) ───────
   async findByEmailWithPassword(email: string): Promise<User | null> {
     return this.usersRepository

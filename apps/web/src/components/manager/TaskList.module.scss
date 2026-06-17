@@ -479,6 +479,16 @@
   font-weight: var(--weight-medium);
 }
 
+.collabStack {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  > * + * {
+    margin-left: -7px;
+  }
+}
+
 .taskTag {
   display: flex;
   align-items: center;

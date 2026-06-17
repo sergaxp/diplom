@@ -1,5 +1,6 @@
 import { api } from './api';
 import { BoardColumn, DEFAULT_COLUMNS } from './board';
+import type { CollabMember } from './collab';
 
 export type { BoardColumn };
 
@@ -24,6 +25,10 @@ export interface Project {
   position: number;
   createdAt?: string;
   updatedAt?: string;
+  /** id владельца проекта (совместный режим; удалять может только он) */
+  ownerId?: string;
+  /** Принятые участники совместного проекта */
+  collaborators?: CollabMember[];
 }
 
 /** Позиция карточки на доске проекта (todo/doing/custom; done = Task.completedAt). */

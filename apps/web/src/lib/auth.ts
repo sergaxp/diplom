@@ -66,6 +66,8 @@ export const saveAuth = (result: AuthResult) => {
 
 export const clearAuth = () => {
   tokens.clear();
+  // Рвём live-сокет, чтобы он не остался в комнате прошлого пользователя.
+  void import('./collabSocket').then((m) => m.disconnectCollabSocket());
 };
 
 export const hasToken = () => tokens.getAccess() !== null;

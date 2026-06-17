@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowLeft, Pencil, Trash2, Plus, LayoutGrid, BarChart3, Flag, X, Archive } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Plus, LayoutGrid, BarChart3, Flag, X, Archive, MessageCircle } from 'lucide-react';
 import { Task, SubtaskItem } from '../../../lib/tasks';
 import type { Tag } from '../../../lib/tags';
 import {
@@ -13,6 +13,10 @@ import { Button } from '../../ui';
 import { ProjectBoardView } from './ProjectBoardView';
 import { ProjectStats } from './ProjectStats';
 import { ProjectDeleteModal } from './ProjectDeleteModal';
+import { useCollab } from '../../../hooks/useCollab';
+import { useAuthStore } from '../../../store/authStore';
+import { CollaboratorsSection, type MemberChip } from '../../collab/CollaboratorsSection';
+import { CommentsSection } from '../../collab/CommentsSection';
 import styles from './ProjectDetail.module.scss';
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -49,7 +53,10 @@ interface Props {
 
 export function ProjectDetail(props: Props) {
   const { project, tasks, userTags, isAdmin, onBack, onEdit, onUpdateProject, onDeleteProject } = props;
-  const [tab, setTab] = useState<'board' | 'stats'>('board');
+  const me = useAuthStore(s => s.user);
+  const collab = useCollab('project', project.id, true);
+  const isOwner = !project.ownerId || project.ownerId === me?.id;
+  const [tab, setTab] = useState<'board' | 'stats' | 'comments'>('board');
   const [activeMilestone, setActiveMilestone] = useState<string | 'all' | 'none'>('all');
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [addingMilestone, setAddingMilestone] = useState(false);
@@ -67,6 +74,22 @@ export function ProjectDetail(props: Props) {
     [project.milestones],
   );
   const accent = project.color ?? 'var(--brand)';
+
+  const chips: MemberChip[] = useMemo(
+    () =>
+      collab.members.map(m => ({
+        id: m.id,
+        username: m.username,
+        displayName: m.displayName,
+        avatarUrl: m.avatarUrl,
+        selectedFrame: m.selectedFrame,
+        status: m.status,
+        isOwner: m.isOwner,
+        removable: isOwner && !m.isOwner,
+      })),
+    [collab.members, isOwner],
+  );
+  const excludeIds = useMemo(() => [...chips.map(c => c.id), me?.id ?? ''], [chips, me]);
 
   const addMilestone = (name: string) => {
     const next: ProjectMilestone = { id: uid(), name: name.trim(), position: milestones.length };
@@ -94,8 +117,32 @@ export function ProjectDetail(props: Props) {
           </div>
           <div className={styles.headActions}>
             <Button variant="secondary" size="sm" leftIcon={<Pencil size={14} />} onClick={onEdit}>Изменить</Button>
-            <Button variant="ghost" size="sm" leftIcon={<Trash2 size={14} />} onClick={() => setDeleteOpen(true)}>Удалить</Button>
+            {isOwner && (
+              <Button variant="ghost" size="sm" leftIcon={<Trash2 size={14} />} onClick={() => setDeleteOpen(true)}>Удалить</Button>
+            )}
           </div>
+        </div>
+
+        {/* Участники проекта */}
+        <div className={styles.collabRow}>
+          <CollaboratorsSection
+            chips={chips}
+            canInvite={isOwner}
+            entityType="project"
+            entityId={project.id}
+            excludeIds={excludeIds}
+            onInvite={u => collab.invite.mutate(u.username)}
+            onRemove={id => collab.removeMember.mutate(id)}
+            inviting={collab.invite.isPending}
+            canLeave={!isOwner}
+            onLeave={async () => {
+              if (!me) return;
+              // Дожидаемся выхода (инвалидация ['projects']/['tasks']), потом уходим —
+              // иначе размонтирование оборвёт onSuccess и проект/задачи останутся.
+              await collab.removeMember.mutateAsync(me.id);
+              onBack();
+            }}
+          />
         </div>
 
         {(tag || dl) && (
@@ -130,6 +177,9 @@ export function ProjectDetail(props: Props) {
             </button>
             <button type="button" className={[styles.tabBtn, tab === 'stats' ? styles.tabActive : ''].join(' ')} onClick={() => setTab('stats')}>
               <BarChart3 size={14} /> Статистика
+            </button>
+            <button type="button" className={[styles.tabBtn, tab === 'comments' ? styles.tabActive : ''].join(' ')} onClick={() => setTab('comments')}>
+              <MessageCircle size={14} /> Обсуждение
             </button>
           </div>
 
@@ -190,8 +240,20 @@ export function ProjectDetail(props: Props) {
           onDeleteSubtask={props.onDeleteSubtask}
           onCreateTag={props.onCreateTag}
         />
-      ) : (
+      ) : tab === 'stats' ? (
         <ProjectStats project={project} tasks={tasks} />
+      ) : (
+        <div className={styles.commentsPane}>
+          <CommentsSection
+            comments={collab.comments}
+            meId={me?.id}
+            ownerId={collab.ownerId}
+            onSend={t => collab.addComment.mutate(t)}
+            onDelete={id => collab.removeComment.mutate(id)}
+            sending={collab.addComment.isPending}
+            loading={collab.commentsLoading}
+          />
+        </div>
       )}
 
       <ProjectDeleteModal

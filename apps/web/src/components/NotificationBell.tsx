@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Bell } from 'lucide-react';
 import { popLayer } from '../lib/motion';
 import { notificationsApi, NotificationItem } from '../lib/notifications';
+import { collabApi, type CollabEntity } from '../lib/collab';
+import { getCollabSocket } from '../lib/collabSocket';
 import { Icon, hasIcon } from '../lib/icons';
 import { Button, EmptyState, Skeleton } from './ui';
 import styles from './NotificationBell.module.scss';
@@ -65,6 +67,26 @@ export function NotificationBell() {
       qc.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
+
+  // Ответ на приглашение в совместный режим прямо из уведомления.
+  const respondMut = useMutation({
+    mutationFn: (v: { entityType: CollabEntity; entityId: string; accept: boolean }) =>
+      collabApi.respond(v.entityType, v.entityId, v.accept),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+
+  // Живое обновление колокольчика: сервер шлёт `notify` в личную комнату.
+  useEffect(() => {
+    const socket = getCollabSocket();
+    if (!socket) return;
+    const onNotify = () => qc.invalidateQueries({ queryKey: ['notifications'] });
+    socket.on('notify', onNotify);
+    return () => { socket.off('notify', onNotify); };
+  }, [qc]);
 
   useEffect(() => {
     if (!open) return;
@@ -153,6 +175,40 @@ export function NotificationBell() {
                     <span className={styles.itemTitle}>{n.title}</span>
                     {n.body && <span className={styles.itemText}>{n.body}</span>}
                     <span className={styles.itemTime}>{relativeTime(n.createdAt)}</span>
+                    {n.kind === 'collab_invite' &&
+                      n.actionState === 'pending' &&
+                      n.data?.entityType &&
+                      n.data?.entityId && (
+                        <div className={styles.itemActions}>
+                          <Button
+                            variant="accent"
+                            size="sm"
+                            loading={respondMut.isPending}
+                            onClick={() =>
+                              respondMut.mutate({
+                                entityType: n.data!.entityType!,
+                                entityId: n.data!.entityId!,
+                                accept: true,
+                              })
+                            }
+                          >
+                            Принять
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              respondMut.mutate({
+                                entityType: n.data!.entityType!,
+                                entityId: n.data!.entityId!,
+                                accept: false,
+                              })
+                            }
+                          >
+                            Отклонить
+                          </Button>
+                        </div>
+                      )}
                   </div>
                   <button
                     type="button"

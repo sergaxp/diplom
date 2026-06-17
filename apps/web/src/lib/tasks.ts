@@ -1,6 +1,7 @@
 import { api } from './api';
 import type { Tag } from './tags';
 import type { AchievementResult } from './achievements';
+import type { CollabMember } from './collab';
 
 export type { Tag };
 
@@ -161,6 +162,10 @@ export interface Task {
   occurrenceDate?: string;
   /** Runtime-only: текст предупреждения о погоде (когда показано с допуском или после ухудшения) */
   weatherWarning?: string;
+  /** id владельца задачи (для совместного режима; удалять может только он) */
+  ownerId?: string;
+  /** Принятые участники совместной задачи (для аватаров и комментариев) */
+  collaborators?: CollabMember[];
 }
 
 export function toDateStr(d: Date): string {
@@ -946,6 +951,8 @@ interface ApiTask {
   projectId?: string | null;
   milestoneId?: string | null;
   completedAt?: string | null;
+  ownerId?: string;
+  collaborators?: CollabMember[];
 }
 
 function fromApi(t: ApiTask): Task {
@@ -970,6 +977,8 @@ function fromApi(t: ApiTask): Task {
     projectId: t.projectId ?? null,
     milestoneId: t.milestoneId ?? null,
     completedAt: t.completedAt ?? null,
+    ownerId: t.ownerId ?? t.userId,
+    collaborators: t.collaborators ?? [],
     status: 'pending',
   };
 }

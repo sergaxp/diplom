@@ -1,6 +1,23 @@
 import { api } from './api';
+import type { CollabEntity } from './collab';
 
-export type NotificationKind = 'achievement' | 'task_completed' | 'daily_bonus' | 'purchase' | 'reminder';
+export type NotificationKind =
+  | 'achievement'
+  | 'task_completed'
+  | 'daily_bonus'
+  | 'purchase'
+  | 'reminder'
+  | 'collab_invite'
+  | 'collab_accepted'
+  | 'collab_comment';
+
+export type NotificationActionState = 'pending' | 'accepted' | 'declined';
+
+export interface NotificationData {
+  entityType?: CollabEntity;
+  entityId?: string;
+  inviteId?: string;
+}
 
 export interface NotificationItem {
   id: string;
@@ -11,6 +28,8 @@ export interface NotificationItem {
   icon: string | null;
   color: string | null;
   read: boolean;
+  data?: NotificationData | null;
+  actionState?: NotificationActionState | null;
   createdAt: string;
 }
 

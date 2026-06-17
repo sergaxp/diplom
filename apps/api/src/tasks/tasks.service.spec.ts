@@ -9,6 +9,7 @@ import { AchievementsService } from '../achievements/achievements.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RemindersService } from '../reminders/reminders.service';
 import { ActivityService } from '../activity/activity.service';
+import { CollabService } from '../collab/collab.service';
 
 type RepoMock<T extends ObjectLiteral> = jest.Mocked<Repository<T>>;
 
@@ -33,6 +34,7 @@ describe('TasksService', () => {
   let notifications: jest.Mocked<NotificationsService>;
   let reminders: jest.Mocked<RemindersService>;
   let activity: jest.Mocked<ActivityService>;
+  let collab: jest.Mocked<CollabService>;
 
   beforeEach(() => {
     taskRepo = repoMock<Task>();
@@ -53,6 +55,12 @@ describe('TasksService', () => {
     activity = {
       log: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<ActivityService>;
+    collab = {
+      canEditTask: jest.fn().mockResolvedValue({ id: 't1', userId: 'u1' }),
+      accessibleTaskIds: jest.fn().mockResolvedValue(['t1', 't2']),
+      attachTaskCollaborators: jest.fn().mockResolvedValue(undefined),
+      emitTaskChanged: jest.fn(),
+    } as unknown as jest.Mocked<CollabService>;
 
     service = new TasksService(
       taskRepo,
@@ -63,6 +71,7 @@ describe('TasksService', () => {
       notifications,
       reminders,
       activity,
+      collab,
     );
   });
 
@@ -151,7 +160,10 @@ describe('TasksService', () => {
 
       const res = await service.toggleCompletion('u1', 't1', '2026-06-08');
 
-      expect(completionRepo.remove).toHaveBeenCalledWith(existing);
+      expect(completionRepo.delete).toHaveBeenCalledWith({
+        taskId: 't1',
+        date: '2026-06-08',
+      });
       expect(res).toEqual({ done: false, newAchievements: [] });
       expect(notifications.create).not.toHaveBeenCalled();
     });

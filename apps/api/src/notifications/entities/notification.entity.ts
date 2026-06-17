@@ -11,7 +11,20 @@ export type NotificationKind =
   | 'task_completed'
   | 'daily_bonus'
   | 'purchase'
-  | 'reminder';
+  | 'reminder'
+  | 'collab_invite'
+  | 'collab_accepted'
+  | 'collab_comment';
+
+/** Состояние actionable-уведомления (приглашение в совместный режим). */
+export type NotificationActionState = 'pending' | 'accepted' | 'declined';
+
+/** Payload для перехода/действия из уведомления (совместный режим). */
+export interface NotificationData {
+  entityType?: 'task' | 'project';
+  entityId?: string;
+  inviteId?: string;
+}
 
 @Entity('notifications')
 @Index(['userId', 'createdAt'])
@@ -41,6 +54,17 @@ export class Notification {
 
   @Column({ type: 'boolean', default: false })
   read: boolean;
+
+  /** Payload для actionable-уведомлений (entityType/entityId/inviteId). */
+  @Column({ type: 'json', nullable: true, default: null })
+  data: NotificationData | null;
+
+  /**
+   * Для приглашений (kind='collab_invite'): pending — показываем кнопки
+   * «Принять/Отклонить»; accepted/declined — кнопки скрыты. null для обычных.
+   */
+  @Column({ type: 'varchar', length: 16, nullable: true, default: null })
+  actionState: NotificationActionState | null;
 
   // timestamptz: иначе naive-время трактуется клиентом как локальное и «уезжает»
   // на величину часового пояса пользователя (баг «N часов назад» сразу после создания).

@@ -45,7 +45,7 @@ export function WorkspaceSwitcher({ active, onChange, boxBadge = 0 }: Props) {
           onClick={() => onChange(id)}
           aria-current={active === id ? 'page' : undefined}
         >
-          <Icon size={19} strokeWidth={1.75} className={styles.icon} />
+          <Icon size={18} strokeWidth={1.75} className={styles.icon} />
           <span className={styles.label}>{label}</span>
           {soon && <span className={styles.soon}>скоро</span>}
           {id === 'box' && boxBadge > 0 && (

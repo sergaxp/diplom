@@ -10,6 +10,7 @@ import { ProjectBoardPlacement } from './entities/project-board-placement.entity
 import { Task } from '../tasks/entities/task.entity';
 import { TasksService } from '../tasks/tasks.service';
 import { ActivityService } from '../activity/activity.service';
+import { CollabService } from '../collab/collab.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { SetProjectPlacementDto } from './dto/set-project-placement.dto';
@@ -34,6 +35,7 @@ export class ProjectsService {
     private readonly taskRepo: Repository<Task>,
     private readonly tasksService: TasksService,
     private readonly activity: ActivityService,
+    private readonly collab: CollabService,
   ) {}
 
   private columnsOf(project: Project): BoardColumn[] {
@@ -48,11 +50,16 @@ export class ProjectsService {
     return project;
   }
 
-  findAll(userId: string): Promise<Project[]> {
-    return this.projectRepo.find({
-      where: { userId },
+  async findAll(userId: string): Promise<Project[]> {
+    // Свои + совместные (accepted) проекты.
+    const ids = await this.collab.accessibleProjectIds(userId);
+    if (!ids.length) return [];
+    const projects = await this.projectRepo.find({
+      where: { id: In(ids) },
       order: { position: 'ASC', createdAt: 'ASC' },
     });
+    await this.collab.attachProjectCollaborators(projects);
+    return projects;
   }
 
   async create(userId: string, dto: CreateProjectDto): Promise<Project> {
@@ -87,7 +94,7 @@ export class ProjectsService {
     id: string,
     dto: UpdateProjectDto,
   ): Promise<Project> {
-    const project = await this.owned(userId, id);
+    const project = await this.collab.canEditProject(userId, id);
     if (dto.name !== undefined) project.name = dto.name;
     if (dto.description !== undefined)
       project.description = dto.description ?? null;
@@ -99,7 +106,10 @@ export class ProjectsService {
     if (dto.position !== undefined) project.position = dto.position;
     if (dto.milestones !== undefined)
       project.milestones = dto.milestones ?? null;
-    return this.projectRepo.save(project);
+    const saved = await this.projectRepo.save(project);
+    this.collab.emitProjectChanged(saved.id);
+    await this.collab.attachProjectCollaborators([saved]);
+    return saved;
   }
 
   // ── Доска проекта ──────────────────────────────────────────────
@@ -107,7 +117,7 @@ export class ProjectsService {
     userId: string,
     id: string,
   ): Promise<{ columns: BoardColumn[]; placements: ProjectBoardPlacement[] }> {
-    const project = await this.owned(userId, id);
+    const project = await this.collab.canEditProject(userId, id);
     const placements = await this.placementRepo.find({
       where: { projectId: id },
     });
@@ -119,7 +129,7 @@ export class ProjectsService {
     id: string,
     dto: UpdateProjectColumnsDto,
   ): Promise<{ columns: BoardColumn[] }> {
-    const project = await this.owned(userId, id);
+    const project = await this.collab.canEditProject(userId, id);
     const cols = dto.columns;
     if (cols.length > MAX_PROJECT_COLUMNS) {
       throw new BadRequestException('Слишком много колонок');
@@ -139,7 +149,7 @@ export class ProjectsService {
     id: string,
     dto: SetProjectPlacementDto,
   ): Promise<ProjectBoardPlacement> {
-    const project = await this.owned(userId, id);
+    const project = await this.collab.canEditProject(userId, id);
     const existing = await this.placementRepo.findOne({
       where: { projectId: id, cardKey: dto.cardKey },
     });
@@ -151,7 +161,9 @@ export class ProjectsService {
     if (existing) {
       existing.columnId = dto.columnId;
       existing.position = dto.position;
-      return this.placementRepo.save(existing);
+      const saved = await this.placementRepo.save(existing);
+      this.collab.emitProjectChanged(id);
+      return saved;
     }
     const created = this.placementRepo.create({
       projectId: id,
@@ -159,7 +171,9 @@ export class ProjectsService {
       columnId: dto.columnId,
       position: dto.position,
     });
-    return this.placementRepo.save(created);
+    const saved = await this.placementRepo.save(created);
+    this.collab.emitProjectChanged(id);
+    return saved;
   }
 
   /** Записать перемещение карточки задачи между колонками доски проекта. */
@@ -172,7 +186,8 @@ export class ProjectsService {
     if (!cardKey.startsWith('task:')) return; // группы/прочее не логируем
     const taskId = cardKey.slice('task:'.length);
     const [task, column] = [
-      await this.taskRepo.findOne({ where: { id: taskId, userId } }),
+      // Задачу в совместном проекте мог создать другой участник — ищем по id.
+      await this.taskRepo.findOne({ where: { id: taskId } }),
       this.columnsOf(project).find((c) => c.id === columnId),
     ];
     if (!task) return;
@@ -194,7 +209,7 @@ export class ProjectsService {
     from: Date,
     to: Date,
   ): Promise<Awaited<ReturnType<ActivityService['projectActivity']>>> {
-    await this.owned(userId, id);
+    await this.collab.canEditProject(userId, id);
     return this.activity.projectActivity(userId, id, from, to);
   }
 
@@ -203,8 +218,9 @@ export class ProjectsService {
     id: string,
     cardKey: string,
   ): Promise<void> {
-    await this.owned(userId, id);
+    await this.collab.canEditProject(userId, id);
     await this.placementRepo.delete({ projectId: id, cardKey });
+    this.collab.emitProjectChanged(id);
   }
 
   // ── Удаление проекта ──────────────────────────────────────────

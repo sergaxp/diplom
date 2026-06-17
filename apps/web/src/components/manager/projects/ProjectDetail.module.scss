@@ -13,6 +13,19 @@
   gap: var(--space-3);
 }
 
+// ── Совместный режим ──────────────────────────────────────────
+.collabRow {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-light);
+}
+
+.commentsPane {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: var(--space-4);
+}
+
 .headTop {
   display: flex;
   align-items: flex-start;

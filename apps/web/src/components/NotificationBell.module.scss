@@ -2,6 +2,13 @@
   position: relative;
 }
 
+// Кнопки «Принять/Отклонить» в уведомлении-приглашении
+.itemActions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
 .bellBtn {
   position: relative;
   width: 32px;

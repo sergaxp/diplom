@@ -16,6 +16,8 @@ export interface PushPayload {
   doneUrl?: string;
   snoozeToken?: string;
   doneToken?: string;
+  /** id пользователя-инициатора действия — клиент не показывает тост автору. */
+  fromUserId?: string;
 }
 
 /** Форма подписки, присылаемая фронтом (`PushSubscription.toJSON()`). */

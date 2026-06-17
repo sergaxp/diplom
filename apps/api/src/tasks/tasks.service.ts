@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import {
   Task,
   TaskRepeat,
@@ -20,6 +20,7 @@ import {
 import { NotificationsService } from '../notifications/notifications.service';
 import { RemindersService } from '../reminders/reminders.service';
 import { ActivityService } from '../activity/activity.service';
+import { CollabService } from '../collab/collab.service';
 
 @Injectable()
 export class TasksService {
@@ -35,18 +36,24 @@ export class TasksService {
     private readonly notifications: NotificationsService,
     private readonly reminders: RemindersService,
     private readonly activity: ActivityService,
+    private readonly collab: CollabService,
   ) {}
 
   findGlobalTasks(): Promise<GlobalTask[]> {
     return this.globalTaskRepo.find({ order: { date: 'ASC' } });
   }
 
-  findAll(userId: string): Promise<Task[]> {
-    return this.taskRepo.find({
-      where: { userId },
+  async findAll(userId: string): Promise<Task[]> {
+    // Доступные задачи = свои + совместные (accepted) + задачи доступных проектов.
+    const ids = await this.collab.accessibleTaskIds(userId);
+    if (!ids.length) return [];
+    const tasks = await this.taskRepo.find({
+      where: { id: In(ids) },
       relations: ['tags'],
       order: { date: 'ASC', time: 'ASC' },
     });
+    await this.collab.attachTaskCollaborators(tasks);
+    return tasks;
   }
 
   async create(
@@ -110,12 +117,17 @@ export class TasksService {
       },
     );
 
+    // Создатель — владелец; участников пока нет (приглашения добавятся позже).
+    (saved as unknown as { ownerId: string }).ownerId = saved.userId;
+    (saved as unknown as { collaborators: unknown[] }).collaborators = [];
     return { task: saved, newAchievements };
   }
 
   async update(userId: string, id: string, dto: UpdateTaskDto): Promise<Task> {
+    // Доступ: владелец или принятый участник (задачи/проекта). Бросает Forbidden иначе.
+    await this.collab.canEditTask(userId, id);
     const task = await this.taskRepo.findOne({
-      where: { id, userId },
+      where: { id },
       relations: ['tags'],
     });
     if (!task) throw new NotFoundException('Задача не найдена');
@@ -146,8 +158,9 @@ export class TasksService {
     if (dto.endDate !== undefined) task.endDate = dto.endDate ?? null;
 
     if (dto.tagIds !== undefined) {
+      // Теги совместной задачи резолвим против владельца (теги принадлежат ему).
       task.tags = dto.tagIds.length
-        ? await this.tagsService.findByIds(userId, dto.tagIds)
+        ? await this.tagsService.findByIds(task.userId, dto.tagIds)
         : [];
     }
     if (dto.icon !== undefined) task.icon = dto.icon ?? null;
@@ -186,6 +199,9 @@ export class TasksService {
       });
     }
 
+    // Живой инвалидейт для участников, открывших задачу.
+    this.collab.emitTaskChanged(saved.id);
+    await this.collab.attachTaskCollaborators([saved]);
     return saved;
   }
 
@@ -209,12 +225,15 @@ export class TasksService {
     taskId: string,
     date: string,
   ): Promise<{ done: boolean; newAchievements: AchievementDef[] }> {
+    // Доступ: владелец/участник. Отметка ОБЩАЯ — ключ (taskId, date) без userId.
+    await this.collab.canEditTask(userId, taskId);
     const existing = await this.completionRepo.findOne({
-      where: { taskId, userId, date },
+      where: { taskId, date },
     });
 
     if (existing) {
-      await this.completionRepo.remove(existing);
+      await this.completionRepo.delete({ taskId, date });
+      this.collab.emitTaskChanged(taskId);
       const task = await this.taskRepo.findOne({ where: { id: taskId } });
       if (task) {
         await this.activity.log({
@@ -231,6 +250,7 @@ export class TasksService {
     await this.completionRepo.save(
       this.completionRepo.create({ taskId, userId, date }),
     );
+    this.collab.emitTaskChanged(taskId);
 
     // Загружаем задачу для контекста достижений и уведомления
     const task = await this.taskRepo.findOne({ where: { id: taskId } });
@@ -266,7 +286,13 @@ export class TasksService {
   }
 
   async getCompletionKeys(userId: string): Promise<string[]> {
-    const rows = await this.completionRepo.find({ where: { userId } });
+    // Отметки ОБЩИЕ: возвращаем по всем доступным задачам (свои + совместные),
+    // независимо от того, кто из участников поставил галочку.
+    const ids = await this.collab.accessibleTaskIds(userId);
+    if (!ids.length) return [];
+    const rows = await this.completionRepo.find({
+      where: { taskId: In(ids) },
+    });
     return rows.map((c) => `${c.taskId}__${c.date}`);
   }
 }

@@ -96,8 +96,7 @@ export const SHOP_ITEMS: ShopItemDef[] = [
     id: 'heatmap_profile',
     kind: 'showcase',
     title: 'Heatmap активности',
-    description:
-      'Карта активности (как у GitHub) в витрине вашего профиля. После покупки добавьте блок «Активность» в настройках витрин.',
+    description: 'Карта активности в витрине вашего профиля.',
     price: P_SHOWCASE,
     meta: { showcaseType: 'heatmap' },
   },
