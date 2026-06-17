@@ -1,7 +1,10 @@
 import { api } from './api';
 import { User } from './auth';
 
-export type ShopItemKind = 'frame' | 'background';
+export type ShopItemKind = 'frame' | 'background' | 'showcase';
+
+/** id товара-витрины «Heatmap активности профиля». */
+export const HEATMAP_SHOWCASE_ITEM = 'heatmap_profile';
 
 export interface ShopItem {
   id: string;
@@ -26,25 +29,41 @@ export const shopApi = {
     api.post<BuyResult>(`/shop/buy/${itemId}`).then((r) => r.data),
 };
 
-/** Цвет рамки по её ID – для отрисовки на фронте без обращения к API. */
-export const FRAME_COLORS: Record<string, string> = {
-  frame_blue:   '#3b82f6',
-  frame_green:  '#22c55e',
-  frame_red:    '#ef4444',
-  frame_yellow: '#eab308',
+/**
+ * Декорации аватара — зеркало рамок из apps/api/src/shop/shop.definitions.ts.
+ * Нужно, чтобы отрисовать выбранную декорацию на публичном профиле без обращения
+ * к /shop/items (он требует авторизации). Два вида:
+ *  - `image`  — PNG-оверлей «как у Discord» (public/decorations/*.png);
+ *  - `css`    — программный анимированный эффект кольца (rgb / blackhole).
+ */
+export interface FrameDeco {
+  label: string;
+  /** PNG-оверлей вокруг аватара. */
+  image?: string;
+  /** Программный CSS-эффект кольца. */
+  css?: 'rgb' | 'blackhole';
+  /** Акцентный цвет — для подписей/свотчей витрины. */
+  color: string;
+  /** Размер оверлея относительно диска аватара (по умолчанию 1.5). */
+  scale?: number;
+  /** Есть ли у декорации анимация (метка «анимир.» + поведение по hover). */
+  animated?: boolean;
+  /** Тип анимации картинки-оверлея (для css-декораций не используется). */
+  anim?: 'flame' | 'blink' | 'drip';
+}
+
+export const FRAME_DECOS: Record<string, FrameDeco> = {
+  frame_phoenix:   { label: 'Феникс',       image: '/decorations/phoenix.png',  color: '#f97316', scale: 1.5, animated: true, anim: 'flame' },
+  frame_darkeye:   { label: 'Тёмное око',   image: '/decorations/darkeye.png',  color: '#7c3aed', scale: 1.5, animated: true, anim: 'blink' },
+  frame_tears:     { label: 'В слезах',     image: '/decorations/in_tears.png', color: '#38bdf8', scale: 1.5, animated: true, anim: 'drip' },
+  frame_chains:    { label: 'Цепи',         image: '/decorations/chains.png',   color: '#9ca3af', scale: 1.5 },
+  frame_rgb:       { label: 'RGB',          css: 'rgb',       color: '#22d3ee', animated: true },
+  frame_blackhole: { label: 'Чёрная дыра',  css: 'blackhole', color: '#a855f7', animated: true },
 };
 
-/** Человекочитаемые названия рамок – для витрины «Любимые рамки». */
-export const FRAME_LABELS: Record<string, string> = {
-  frame_blue:   'Синяя рамка',
-  frame_green:  'Зелёная рамка',
-  frame_red:    'Красная рамка',
-  frame_yellow: 'Жёлтая рамка',
-};
-
-export function getFrameColor(id: string | null | undefined): string | null {
+export function getFrameDeco(id: string | null | undefined): FrameDeco | null {
   if (!id) return null;
-  return FRAME_COLORS[id] ?? null;
+  return FRAME_DECOS[id] ?? null;
 }
 
 /**

@@ -8,6 +8,7 @@ export type TaskStatus   = 'done' | 'missed' | 'pending';
 export type TaskRepeat   = 'none' | 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'yearly' | 'custom';
 export type TaskType     = 'normal' | 'mandatory' | 'event';
 export type TaskPriority = 'none' | 'low' | 'medium' | 'high';
+export type TaskDifficulty = 'easy' | 'normal' | 'hard';
 
 export interface CyclicSegment {
   active: number;  // дней с задачами
@@ -129,11 +130,14 @@ export interface Task {
   endTime?: string;    // HH:MM – конец (для многочасовых)
   endDate?: string;    // YYYY-MM-DD – конец (для многодневных)
   status: TaskStatus;
-  date: string;        // YYYY-MM-DD – начало
+  /** YYYY-MM-DD – начало. null/undefined = задача-бэклог проекта (без даты) */
+  date?: string | null;
   repeat: TaskRepeat;
   repeatUntil?: string;
   type: TaskType;
   priority?: TaskPriority;
+  /** Сложность задачи (визуальный индикатор; дефолт normal) */
+  difficulty?: TaskDifficulty;
   repeatConfig?: RepeatConfig | null;
   isGlobal?: boolean;
   icon?: string | null;
@@ -143,6 +147,16 @@ export interface Task {
   reminders?: ReminderRule[] | null;
   /** Переопределения по дням (для многодневных/повторяющихся задач) */
   dayOverrides?: Record<string, DayOverride> | null;
+  /** Проект, к которому относится задача (null — личная задача) */
+  projectId?: string | null;
+  /** id этапа (вехи) внутри проекта */
+  milestoneId?: string | null;
+  /** ISO-время выполнения задачи-как-целого (done на доске проекта/прогресс) */
+  completedAt?: string | null;
+  /** ISO-время создания (приходит с бэкенда) */
+  createdAt?: string;
+  /** ISO-время последнего изменения (для расчёта «застрявших» задач) */
+  updatedAt?: string;
   /** Runtime-only: дата конкретного вхождения, к которому относится этот объект (YYYY-MM-DD) */
   occurrenceDate?: string;
   /** Runtime-only: текст предупреждения о погоде (когда показано с допуском или после ухудшения) */
@@ -280,6 +294,7 @@ export function getSeriesDays(
   dayOverrides?: Record<string, DayOverride> | null,
 ): string[] {
   const start = task.date;
+  if (!start) return [];          // задача без даты (бэклог) — нет дней серии
   const isDeleted = (ds: string) => dayOverrides?.[ds]?.deleted === true;
   const days: string[] = [];
   if (task.endDate && task.endDate >= start) {
@@ -350,7 +365,7 @@ function addYearsClamped(d: Date, years: number): Date {
 
 /** Возвращает диапазон [start, end] вхождения многодневной задачи, в котором лежит dateStr, или null */
 export function getMultiDayOccurrence(task: Task, dateStr: string): { startStr: string; endStr: string } | null {
-  if (!task.endDate) return null;
+  if (!task.endDate || !task.date) return null;
 
   const checkDate = new Date(dateStr    + 'T00:00:00');
   const origStart = new Date(task.date  + 'T00:00:00');
@@ -482,7 +497,8 @@ function isRepeatMultiDayActiveOn(task: Task, dateStr: string): boolean {
   const occ = getMultiDayOccurrence(task, dateStr);
   if (!occ) return false;
   // Исключаем оригинальное вхождение – его обрабатывает caller отдельно
-  return occ.startStr > task.date;
+  // (occ != null ⇒ task.date задан, см. getMultiDayOccurrence)
+  return occ.startStr > (task.date ?? '');
 }
 
 function evaluateCyclicPattern(pattern: CyclicSegment[], diffDays: number): boolean {
@@ -778,6 +794,9 @@ export function getTasksForDate(
   for (const task of allTasks) {
     let isMatch = false;
 
+    // Бэклог-задача проекта (без даты) никогда не попадает в конкретный день.
+    if (!task.date) continue;
+
     // Переопределение этого дня: если день помечен удалённым — пропускаем
     const dayOv = task.dayOverrides?.[dateStr];
     if (dayOv?.deleted) continue;
@@ -915,14 +934,18 @@ export function getMockTemp(date: Date): number {
 
 interface ApiTask {
   id: string; userId: string; title: string; description: string | null;
-  date: string; time: string | null; endTime: string | null; endDate: string | null;
+  date: string | null; time: string | null; endTime: string | null; endDate: string | null;
   repeat: string; repeatUntil: string | null; type: string; priority: string;
+  difficulty?: string | null;
   repeatConfig: object | null;
   icon: string | null;
   tags?: Tag[];
   subtasks?: object[] | null;
   reminders?: object[] | null;
   dayOverrides?: Record<string, object> | null;
+  projectId?: string | null;
+  milestoneId?: string | null;
+  completedAt?: string | null;
 }
 
 function fromApi(t: ApiTask): Task {
@@ -932,17 +955,21 @@ function fromApi(t: ApiTask): Task {
     time:    t.time    ?? undefined,
     endTime: t.endTime ?? undefined,
     endDate: t.endDate ?? undefined,
-    date: t.date,
+    date: t.date ?? null,
     repeat: t.repeat as TaskRepeat,
     repeatUntil: t.repeatUntil ?? undefined,
     type: t.type as TaskType,
     priority: (t.priority ?? 'none') as TaskPriority,
+    difficulty: (t.difficulty ?? 'normal') as TaskDifficulty,
     repeatConfig: (t.repeatConfig ?? null) as RepeatConfig | null,
     icon: t.icon ?? null,
     tags: t.tags ?? [],
     subtasks: (t.subtasks ?? null) as SubtaskSection[] | null,
     reminders: (t.reminders ?? null) as ReminderRule[] | null,
     dayOverrides: (t.dayOverrides ?? null) as Record<string, DayOverride> | null,
+    projectId: t.projectId ?? null,
+    milestoneId: t.milestoneId ?? null,
+    completedAt: t.completedAt ?? null,
     status: 'pending',
   };
 }
@@ -970,14 +997,18 @@ export const tasksApi = {
     api.post<ApiTask & { newAchievements?: AchievementResult[] }>('/tasks', {
       title:       p.title,
       description: p.description ?? null,
-      date:        p.date,
+      date:        p.date         ?? null,
       time:        p.time        ?? null,
+      projectId:   p.projectId    ?? null,
+      milestoneId: p.milestoneId  ?? null,
+      completedAt: p.completedAt  ?? null,
       endTime:     p.endTime     ?? null,
       endDate:     p.endDate     ?? null,
       repeat:      p.repeat,
       repeatUntil: p.repeatUntil ?? null,
       type:        p.type,
       priority:     p.priority     ?? 'none',
+      difficulty:   p.difficulty   ?? 'normal',
       repeatConfig: p.repeatConfig ?? null,
       icon:         p.icon         ?? null,
       tagIds:       p.tags?.map(t => t.id) ?? [],
@@ -990,14 +1021,18 @@ export const tasksApi = {
     api.patch<ApiTask>(`/tasks/${id}`, {
       title:        p.title,
       description:  p.description  ?? null,
-      date:         p.date,
+      date:         p.date         ?? null,
       time:         p.time         ?? null,
+      projectId:    p.projectId    ?? null,
+      milestoneId:  p.milestoneId  ?? null,
+      completedAt:  p.completedAt  ?? null,
       endTime:      p.endTime      ?? null,
       endDate:      p.endDate      ?? null,
       repeat:       p.repeat,
       repeatUntil:  p.repeatUntil  ?? null,
       type:         p.type,
       priority:     p.priority     ?? 'none',
+      difficulty:   p.difficulty   ?? 'normal',
       repeatConfig: p.repeatConfig ?? null,
       icon:         p.icon         ?? null,
       tagIds:       p.tags?.map(t => t.id) ?? [],

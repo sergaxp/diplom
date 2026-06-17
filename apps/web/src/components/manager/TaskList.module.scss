@@ -107,8 +107,9 @@
     z-index: var(--z-sticky);
     background: var(--bg-base);
     padding: var(--space-2) 0;
-    // Непрозрачная полоса над шапкой перекрывает верхний отступ .root,
-    // чтобы прокручиваемые задачи не «просвечивали» над прилипшей шапкой.
+    // Полоса над шапкой перекрывает верхний отступ .root, чтобы прокручиваемые
+    // задачи не «просвечивали» над прилипшей шапкой. Градиент (плотный у шапки →
+    // прозрачный сверху), чтобы НЕ обрезать жёстко низ карточки предыдущей секции.
     &::before {
       content: '';
       position: absolute;
@@ -116,7 +117,7 @@
       right: 0;
       bottom: 100%;
       height: var(--space-6);
-      background: var(--bg-base);
+      background: linear-gradient(to top, var(--bg-base) 55%, transparent);
     }
   }
 }
@@ -186,10 +187,12 @@
   }
 }
 
-// Локальный stacking — поднять строку с открытым меню над соседними
+// Локальный stacking — поднять строку с открытым меню НАД соседними строками
+// и над прилипающими шапками секций (--z-sticky: 20), иначе секция
+// «Обязательные впереди» перекрывает выпадающее меню и низ карточки.
 .taskMenuOpen {
   position: relative;
-  z-index: 5;
+  z-index: 30;
 }
 
 .task_done {
@@ -208,24 +211,78 @@
   padding-left: calc(var(--space-3) + 3px);
 }
 
-.taskMandatoryDay {
-  box-shadow: inset 3px 0 0 var(--error);
-  padding-left: calc(var(--space-3) + 3px);
-}
-
+// Цвета согласованы с PRIORITY_COLORS (дропдаун приоритета в форме задачи):
+// high #ef4444, medium #3b82f6, low #eab308.
 .taskPriorityHigh {
-  box-shadow: inset 3px 0 0 var(--error);
+  box-shadow: inset 3px 0 0 rgb(239 68 68);
   padding-left: calc(var(--space-3) + 3px);
 }
 
 .taskPriorityMedium {
-  box-shadow: inset 3px 0 0 var(--accent);
+  box-shadow: inset 3px 0 0 rgb(59 130 246);
   padding-left: calc(var(--space-3) + 3px);
 }
 
 .taskPriorityLow {
-  box-shadow: inset 3px 0 0 var(--brand-muted);
+  box-shadow: inset 3px 0 0 rgb(234 179 8);
   padding-left: calc(var(--space-3) + 3px);
+}
+
+// ── Дедлайн — мягкое свечение по цвету сайта (--error), БЕЗ левой обводки ──
+// Свечение идёт сверху/справа/снизу, чтобы не перекрывать цветную полосу
+// приоритета у левого края. На отдельном ::after.
+.taskDeadline::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 -2px 5px -3px color-mix(in srgb, var(--error) 50%, transparent),
+    0 2px 5px -3px color-mix(in srgb, var(--error) 50%, transparent),
+    4px 0 8px -3px color-mix(in srgb, var(--error) 58%, transparent);
+  animation: task-deadline-glow 3.4s var(--ease-default) infinite;
+}
+
+@keyframes task-deadline-glow {
+  0%, 100% { opacity: 0.8; }
+  50%      { opacity: 1; }
+}
+
+// ── Сложность — морской градиент справа (лёгкая/тяжёлая) ──
+// Градиент = фон самой карточки (не отдельный слой) → всегда под контентом,
+// без stacking-контекстов. Цвет — токены темы сайта (--info / --error).
+// Движущийся слой даёт еле заметную «волну»; статичный — мягкую подложку.
+.diffEasy,
+.diffHard {
+  background-repeat: no-repeat;
+  background-position: 92% 0, 0 0;
+  background-size: 220% 100%, 100% 100%;
+  background-color: var(--bg-surface);
+  animation: task-sea 7.5s ease-in-out infinite;
+}
+
+.diffEasy {
+  background-image:
+    linear-gradient(90deg, transparent 50%, color-mix(in srgb, var(--info) 13%, transparent) 125%),
+    linear-gradient(90deg, transparent 40%, color-mix(in srgb, var(--info) 16%, transparent) 130%);
+}
+
+.diffHard {
+  background-image:
+    linear-gradient(90deg, transparent 50%, color-mix(in srgb, var(--error) 13%, transparent) 125%),
+    linear-gradient(90deg, transparent 40%, color-mix(in srgb, var(--error) 16%, transparent) 130%);
+}
+
+@keyframes task-sea {
+  0%, 100% { background-position: 92% 0, 0 0; }
+  50%      { background-position: 56% 0, 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taskDeadline::after,
+  .diffEasy,
+  .diffHard { animation: none; }
 }
 
 .globalIcon {
@@ -292,6 +349,29 @@
 .checkboxMissed {
   background: var(--text-muted);
   border-color: var(--text-muted);
+}
+
+// Галочка/крестик — поверх фонового колокольчика.
+.checkMark {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+// Колокольчик напоминания — фоном за галочкой, полупрозрачный, не мешает тапу.
+.reminderBell {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 11px;
+  height: 11px;
+  color: var(--brand);
+  opacity: 0.34;
+  pointer-events: none;
+  z-index: 0;
 }
 
 // ── Task body (button reset) ──────────────────────────────────

@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Plus, X, Check } from 'lucide-react';
 import { BoardColumn as Col, BoardCard, toUnits, columnColor, COLUMN_COLORS } from '../../../lib/board';
+import { useAnchoredDropdown } from '../../../hooks/useAnchoredDropdown';
 import { SortableCard, GroupUnit, DragData } from './BoardCard';
 import styles from './BoardView.module.scss';
 
@@ -34,17 +36,12 @@ export function BoardColumn({ column, cards, onRename, onSetColor, onDelete, onO
   const [addText, setAddText] = useState('');
   const addRef = useRef<HTMLInputElement>(null);
 
-  const [paletteOpen, setPaletteOpen] = useState(false);
-  const paletteRef = useRef<HTMLDivElement>(null);
+  // Палитра цвета — в портале с fixed-позиционированием, чтобы её не обрезал
+  // overflow:hidden колонки (актуально для пустых/коротких колонок).
+  const palette = useAnchoredDropdown<HTMLButtonElement, HTMLDivElement>({ width: 140, height: 90 });
 
   useEffect(() => { if (editing) nameRef.current?.select(); }, [editing]);
   useEffect(() => { if (adding) addRef.current?.focus(); }, [adding]);
-  useEffect(() => {
-    if (!paletteOpen) return;
-    const h = (e: MouseEvent) => { if (paletteRef.current && !paletteRef.current.contains(e.target as Node)) setPaletteOpen(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [paletteOpen]);
 
   const color = columnColor(column);
 
@@ -69,20 +66,21 @@ export function BoardColumn({ column, cards, onRename, onSetColor, onDelete, onO
   return (
     <div ref={setNodeRef} style={style} className={[styles.column, isDragging ? styles.columnDragging : ''].join(' ')}>
       <div className={styles.columnHead} {...listeners} {...attributes}>
-        <div className={styles.colorWrap} ref={paletteRef}>
-          <button type="button" className={styles.colorDot} style={{ background: color }}
-            onPointerDown={e => e.stopPropagation()} onClick={() => setPaletteOpen(v => !v)}
+        <div className={styles.colorWrap}>
+          <button ref={palette.anchorRef} type="button" className={styles.colorDot} style={{ background: color }}
+            onPointerDown={e => e.stopPropagation()} onClick={palette.toggle}
             aria-label="Цвет колонки" />
-          {paletteOpen && (
-            <div className={styles.palette}>
+          {palette.open && palette.pos && createPortal(
+            <div ref={palette.popoverRef} className={styles.palette}
+              style={{ position: 'fixed', top: palette.pos.top, left: palette.pos.left, zIndex: 1000 }}>
               {COLUMN_COLORS.map(hex => (
                 <button key={hex} type="button"
                   className={[styles.swatch, hex === color ? styles.swatchActive : ''].join(' ')}
                   style={{ background: hex }}
-                  onPointerDown={e => e.stopPropagation()}
-                  onClick={() => { onSetColor(hex); setPaletteOpen(false); }} />
+                  onClick={() => { onSetColor(hex); palette.close(); }} />
               ))}
-            </div>
+            </div>,
+            document.body,
           )}
         </div>
 

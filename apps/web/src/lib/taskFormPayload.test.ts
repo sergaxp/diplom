@@ -20,6 +20,7 @@ function mkState(over: Partial<TaskFormState> = {}): TaskFormState {
     repeatUntil: '',
     type: 'normal',
     priority: 'none',
+    difficulty: 'normal',
     repeatConfig: null,
     selectedTag: undefined,
     sections: [],
@@ -96,6 +97,13 @@ describe('buildTaskPayload — repeat / repeatUntil', () => {
   it('keeps repeatUntil when repeat is set, hasEnd is true and a date is given', () => {
     const payload = buildTaskPayload(mkState({ repeat: 'daily', hasEnd: true, repeatUntil: '2026-07-01' }));
     expect(payload.repeatUntil).toBe('2026-07-01');
+  });
+});
+
+describe('buildTaskPayload — difficulty', () => {
+  it('passes difficulty through', () => {
+    expect(buildTaskPayload(mkState({ difficulty: 'hard' })).difficulty).toBe('hard');
+    expect(buildTaskPayload(mkState()).difficulty).toBe('normal');
   });
 });
 

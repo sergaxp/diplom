@@ -1,4 +1,4 @@
-export type ShopItemKind = 'frame' | 'background';
+export type ShopItemKind = 'frame' | 'background' | 'showcase';
 
 export interface ShopItemDef {
   id: string;
@@ -7,54 +7,99 @@ export interface ShopItemDef {
   description: string;
   price: number;
   /** Дополнительные данные товара, специфичные для kind.
-   *  Для frame – цвет CSS (meta.color).
+   *  Для frame – декорация аватара: картинка-оверлей (meta.image) ЛИБО
+   *    программный CSS-эффект (meta.css='rgb'|'blackhole'); meta.color — акцент.
    *  Для background – CSS-градиент (meta.gradient) или видео (meta.video) и
    *  флаг анимации (meta.animated='1'). */
   meta?: Record<string, string>;
 }
 
 // Ценовые тиры (в монетах). Монеты копятся за достижения (1–4) и daily-вход (+1).
-const P_FRAME = 3; // рамки аватара
+const P_DECO = 5; // картинка-декорация аватара (PNG-оверлей)
+const P_DECO_ANIM = 8; // анимированная CSS-декорация (rgb / чёрная дыра)
 const P_BG = 5; // статичный градиент-фон
 const P_BG_ANIM = 8; // анимированный градиент-фон
 const P_BG_STEAM = 10; // анимированный фон
+const P_SHOWCASE = 12; // блок-витрина профиля (heatmap активности)
 
 // База Steam CDN для анимированных фонов профиля (публично хотлинкаемые .webm)
 const STEAM =
   'https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/items';
 
 export const SHOP_ITEMS: ShopItemDef[] = [
+  // ── Декорации аватара: картинки-оверлеи (как у Discord) ──
   {
-    id: 'frame_blue',
+    id: 'frame_chains',
     kind: 'frame',
-    title: 'Синяя рамка',
-    description: 'Декоративная синяя рамка вокруг аватара',
-    price: P_FRAME,
-    meta: { color: '#3b82f6' },
+    title: 'Цепи',
+    description: 'Тяжёлые цепи, оплетающие аватар',
+    price: P_DECO,
+    meta: { image: '/decorations/chains.png', color: '#9ca3af' },
   },
   {
-    id: 'frame_green',
+    id: 'frame_phoenix',
     kind: 'frame',
-    title: 'Зелёная рамка',
-    description: 'Декоративная зелёная рамка вокруг аватара',
-    price: P_FRAME,
-    meta: { color: '#22c55e' },
+    title: 'Феникс',
+    description: 'Огненный феникс, обвивающий аватар',
+    price: P_DECO,
+    meta: {
+      image: '/decorations/phoenix.png',
+      color: '#f97316',
+      animated: '1',
+    },
   },
   {
-    id: 'frame_red',
+    id: 'frame_darkeye',
     kind: 'frame',
-    title: 'Красная рамка',
-    description: 'Декоративная красная рамка вокруг аватара',
-    price: P_FRAME,
-    meta: { color: '#ef4444' },
+    title: 'Тёмное око',
+    description: 'Мистическое тёмное око вокруг аватара',
+    price: P_DECO,
+    meta: {
+      image: '/decorations/darkeye.png',
+      color: '#7c3aed',
+      animated: '1',
+    },
   },
   {
-    id: 'frame_yellow',
+    id: 'frame_tears',
     kind: 'frame',
-    title: 'Жёлтая рамка',
-    description: 'Декоративная жёлтая рамка вокруг аватара',
-    price: P_FRAME,
-    meta: { color: '#eab308' },
+    title: 'В слезах',
+    description: 'Печальная декорация со слезами',
+    price: P_DECO,
+    meta: {
+      image: '/decorations/in_tears.png',
+      color: '#38bdf8',
+      animated: '1',
+    },
+  },
+
+  // ── Декорации аватара: программные анимированные CSS-кольца ──
+  {
+    id: 'frame_rgb',
+    kind: 'frame',
+    title: 'RGB',
+    description: 'Переливающееся RGB-кольцо вокруг аватара',
+    price: P_DECO_ANIM,
+    meta: { css: 'rgb', color: '#22d3ee', animated: '1' },
+  },
+  {
+    id: 'frame_blackhole',
+    kind: 'frame',
+    title: 'Чёрная дыра',
+    description: 'Пульсирующая чёрная дыра вокруг аватара',
+    price: P_DECO_ANIM,
+    meta: { css: 'blackhole', color: '#a855f7', animated: '1' },
+  },
+
+  // ── Витрины профиля ──
+  {
+    id: 'heatmap_profile',
+    kind: 'showcase',
+    title: 'Heatmap активности',
+    description:
+      'Карта активности (как у GitHub) в витрине вашего профиля. После покупки добавьте блок «Активность» в настройках витрин.',
+    price: P_SHOWCASE,
+    meta: { showcaseType: 'heatmap' },
   },
 
   // ── Фоны-градиенты ──

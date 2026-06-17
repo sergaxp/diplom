@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Bell } from 'lucide-react';
-import { Task, TaskRepeat, TaskType, TaskPriority, RepeatConfig, SubtaskSection, ReminderRule, toDateStr, getSeriesDays } from '../../../lib/tasks';
+import { Task, TaskRepeat, TaskType, TaskPriority, TaskDifficulty, RepeatConfig, SubtaskSection, ReminderRule, toDateStr, getSeriesDays } from '../../../lib/tasks';
 import { DatePickerPopup, getDateButtonLabel } from '../date-picker';
 import { RepeatConfigModal } from '../repeat-config';
 import { TimePickerField } from '../TimePickerField';
@@ -11,7 +11,7 @@ import { Modal, Button, IconButton } from '../../../components/ui';
 import { Icon, hasIcon } from '../../../lib/icons';
 import { buildTaskPayload } from '../../../lib/taskFormPayload';
 import {
-  PRIORITY_LABELS, PRIORITY_COLORS, TYPE_LABELS, TYPE_COLORS,
+  PRIORITY_LABELS, PRIORITY_COLORS, DIFFICULTY_LABELS, DIFFICULTY_COLORS,
 } from './constants';
 import { useTaskDraft } from '../../../hooks/useTaskDraft';
 import { useAnchoredDropdown } from '../../../hooks/useAnchoredDropdown';
@@ -57,8 +57,11 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   const [repeat,        setRepeat]        = useState<TaskRepeat>(task?.repeat ?? draft?.repeat ?? 'none');
   const [hasEnd,        setHasEnd]        = useState(task ? !!task.repeatUntil : (draft?.hasEnd ?? false));
   const [repeatUntil,   setRepeatUntil]   = useState(task?.repeatUntil ?? draft?.repeatUntil ?? '');
-  const [type,          setType]          = useState<TaskType>(task?.type ?? draft?.type ?? 'normal');
+  // «Дедлайн» = type 'mandatory'; «Эвент» (админ) = type 'event'; иначе 'normal'.
+  const [deadline,      setDeadline]      = useState(task ? task.type === 'mandatory' : (draft?.deadline ?? draft?.type === 'mandatory'));
+  const [isEvent,       setIsEvent]       = useState(task?.type === 'event');
   const [priority,      setPriority]      = useState<TaskPriority>(task?.priority ?? draft?.priority ?? 'none');
+  const [difficulty,    setDifficulty]    = useState<TaskDifficulty>(task?.difficulty ?? draft?.difficulty ?? 'normal');
   const [repeatConfig,    setRepeatConfig]    = useState<RepeatConfig | null>(task?.repeatConfig ?? null);
   const [selectedTagId,   setSelectedTagId]   = useState<string | null>(task?.tags?.[0]?.id ?? draft?.tagId ?? null);
   const [reminders,       setReminders]       = useState<ReminderRule[]>(task?.reminders ?? draft?.reminders ?? []);
@@ -79,9 +82,9 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     anchorRef: priorityBtnRef, popoverRef: priorityDropRef,
   } = useAnchoredDropdown();
   const {
-    open: typeDropOpen, pos: typeDropPos, toggle: toggleTypeDrop, close: closeTypeDrop,
-    anchorRef: typeBtnRef, popoverRef: typeDropRef,
-  } = useAnchoredDropdown();
+    open: difficultyDropOpen, pos: difficultyDropPos, toggle: toggleDifficultyDrop, close: closeDifficultyDrop,
+    anchorRef: difficultyBtnRef, popoverRef: difficultyDropRef,
+  } = useAnchoredDropdown({ height: 240 });
   const {
     open: reminderDropOpen, pos: reminderDropPos, toggle: toggleReminderDrop,
     anchorRef: reminderBtnRef, popoverRef: reminderDropRef,
@@ -126,7 +129,8 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
 
   const clearForm = () => {
     setTitle(''); setDescription(''); setTime(''); setEndTime('');
-    setPriority('none'); setRepeat('none'); setHasEnd(false); setRepeatUntil('');
+    setPriority('none'); setDifficulty('normal'); setDeadline(false); setIsEvent(false);
+    setRepeat('none'); setHasEnd(false); setRepeatUntil('');
     setRepeatConfig(null); setSelectedTagId(null);
     setFormDate(initialDate);
     setMultiDay(false);
@@ -136,15 +140,18 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     clearDraft();
   };
 
+  // Тип задачи выводится из флагов: «Эвент» (админ) → event, «Дедлайн» → mandatory.
+  const type: TaskType = isEvent ? 'event' : deadline ? 'mandatory' : 'normal';
+
   useEffect(() => {
     if (isEdit || !title.trim()) return;
     saveDraftFields({
       title, description, time, endTime, multiDay, endDate,
-      repeat, hasEnd, repeatUntil, type, priority, tagId: selectedTagId,
+      repeat, hasEnd, repeatUntil, type, priority, difficulty, deadline, tagId: selectedTagId,
       sections, reminders,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, description, time, endTime, multiDay, endDate, repeat, hasEnd, repeatUntil, type, priority, selectedTagId, sections, reminders, isEdit, initialDate]);
+  }, [title, description, time, endTime, multiDay, endDate, repeat, hasEnd, repeatUntil, type, priority, difficulty, deadline, selectedTagId, sections, reminders, isEdit, initialDate]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -156,11 +163,18 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
 
   const handleSelectPriority = (p: TaskPriority) => { setPriority(p); closePriorityDrop(); };
 
-  const handleSelectType = (t: TaskType) => {
-    setType(t);
-    if (t === 'mandatory' && multiDay) { setMultiDay(false); setEndDate(''); }
-    closeTypeDrop();
+  const handleSelectDifficulty = (d: TaskDifficulty) => { setDifficulty(d); closeDifficultyDrop(); };
+
+  // Дедлайн (mandatory) несовместим с многодневностью — гасим её при включении.
+  const toggleDeadline = () => {
+    setDeadline(prev => {
+      const next = !prev;
+      if (next && multiDay) { setMultiDay(false); setEndDate(''); }
+      return next;
+    });
   };
+
+  const toggleEvent = () => setIsEvent(prev => !prev);
 
   const handleSelectTag = (id: string | null) => {
     if (id === null) setSelectedTagId(null);
@@ -225,10 +239,6 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
       return next;
     });
 
-  const availableTypes: TaskType[] = isAdmin
-    ? ['normal', 'mandatory', 'event']
-    : ['normal', 'mandatory'];
-
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     const trimmed = title.trim();
@@ -239,7 +249,7 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
 
     const payload = buildTaskPayload({
       title, description, formDate, multiDay, endDate, time, endTime,
-      repeat, hasEnd, repeatUntil, type, priority, repeatConfig, selectedTag, sections, reminders,
+      repeat, hasEnd, repeatUntil, type, priority, difficulty, repeatConfig, selectedTag, sections, reminders,
     });
 
     onSave(payload);
@@ -389,16 +399,17 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               ) : '# Тег'}
             </button>
 
-            {/* Тип задачи */}
+            {/* Сложность (+ дедлайн/эвент внутри дропдауна) */}
             <button
-              ref={typeBtnRef}
+              ref={difficultyBtnRef}
               type="button"
-              className={[styles.metaBtn, type !== 'normal' ? styles.metaBtnColored : ''].join(' ')}
-              style={TYPE_COLORS[type] ? { color: TYPE_COLORS[type], borderColor: TYPE_COLORS[type] + '55' } : {}}
-              onClick={toggleTypeDrop}
+              className={[styles.metaBtn, difficulty !== 'normal' ? styles.metaBtnColored : ''].join(' ')}
+              style={difficulty !== 'normal' ? { color: DIFFICULTY_COLORS[difficulty], borderColor: DIFFICULTY_COLORS[difficulty] + '55' } : {}}
+              onClick={toggleDifficultyDrop}
             >
-              {TYPE_COLORS[type] && <span className={styles.metaBtnDot} style={{ background: TYPE_COLORS[type] }} />}
-              {TYPE_LABELS[type]}
+              {difficulty !== 'normal' && <span className={styles.metaBtnDot} style={{ background: DIFFICULTY_COLORS[difficulty] }} />}
+              {DIFFICULTY_LABELS[difficulty]}
+              {deadline && <span className={styles.metaBtnFlag} title="Дедлайн">⚑</span>}
             </button>
 
             {/* Напоминание */}
@@ -485,12 +496,16 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
       priorityDropPos={priorityDropPos}
       priorityDropRef={priorityDropRef}
       onSelectPriority={handleSelectPriority}
-      type={type}
-      availableTypes={availableTypes}
-      typeDropOpen={typeDropOpen}
-      typeDropPos={typeDropPos}
-      typeDropRef={typeDropRef}
-      onSelectType={handleSelectType}
+      difficulty={difficulty}
+      difficultyDropOpen={difficultyDropOpen}
+      difficultyDropPos={difficultyDropPos}
+      difficultyDropRef={difficultyDropRef}
+      onSelectDifficulty={handleSelectDifficulty}
+      deadline={deadline}
+      isEvent={isEvent}
+      isAdmin={isAdmin}
+      onToggleDeadline={toggleDeadline}
+      onToggleEvent={toggleEvent}
       selectedTagId={selectedTagId}
       allTags={allTags}
       tagDropOpen={tagDropOpen}

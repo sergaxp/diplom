@@ -1,20 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, ArrowUp, ArrowDown, X, Check, Pencil } from 'lucide-react';
 import { Button, Card } from '../ui';
 import {
   ShowcaseBlock,
   ShowcaseType,
   SHOWCASE_LABELS,
+  showcaseApi,
   newShowcaseBlock,
 } from '../../lib/showcases';
+import { HEATMAP_SHOWCASE_ITEM } from '../../lib/shop';
 import { profileApi } from '../../lib/profile';
 import { useAuthStore } from '../../store/authStore';
 import styles from './profile.module.scss';
 
-const ALL_TYPES: ShowcaseType[] = ['stats', 'favorites', 'featuredPosts'];
+/** Базовые витрины доступны всем; heatmap — только после покупки в магазине. */
+const BASE_TYPES: ShowcaseType[] = ['stats', 'favorites', 'featuredPosts'];
 
 export function ShowcaseEditor({
   username,
@@ -28,6 +31,14 @@ export function ShowcaseEditor({
   const [open, setOpen] = useState(false);
   const [blocks, setBlocks] = useState<ShowcaseBlock[]>(current);
 
+  // Инвентарь владельца — определяет, доступна ли витрина-heatmap.
+  const { data: inventory = [] } = useQuery({
+    queryKey: ['profileInventory', username],
+    queryFn: () => showcaseApi.getInventory(username),
+    enabled: open,
+  });
+  const ownsHeatmap = inventory.includes(HEATMAP_SHOWCASE_ITEM);
+
   const saveMut = useMutation({
     mutationFn: () => profileApi.update({ showcases: blocks }),
     onSuccess: (u) => {
@@ -37,8 +48,11 @@ export function ShowcaseEditor({
     },
   });
 
+  const allTypes: ShowcaseType[] = ownsHeatmap
+    ? [...BASE_TYPES, 'heatmap']
+    : BASE_TYPES;
   const usedTypes = new Set(blocks.map((b) => b.type));
-  const available = ALL_TYPES.filter((t) => !usedTypes.has(t));
+  const available = allTypes.filter((t) => !usedTypes.has(t));
 
   const addBlock = (type: ShowcaseType) =>
     setBlocks((b) => [...b, newShowcaseBlock(type)]);

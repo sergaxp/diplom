@@ -28,6 +28,12 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
   },
   icons: {
+    // Логотип-сова во вкладке: SVG для современных браузеров +
+    // PNG-фоллбэк для тех, кто не рисует SVG-favicon (иначе серый квадрат).
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+    ],
     apple: '/apple-touch-icon.png',
   },
 };

@@ -5,7 +5,12 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
-import { TaskRepeat, TaskType, TaskPriority } from '../entities/task.entity';
+import {
+  TaskRepeat,
+  TaskType,
+  TaskPriority,
+  TaskDifficulty,
+} from '../entities/task.entity';
 
 // Manual partial – avoids @nestjs/mapped-types dependency
 export class UpdateTaskDto {
@@ -58,6 +63,10 @@ export class UpdateTaskDto {
   priority?: TaskPriority;
 
   @IsOptional()
+  @IsEnum(TaskDifficulty)
+  difficulty?: TaskDifficulty;
+
+  @IsOptional()
   @IsString({ each: true })
   tagIds?: string[];
 
@@ -73,4 +82,15 @@ export class UpdateTaskDto {
 
   @IsOptional()
   dayOverrides?: Record<string, object> | null;
+
+  @IsOptional()
+  @IsString()
+  projectId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  milestoneId?: string | null;
+
+  @IsOptional()
+  completedAt?: string | null;
 }

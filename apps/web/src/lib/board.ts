@@ -107,13 +107,20 @@ export function buildBoardCards(
   const valid = new Set(columns.map(c => c.id));
   const cards: BoardCard[] = [];
 
-  // Позиция (placement) — основной источник колонки (включая done), чтобы визуал
-  // не зависел от тайминга мутации выполнения. Нет позиции → выполненные в done,
-  // остальные в todo.
+  // Выполнение — приоритетный признак: выполненная карточка всегда в done (даже
+  // если сохранён placement в другой колонке — напр. отметили «выполнено» в списке
+  // слева, а карточка лежала в «Начатых»). Позицию в done сохраняем, только если
+  // placement уже указывает на done; иначе ставим в натуральном порядке. Не
+  // выполненная — по сохранённому placement, иначе в todo. Возврат в «Начатые» при
+  // снятии выполнения из списка обеспечивает явная запись placement (см. page.tsx).
   const resolve = (key: string, date: string, done: boolean, natural: number): { columnId: string; order: number } => {
     const pl = placements.get(placementKey(key, date));
-    if (pl && valid.has(pl.columnId)) return { columnId: pl.columnId, order: pl.position };
-    if (done) return { columnId: doneId, order: natural };
+    const placed = pl && valid.has(pl.columnId) ? pl : null;
+    if (done) {
+      if (placed && placed.columnId === doneId) return { columnId: doneId, order: placed.position };
+      return { columnId: doneId, order: natural };
+    }
+    if (placed) return { columnId: placed.columnId, order: placed.position };
     return { columnId: todoId, order: natural };
   };
 

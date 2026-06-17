@@ -14,13 +14,13 @@
   align-items: center;
   gap: var(--space-3);
   width: 100%;
-  padding: var(--space-2) var(--space-3);
+  padding: 10px 14px; // между исходным (8/12) и крупным (12/16) вариантами
   border: none;
   border-radius: var(--radius-md);
   background: none;
   cursor: pointer;
   font-family: inherit;
-  font-size: var(--text-base);
+  font-size: 16px; // между --text-base (15) и --text-md (17)
   font-weight: var(--weight-medium);
   color: var(--text-secondary);
   text-align: left;

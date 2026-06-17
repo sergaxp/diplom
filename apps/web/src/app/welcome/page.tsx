@@ -10,6 +10,7 @@ import {
 import { Header } from '../../components/Header';
 import { Button, Card, PageContainer } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
+import { useStaticTitle } from '../../hooks/useTabTitle';
 import { api } from '../../lib/api';
 import styles from './page.module.scss';
 
@@ -18,6 +19,7 @@ interface PublicStats { totalUsers: number; onlineUsers: number; registeredToday
 export default function Home() {
   const { user, ready } = useAuthStore();
   const router = useRouter();
+  useStaticTitle();
 
   useEffect(() => {
     if (ready && user) router.replace('/');

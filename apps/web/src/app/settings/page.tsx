@@ -12,6 +12,7 @@ import { Header } from '../../components/Header';
 import { AvatarFramed } from '../../components/AvatarFramed';
 import { useAuthStore } from '../../store/authStore';
 import { useAchievementStore } from '../../store/achievementStore';
+import { usePageTitle } from '../../hooks/useTabTitle';
 import { clearAuth, authApi } from '../../lib/auth';
 import { api } from '../../lib/api';
 import type { AchievementResult } from '../../lib/achievements';
@@ -46,6 +47,7 @@ export default function SettingsPage() {
   const { user, ready, setUser, logout } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
+  usePageTitle('Настройки');
 
   const [tab, setTab] = useState<TabId>('profile');
   const pushAchievement = useAchievementStore(s => s.push);

@@ -100,7 +100,7 @@ export class User {
   @Column({ type: 'timestamp', nullable: true, default: null })
   lastDailyBonusAt: Date | null;
 
-  /** ID экипированной рамки аватара (напр. 'frame_blue'); null = без рамки */
+  /** ID экипированной декорации аватара (напр. 'frame_phoenix'); null = без рамки */
   @Column({ type: 'varchar', length: 64, nullable: true, default: null })
   selectedFrame: string | null;
 

@@ -14,6 +14,13 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
+// Закреплённый хедер (напр. на странице профиля) — остаётся вверху при прокрутке.
+.sticky {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
 .logo {
   display: inline-flex;
   align-items: center;

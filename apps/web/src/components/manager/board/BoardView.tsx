@@ -110,7 +110,9 @@ export function BoardView(props: Props) {
   const boardTasks = useMemo<BoardTask[]>(() => {
     const occ = getTasksForDate(tasks, selectedDate, completions, condHolidayMap, condWeatherMap, { todayStr, weatherShownLock });
     const dayList = occ.map(o => ({ task: tasks.find(t => t.id === o.id) ?? o, date: selectedStr }));
-    const future = tasks.filter(t => t.date > selectedStr && t.type === 'mandatory').map(t => ({ task: t, date: t.date }));
+    const future = tasks
+      .filter(t => t.type === 'mandatory' && !!t.date && t.date > selectedStr)
+      .map(t => ({ task: t, date: t.date as string }));
     return [...dayList, ...future];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tasks, selectedStr, todayStr, completions, holData, dayWeatherData, weatherShownLock]);

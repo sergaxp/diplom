@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
 import { authApi, saveAuth } from '../../lib/auth';
 import { useAuthStore } from '../../store/authStore';
+import { useStaticTitle } from '../../hooks/useTabTitle';
 import { Button, Input } from '../../components/ui';
 import { OwlMark } from '../../components/OwlMark';
 import { GoogleSignInButton } from '../../components/GoogleSignInButton';
@@ -58,6 +59,7 @@ export default function AuthPage() {
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [serverError, setServerError] = useState('');
   const router  = useRouter();
+  useStaticTitle();
   const setUser = useAuthStore((s) => s.setUser);
   const ready   = useAuthStore((s) => s.ready);
   const user    = useAuthStore((s) => s.user);

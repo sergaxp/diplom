@@ -61,14 +61,15 @@ export function nextOccurrenceStr(task: Task, todayStr: string): string {
   if (isSeriesTask(task)) {
     const days = getSeriesDays(task, task.dayOverrides);
     const upcoming = days.find(d => d >= todayStr);
-    return upcoming ?? days[days.length - 1] ?? task.date;
+    return upcoming ?? days[days.length - 1] ?? task.date ?? '';
   }
-  return task.date;
+  return task.date ?? '';
 }
 
 /** Статус задачи. Однозначен для одиночных; серии считаем активными. */
 export function deriveBoxStatus(task: Task, completions: Set<string>, todayStr: string): BoxStatus {
   if (isSeriesTask(task)) return 'active';
+  if (!task.date) return 'active';      // бэклог без даты — не просрочен
   const done = completions.has(completionKey(task.id, task.date));
   if (done) return 'done';
   return task.date < todayStr ? 'overdue' : 'active';
@@ -111,8 +112,9 @@ export function matchesFilters(
   // Только серии
   if (f.repeatOnly && !isSeriesTask(task)) return false;
 
-  // Период (перекрытие диапазонов)
+  // Период (перекрытие диапазонов): бэклог без даты под фильтр периода не подходит
   if (f.dateFrom || f.dateTo) {
+    if (!task.date) return false;
     const start = task.date;
     const end = task.endDate
       ?? (task.repeat !== 'none' ? (task.repeatUntil ?? '9999-12-31') : task.date);

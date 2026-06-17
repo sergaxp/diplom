@@ -6,8 +6,10 @@ import { Trophy, Coins, Zap, FileText, Frame as FrameIcon } from 'lucide-react';
 import { Card } from '../ui';
 import { showcaseApi, ShowcaseBlock, SHOWCASE_LABELS } from '../../lib/showcases';
 import { postsApi } from '../../lib/posts';
-import { FRAME_COLORS, FRAME_LABELS } from '../../lib/shop';
+import { FRAME_DECOS } from '../../lib/shop';
 import { PublicProfile } from '../../lib/profile';
+import { activityApi } from '../../lib/activity';
+import { HeatmapGrid } from '../manager/heatmap/HeatmapGrid';
 import styles from './profile.module.scss';
 
 export function Showcase({
@@ -23,7 +25,25 @@ export function Showcase({
       {block.type === 'stats' && <ShowcaseStats username={profile.username} />}
       {block.type === 'favorites' && <ShowcaseFavorites username={profile.username} />}
       {block.type === 'featuredPosts' && <ShowcaseFeaturedPosts profile={profile} />}
+      {block.type === 'heatmap' && <ShowcaseHeatmap username={profile.username} />}
     </Card>
+  );
+}
+
+/** Профильный heatmap показываем за последние ~4 месяца (≈18 недель). */
+const PROFILE_HEATMAP_WEEKS = 18;
+
+function ShowcaseHeatmap({ username }: { username: string }) {
+  const { data } = useQuery({
+    queryKey: ['profileActivity', username],
+    queryFn: () => activityApi.getUserActivity(username),
+  });
+  return (
+    <HeatmapGrid
+      days={data?.days ?? []}
+      weeks={PROFILE_HEATMAP_WEEKS}
+      caption="Активность за 4 месяца"
+    />
   );
 }
 
@@ -60,24 +80,34 @@ function ShowcaseFavorites({ username }: { username: string }) {
     queryFn: () => showcaseApi.getInventory(username),
   });
 
-  const frames = itemIds.filter((id) => id in FRAME_COLORS);
+  const frames = itemIds.filter((id) => id in FRAME_DECOS);
   if (frames.length === 0) {
     return <p className={styles.mutedSmall}>Нет купленных предметов.</p>;
   }
 
   return (
     <div className={styles.favGrid}>
-      {frames.map((id) => (
-        <div key={id} className={styles.favItem} title={FRAME_LABELS[id] ?? id}>
-          <span
-            className={styles.favSwatch}
-            style={{ background: `linear-gradient(135deg, ${FRAME_COLORS[id]}, ${FRAME_COLORS[id]}66)` }}
-          >
-            <FrameIcon size={20} strokeWidth={1.75} />
-          </span>
-          <span className={styles.favLabel}>{FRAME_LABELS[id] ?? id}</span>
-        </div>
-      ))}
+      {frames.map((id) => {
+        const deco = FRAME_DECOS[id];
+        return (
+          <div key={id} className={styles.favItem} title={deco.label}>
+            {deco.image ? (
+              <span className={styles.favSwatch}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- декоративный PNG из public/ */}
+                <img src={deco.image} alt="" className={styles.favSwatchImg} />
+              </span>
+            ) : (
+              <span
+                className={styles.favSwatch}
+                style={{ background: `linear-gradient(135deg, ${deco.color}, ${deco.color}66)` }}
+              >
+                <FrameIcon size={20} strokeWidth={1.75} />
+              </span>
+            )}
+            <span className={styles.favLabel}>{deco.label}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }

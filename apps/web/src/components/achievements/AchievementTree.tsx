@@ -89,6 +89,23 @@ export function AchievementTree({ achievements }: Props) {
     clampToBounds(next);
   };
 
+  // Колесо мыши обрабатываем нативным слушателем с { passive: false }: React
+  // вешает onWheel пассивно, из-за чего e.preventDefault() игнорируется и вместе
+  // с зумом прокручивалась страница за деревом. Через ref берём свежий zoomTo.
+  const zoomRef = useRef(zoomTo);
+  zoomRef.current = zoomTo;
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const onWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+      const factor = Math.exp(-e.deltaY * 0.0015);
+      zoomRef.current(scale.get() * factor);
+    };
+    viewport.addEventListener('wheel', onWheelNative, { passive: false });
+    return () => viewport.removeEventListener('wheel', onWheelNative);
+  }, [scale]);
+
   // Корневое достижение всегда в центре окна при открытии дерева.
   useEffect(() => {
     const id = requestAnimationFrame(() => {
@@ -102,13 +119,6 @@ export function AchievementTree({ achievements }: Props) {
     return () => cancelAnimationFrame(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Масштаб колесом мыши (десктоп) — относительно центра окна
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const factor = Math.exp(-e.deltaY * 0.0015);
-    zoomTo(scale.get() * factor);
-  };
 
   // Масштаб щипком двух пальцев (мобильные устройства) — тоже от центра окна
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -139,7 +149,6 @@ export function AchievementTree({ achievements }: Props) {
       <div
         className={styles.viewport}
         ref={viewportRef}
-        onWheel={handleWheel}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

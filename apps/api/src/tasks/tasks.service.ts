@@ -6,6 +6,7 @@ import {
   TaskRepeat,
   TaskType,
   TaskPriority,
+  TaskDifficulty,
 } from './entities/task.entity';
 import { TaskCompletion } from './entities/task-completion.entity';
 import { GlobalTask } from './entities/global-task.entity';
@@ -18,6 +19,7 @@ import {
 } from '../achievements/achievements.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RemindersService } from '../reminders/reminders.service';
+import { ActivityService } from '../activity/activity.service';
 
 @Injectable()
 export class TasksService {
@@ -32,6 +34,7 @@ export class TasksService {
     private readonly achievementsService: AchievementsService,
     private readonly notifications: NotificationsService,
     private readonly reminders: RemindersService,
+    private readonly activity: ActivityService,
   ) {}
 
   findGlobalTasks(): Promise<GlobalTask[]> {
@@ -58,12 +61,16 @@ export class TasksService {
       userId,
       title: dto.title,
       description: dto.description ?? null,
-      date: dto.date,
+      date: dto.date ?? null,
       time: dto.time ?? null,
+      projectId: dto.projectId ?? null,
+      milestoneId: dto.milestoneId ?? null,
+      completedAt: dto.completedAt ? new Date(dto.completedAt) : null,
       repeat: dto.repeat ?? TaskRepeat.NONE,
       repeatUntil: dto.repeatUntil ?? null,
       type: dto.type ?? TaskType.NORMAL,
       priority: dto.priority ?? TaskPriority.NONE,
+      difficulty: dto.difficulty ?? TaskDifficulty.NORMAL,
       repeatConfig: dto.repeatConfig ?? null,
       icon: dto.icon ?? null,
       endTime: dto.endTime ?? null,
@@ -74,6 +81,24 @@ export class TasksService {
       tags,
     });
     const saved = await this.taskRepo.save(task);
+
+    await this.activity.log({
+      userId,
+      projectId: saved.projectId,
+      taskId: saved.id,
+      type: 'task_created',
+      summary: `Создана задача «${saved.title}»`,
+    });
+    // Задачу создали уже завершённой (импорт/быстрый ввод) — фиксируем и это.
+    if (saved.completedAt) {
+      await this.activity.log({
+        userId,
+        projectId: saved.projectId,
+        taskId: saved.id,
+        type: 'task_completed',
+        summary: `Завершена задача «${saved.title}»`,
+      });
+    }
 
     const newAchievements = await this.achievementsService.checkAndUnlock(
       userId,
@@ -95,17 +120,26 @@ export class TasksService {
     });
     if (!task) throw new NotFoundException('Задача не найдена');
 
+    const wasCompleted = task.completedAt != null;
+
     if (dto.title !== undefined) task.title = dto.title;
     if (dto.description !== undefined)
       task.description = dto.description ?? null;
-    if (dto.date !== undefined) task.date = dto.date;
+    if (dto.date !== undefined) task.date = dto.date ?? null;
     if (dto.time !== undefined) task.time = dto.time ?? null;
+    if (dto.projectId !== undefined) task.projectId = dto.projectId ?? null;
+    if (dto.milestoneId !== undefined)
+      task.milestoneId = dto.milestoneId ?? null;
+    if (dto.completedAt !== undefined)
+      task.completedAt = dto.completedAt ? new Date(dto.completedAt) : null;
     if (dto.repeat !== undefined) task.repeat = dto.repeat;
     if (dto.repeatUntil !== undefined)
       task.repeatUntil = dto.repeatUntil ?? null;
     if (dto.type !== undefined) task.type = dto.type;
     if (dto.priority !== undefined)
       task.priority = dto.priority ?? TaskPriority.NONE;
+    if (dto.difficulty !== undefined)
+      task.difficulty = dto.difficulty ?? TaskDifficulty.NORMAL;
     if (dto.repeatConfig !== undefined)
       task.repeatConfig = dto.repeatConfig ?? null;
     if (dto.endTime !== undefined) task.endTime = dto.endTime ?? null;
@@ -122,7 +156,37 @@ export class TasksService {
     if (dto.dayOverrides !== undefined)
       task.dayOverrides = dto.dayOverrides ?? null;
 
-    return this.taskRepo.save(task);
+    const saved = await this.taskRepo.save(task);
+
+    // Одно событие на правку: завершение/возврат важнее «отредактировано».
+    const isCompleted = saved.completedAt != null;
+    if (!wasCompleted && isCompleted) {
+      await this.activity.log({
+        userId,
+        projectId: saved.projectId,
+        taskId: saved.id,
+        type: 'task_completed',
+        summary: `Завершена задача «${saved.title}»`,
+      });
+    } else if (wasCompleted && !isCompleted) {
+      await this.activity.log({
+        userId,
+        projectId: saved.projectId,
+        taskId: saved.id,
+        type: 'task_reopened',
+        summary: `Возвращена в работу задача «${saved.title}»`,
+      });
+    } else {
+      await this.activity.log({
+        userId,
+        projectId: saved.projectId,
+        taskId: saved.id,
+        type: 'task_updated',
+        summary: `Изменена задача «${saved.title}»`,
+      });
+    }
+
+    return saved;
   }
 
   async remove(userId: string, id: string): Promise<void> {
@@ -131,6 +195,13 @@ export class TasksService {
     await this.taskRepo.remove(task);
     await this.completionRepo.delete({ taskId: id });
     await this.reminders.deleteForTask(id);
+    await this.activity.log({
+      userId,
+      projectId: task.projectId,
+      taskId: id,
+      type: 'task_deleted',
+      summary: `Удалена задача «${task.title}»`,
+    });
   }
 
   async toggleCompletion(
@@ -144,6 +215,16 @@ export class TasksService {
 
     if (existing) {
       await this.completionRepo.remove(existing);
+      const task = await this.taskRepo.findOne({ where: { id: taskId } });
+      if (task) {
+        await this.activity.log({
+          userId,
+          projectId: task.projectId,
+          taskId,
+          type: 'task_reopened',
+          summary: `Возвращена в работу задача «${task.title}»`,
+        });
+      }
       return { done: false, newAchievements: [] };
     }
 
@@ -154,6 +235,13 @@ export class TasksService {
     // Загружаем задачу для контекста достижений и уведомления
     const task = await this.taskRepo.findOne({ where: { id: taskId } });
     if (task) {
+      await this.activity.log({
+        userId,
+        projectId: task.projectId,
+        taskId,
+        type: 'task_completed',
+        summary: `Завершена задача «${task.title}»`,
+      });
       await this.notifications.create({
         userId,
         kind: 'task_completed',

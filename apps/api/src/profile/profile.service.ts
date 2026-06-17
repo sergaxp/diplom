@@ -12,6 +12,8 @@ import { UsersService } from '../users/users.service';
 import { ShopService } from '../shop/shop.service';
 import { AchievementsService } from '../achievements/achievements.service';
 import { StorageService, BUCKETS } from '../storage/storage.service';
+import { ActivityService } from '../activity/activity.service';
+import { DayCount } from '../activity/activity.types';
 
 interface AuthorView {
   id: string;
@@ -42,6 +44,7 @@ export class ProfileService {
     private readonly shopService: ShopService,
     private readonly achievementsService: AchievementsService,
     private readonly storage: StorageService,
+    private readonly activity: ActivityService,
   ) {}
 
   // ── Посты ──────────────────────────────────────────────────
@@ -202,6 +205,21 @@ export class ProfileService {
     const user = await this.usersService.findByUsername(username);
     if (!user) throw new NotFoundException('Пользователь не найден');
     return this.achievementsService.getAll(user.id);
+  }
+
+  /**
+   * Глобальная активность пользователя (клетки heatmap) за период — для витрины
+   * профиля. Публично, но только счётчики по дням (без текстов/деталей).
+   */
+  async getActivity(
+    username: string,
+    from: Date,
+    to: Date,
+  ): Promise<{ days: DayCount[] }> {
+    const user = await this.usersService.findByUsername(username);
+    if (!user) throw new NotFoundException('Пользователь не найден');
+    const days = await this.activity.userDailyCounts(user.id, from, to);
+    return { days };
   }
 
   // ── Хелперы: подмешать мини-профиль автора ─────────────────

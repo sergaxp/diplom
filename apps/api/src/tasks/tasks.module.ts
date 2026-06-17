@@ -9,6 +9,7 @@ import { TagsModule } from '../tags/tags.module';
 import { AchievementsModule } from '../achievements/achievements.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { RemindersModule } from '../reminders/reminders.module';
+import { ActivityModule } from '../activity/activity.module';
 
 @Module({
   imports: [
@@ -17,8 +18,10 @@ import { RemindersModule } from '../reminders/reminders.module';
     AchievementsModule,
     NotificationsModule,
     RemindersModule,
+    ActivityModule,
   ],
   controllers: [TasksController],
   providers: [TasksService],
+  exports: [TasksService],
 })
 export class TasksModule {}

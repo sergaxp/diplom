@@ -1,0 +1,108 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  // По размеру содержимого (располагается справа от метрик в .topRow).
+  width: fit-content;
+  max-width: 100%;
+}
+
+// Акцент по уровню (адаптируется под тему через семантические токены).
+.good { --mood: var(--success); --mood-soft: var(--success-subtle); }
+.warn { --mood: var(--warning); --mood-soft: var(--warning-subtle); }
+.bad  { --mood: var(--error);   --mood-soft: var(--error-subtle); }
+
+.title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  color: var(--mood);
+  background: var(--mood-soft);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--mood);
+  line-height: 1.15;
+}
+
+.reason {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+// Чипы-сигналы прижаты вправо; на узкой ширине переносятся под текст.
+.signals {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 70px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+}
+
+.chipValue {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.chipLabel {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.chipBad {
+  background: var(--error-subtle);
+  border-color: transparent;
+
+  .chipValue { color: var(--error); }
+}
+
+.chipWarn {
+  background: var(--warning-subtle);
+  border-color: transparent;
+
+  .chipValue { color: var(--warning); }
+}

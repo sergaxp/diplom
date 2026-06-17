@@ -4,7 +4,7 @@
  * Зеркало этого типа живёт на фронте в apps/web/src/lib/showcases.ts.
  */
 
-export type ShowcaseType = 'stats' | 'favorites' | 'featuredPosts';
+export type ShowcaseType = 'stats' | 'favorites' | 'featuredPosts' | 'heatmap';
 
 export interface ShowcaseBlock {
   /** Сгенерированный на клиенте id (для ключей и переупорядочивания) */
@@ -13,6 +13,7 @@ export interface ShowcaseBlock {
   /** Произвольные настройки блока:
    *  - favorites: { itemIds: string[] } — id рамок/предметов магазина
    *  - featuredPosts: { postIds: string[] } — закреплённые посты
-   *  - stats: {} — собирается автоматически */
+   *  - stats: {} — собирается автоматически
+   *  - heatmap: {} — карта активности (требует покупки heatmap_profile) */
   settings: Record<string, unknown>;
 }

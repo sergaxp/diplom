@@ -1,4 +1,4 @@
-import { TaskRepeat, TaskType, TaskPriority } from '../../../lib/tasks';
+import { TaskRepeat, TaskType, TaskPriority, TaskDifficulty } from '../../../lib/tasks';
 
 export const MONTHS_GEN = [
   'января','февраля','марта','апреля','мая','июня',
@@ -35,6 +35,16 @@ export const PRIORITY_COLORS: Record<TaskPriority, string | undefined> = {
 
 export const TYPE_COLORS: Record<string, string | undefined> = {
   normal: undefined, mandatory: '#ef4444', event: '#8b5cf6',
+};
+
+export const DIFFICULTY_LABELS: Record<TaskDifficulty, string> = {
+  easy: 'Лёгкая', normal: 'Обычная', hard: 'Тяжёлая',
+};
+
+// Цвета сложности под палитру сайта: Лёгкая — info (синий), Обычная — accent
+// (янтарный), Тяжёлая — error (красно-кирпичный). См. globals.scss.
+export const DIFFICULTY_COLORS: Record<TaskDifficulty, string> = {
+  easy: '#4A7898', normal: '#C8862F', hard: '#B84040',
 };
 
 export const ATTACH_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/ogg,application/zip,application/x-7z-compressed,application/x-rar-compressed,application/pdf';

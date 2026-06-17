@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, Columns3, FolderKanban, Inbox } from 'lucide-react';
+import { CalendarDays, Columns3, LayoutGrid, Inbox } from 'lucide-react';
 import styles from './WorkspaceSwitcher.module.scss';
 
 export type Workspace = 'manager' | 'board' | 'projects' | 'box';
@@ -15,9 +15,17 @@ interface ItemDef {
 const ITEMS: ItemDef[] = [
   { id: 'manager',  label: 'Менеджер', icon: CalendarDays },
   { id: 'board',    label: 'Доска',    icon: Columns3 },
-  { id: 'projects', label: 'Проекты',  icon: FolderKanban, soon: true },
+  { id: 'projects', label: 'Проекты',  icon: LayoutGrid },
   { id: 'box',      label: 'Коробка',  icon: Inbox },
 ];
+
+/** Человекочитаемое название рабочей области (для заголовка вкладки и пр.). */
+export const WORKSPACE_LABELS: Record<Workspace, string> = {
+  manager:  'Менеджер',
+  board:    'Доска',
+  projects: 'Проекты',
+  box:      'Коробка',
+};
 
 interface Props {
   active: Workspace;
@@ -37,7 +45,7 @@ export function WorkspaceSwitcher({ active, onChange, boxBadge = 0 }: Props) {
           onClick={() => onChange(id)}
           aria-current={active === id ? 'page' : undefined}
         >
-          <Icon size={18} strokeWidth={1.75} className={styles.icon} />
+          <Icon size={19} strokeWidth={1.75} className={styles.icon} />
           <span className={styles.label}>{label}</span>
           {soon && <span className={styles.soon}>скоро</span>}
           {id === 'box' && boxBadge > 0 && (

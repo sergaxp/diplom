@@ -20,6 +20,7 @@ import { achievementsApi } from '../../../lib/achievements';
 import { SOCIAL_PROVIDERS, resolveSocialHref } from '../../../lib/socials';
 import { Icon } from '../../../lib/icons';
 import { useAuthStore } from '../../../store/authStore';
+import { usePageTitle } from '../../../hooks/useTabTitle';
 import styles from './page.module.scss';
 
 function formatDate(iso: string) {
@@ -59,6 +60,7 @@ export default function ProfilePage({
   const { username } = use(params);
   const { user: me } = useAuthStore();
   const [treeOpen, setTreeOpen] = useState(false);
+  usePageTitle(`Профиль @${username}`);
 
   const { data: profile, isLoading, isError } = useQuery({
     queryKey: ['profile', username],
@@ -86,7 +88,7 @@ export default function ProfilePage({
   return (
     <div className={styles.root}>
       <ProfileBackground selectedBackground={profile?.selectedBackground} url={profile?.backgroundUrl} />
-      <Header />
+      <Header sticky />
 
       {isLoading && <ProfileSkeleton />}
 
@@ -115,6 +117,7 @@ export default function ProfilePage({
                   username={profile.username}
                   frameId={profile.selectedFrame}
                   size={120}
+                  animate
                 />
               </div>
 

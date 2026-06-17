@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../tags/entities/tag.entity';
+import { Project } from '../../projects/entities/project.entity';
 
 export enum TaskRepeat {
   NONE = 'none',
@@ -35,6 +36,12 @@ export enum TaskPriority {
   HIGH = 'high',
 }
 
+export enum TaskDifficulty {
+  EASY = 'easy',
+  NORMAL = 'normal',
+  HARD = 'hard',
+}
+
 @Entity('tasks')
 export class Task {
   @PrimaryGeneratedColumn('uuid')
@@ -53,8 +60,8 @@ export class Task {
   @Column({ type: 'text', nullable: true, default: null })
   description: string | null;
 
-  @Column({ type: 'varchar', length: 10 })
-  date: string; // YYYY-MM-DD
+  @Column({ type: 'varchar', length: 10, nullable: true, default: null })
+  date: string | null; // YYYY-MM-DD; null = бэклог проекта (задача без даты)
 
   @Column({ type: 'varchar', length: 5, nullable: true, default: null })
   time: string | null; // HH:MM
@@ -80,6 +87,9 @@ export class Task {
   @Column({ type: 'varchar', length: 20, default: TaskPriority.NONE })
   priority: TaskPriority;
 
+  @Column({ type: 'varchar', length: 20, default: TaskDifficulty.NORMAL })
+  difficulty: TaskDifficulty;
+
   @Column({ type: 'varchar', length: 64, nullable: true, default: null })
   icon: string | null;
 
@@ -98,6 +108,26 @@ export class Task {
    */
   @Column({ type: 'json', nullable: true, default: null })
   dayOverrides: Record<string, object> | null;
+
+  /** Проект, к которому относится задача (null — личная задача вне проектов). */
+  @Column({ type: 'varchar', nullable: true, default: null })
+  projectId: string | null;
+
+  @ManyToOne(() => Project, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'projectId' })
+  project?: Project | null;
+
+  /** id этапа (вехи) внутри проекта; ссылается на Project.milestones[].id. */
+  @Column({ type: 'varchar', length: 64, nullable: true, default: null })
+  milestoneId: string | null;
+
+  /**
+   * Момент выполнения задачи как единицы (для задач проекта: «done» на доске
+   * проекта и прогресс). Для дневных/повторяющихся отметок используется
+   * per-date task_completions; здесь — задача-как-целое (в т.ч. бэклог без даты).
+   */
+  @Column({ type: 'timestamp with time zone', nullable: true, default: null })
+  completedAt: Date | null;
 
   @ManyToMany(() => Tag, (tag) => tag.tasks, { eager: false, cascade: false })
   @JoinTable({

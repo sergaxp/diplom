@@ -1,11 +1,11 @@
 'use client';
 
 import type { RefObject } from 'react';
-import { TaskType, TaskPriority } from '../../../lib/tasks';
+import { TaskDifficulty, TaskPriority } from '../../../lib/tasks';
 import type { Tag } from '../../../lib/tags';
 import { Icon, hasIcon } from '../../../lib/icons';
 import { TagManager } from '../TagManager';
-import { PRIORITY_LABELS, PRIORITY_COLORS, TYPE_LABELS, TYPE_COLORS } from './constants';
+import { PRIORITY_LABELS, PRIORITY_COLORS, DIFFICULTY_LABELS, DIFFICULTY_COLORS } from './constants';
 import styles from './TaskFormModal.module.scss';
 
 interface Pos { top: number; left: number }
@@ -17,12 +17,16 @@ interface MetaDropdownsProps {
   priorityDropRef: RefObject<HTMLDivElement | null>;
   onSelectPriority: (p: TaskPriority) => void;
 
-  type: TaskType;
-  availableTypes: TaskType[];
-  typeDropOpen: boolean;
-  typeDropPos: Pos | null;
-  typeDropRef: RefObject<HTMLDivElement | null>;
-  onSelectType: (t: TaskType) => void;
+  difficulty: TaskDifficulty;
+  difficultyDropOpen: boolean;
+  difficultyDropPos: Pos | null;
+  difficultyDropRef: RefObject<HTMLDivElement | null>;
+  onSelectDifficulty: (d: TaskDifficulty) => void;
+  deadline: boolean;
+  isEvent: boolean;
+  isAdmin: boolean;
+  onToggleDeadline: () => void;
+  onToggleEvent: () => void;
 
   selectedTagId: string | null;
   allTags: Tag[];
@@ -38,7 +42,8 @@ interface MetaDropdownsProps {
 /** Поповеры выбора приоритета/типа/тега мета-полей формы задачи (на базе useAnchoredDropdown). */
 export function MetaDropdowns({
   priority, priorityDropOpen, priorityDropPos, priorityDropRef, onSelectPriority,
-  type, availableTypes, typeDropOpen, typeDropPos, typeDropRef, onSelectType,
+  difficulty, difficultyDropOpen, difficultyDropPos, difficultyDropRef, onSelectDifficulty,
+  deadline, isEvent, isAdmin, onToggleDeadline, onToggleEvent,
   selectedTagId, allTags, tagDropOpen, tagDropPos, tagDropRef, onSelectTag,
   creatingTag, onStartCreatingTag, onCreateTag,
 }: MetaDropdownsProps) {
@@ -68,27 +73,54 @@ export function MetaDropdowns({
         </div>
       )}
 
-      {typeDropOpen && typeDropPos && (
+      {difficultyDropOpen && difficultyDropPos && (
         <div
-          ref={typeDropRef}
+          ref={difficultyDropRef}
           className={styles.metaDropdown}
-          style={{ top: typeDropPos.top, left: typeDropPos.left }}
+          style={{ top: difficultyDropPos.top, left: difficultyDropPos.left }}
           onMouseDown={e => e.stopPropagation()}
         >
-          {availableTypes.map(t => (
+          {(Object.keys(DIFFICULTY_LABELS) as TaskDifficulty[]).map(d => (
             <button
-              key={t}
+              key={d}
               type="button"
-              className={[styles.metaDropItem, type === t ? styles.metaDropItemActive : ''].join(' ')}
-              onClick={() => onSelectType(t)}
+              className={[styles.metaDropItem, difficulty === d ? styles.metaDropItemActive : ''].join(' ')}
+              onClick={() => onSelectDifficulty(d)}
             >
-              {TYPE_COLORS[t]
-                ? <span className={styles.metaDropDot} style={{ background: TYPE_COLORS[t] }} />
-                : <span className={styles.metaDropDotNone} />}
-              {TYPE_LABELS[t]}
-              {type === t && <span className={styles.metaDropCheck}>✓</span>}
+              <span className={styles.metaDropDot} style={{ background: DIFFICULTY_COLORS[d] }} />
+              {DIFFICULTY_LABELS[d]}
+              {difficulty === d && <span className={styles.metaDropCheck}>✓</span>}
             </button>
           ))}
+
+          {/* Дедлайн / Эвент — чекбоксы под чертой */}
+          <div className={styles.metaDropDivider} />
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={deadline}
+            className={styles.metaDropToggle}
+            onClick={onToggleDeadline}
+          >
+            <span className={[styles.metaDropBox, deadline ? styles.metaDropBoxOn : ''].join(' ')}>
+              {deadline && '✓'}
+            </span>
+            Дедлайн
+          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={isEvent}
+              className={styles.metaDropToggle}
+              onClick={onToggleEvent}
+            >
+              <span className={[styles.metaDropBox, isEvent ? styles.metaDropBoxOn : ''].join(' ')}>
+                {isEvent && '✓'}
+              </span>
+              Эвент
+            </button>
+          )}
         </div>
       )}
 

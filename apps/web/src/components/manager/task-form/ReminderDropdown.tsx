@@ -111,9 +111,10 @@ export function ReminderDropdown({ reminders, onChange, hasTime, minDate, open, 
             className={[styles.metaDropItem, active ? styles.metaDropItemActive : ''].join(' ')}
             onClick={() => togglePreset(p)}
           >
-            <span className={active ? styles.reminderBox : styles.reminderBoxEmpty} />
+            <span className={active ? styles.reminderBox : styles.reminderBoxEmpty}>
+              {active && '✓'}
+            </span>
             {p.label}
-            {active && <span className={styles.metaDropCheck}>✓</span>}
           </button>
         );
       })}

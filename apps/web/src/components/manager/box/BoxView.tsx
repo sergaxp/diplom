@@ -31,8 +31,9 @@ function fmtDate(ds: string): string {
 }
 
 function rowDateLabel(task: Task, repDate: string): string {
-  if (task.endDate) return `${fmtDate(task.date)} — ${fmtDate(task.endDate)}`;
-  if (task.repeat && task.repeat !== 'none') return `с ${fmtDate(task.date)}`;
+  if (task.endDate) return `${fmtDate(task.date ?? '')} — ${fmtDate(task.endDate)}`;
+  if (task.repeat && task.repeat !== 'none') return `с ${fmtDate(task.date ?? '')}`;
+  if (!repDate) return 'Без даты';
   return fmtDate(repDate);
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Plus, AlignLeft, CheckCircle2 } from 'lucide-react';
+import { Plus, AlignLeft, CheckCircle2, Bell } from 'lucide-react';
 import { popLayer, listContainer, listItem, layoutTransition } from '../../lib/motion';
 import { Task, TaskPriority, TaskStatus, toDateStr, getTasksForDate, completionKey, applyDayOverride } from '../../lib/tasks';
 import type { Tag } from '../../lib/tags';
@@ -44,15 +44,16 @@ interface TaskItemProps {
   task: Task;
   dateStr: string;
   dateLabel?: string;
-  isMandatoryDay?: boolean;
   hidePostpone?: boolean;
   onToggle: (id: string, dateStr: string) => void;
   onDelete: (id: string, dateStr: string) => void;
   onEdit:   (task: Task) => void;
   onPostpone: (id: string, days: number) => void;
+  /** Цвет проекта задачи (метка-точка). */
+  projectColor?: string;
 }
 
-function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onToggle, onDelete, onEdit, onPostpone }: TaskItemProps) {
+function TaskItem({ task, dateStr, dateLabel, hidePostpone, onToggle, onDelete, onEdit, onPostpone, projectColor }: TaskItemProps) {
   const [menuOpen,     setMenuOpen]     = useState(false);
   const [postponeOpen, setPostponeOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -124,8 +125,9 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
       className={[
       styles.task,
       styles[`task_${task.status}`],
-      !isMandatoryDay ? priorityClass(task.priority) : '',
-      isMandatoryDay ? styles.taskMandatoryDay : '',
+      priorityClass(task.priority),
+      task.type === 'mandatory' ? styles.taskDeadline : '',
+      task.difficulty === 'easy' ? styles.diffEasy : task.difficulty === 'hard' ? styles.diffHard : '',
       (menuOpen || postponeOpen) ? styles.taskMenuOpen : '',
     ].join(' ')}>
       {/* Checkbox */}
@@ -141,8 +143,13 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
         onClick={e => { e.stopPropagation(); onToggle(task.id, dateStr); }}
         aria-label={task.status === 'done' ? 'Снять отметку' : 'Отметить выполненным'}
       >
-        {task.status === 'done'   && '✓'}
-        {task.status === 'missed' && '✕'}
+        {!!task.reminders?.length && (
+          <Bell className={styles.reminderBell} size={11} strokeWidth={2.25} aria-hidden />
+        )}
+        <span className={styles.checkMark}>
+          {task.status === 'done'   && '✓'}
+          {task.status === 'missed' && '✕'}
+        </span>
       </button>
 
       {/* Body – кликабельно для открытия редактора */}
@@ -151,6 +158,12 @@ function TaskItem({ task, dateStr, dateLabel, isMandatoryDay, hidePostpone, onTo
         {task.time && <span className={styles.taskTime}>{task.time}</span>}
         <div className={styles.taskText}>
           <span className={styles.taskTitle}>
+            {projectColor && (
+              <span
+                style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: projectColor, marginRight: 6, verticalAlign: 'middle' }}
+                title="Задача проекта"
+              />
+            )}
             {task.title}
             {subtaskCount > 0 && (
               <span className={styles.subtaskCount} title={`Подзадач: ${subtaskCount}`}>{subtaskCount}</span>
@@ -267,13 +280,21 @@ interface Props {
   onUpdate:    (id: string, data: Omit<Task, 'id' | 'status'>, occDate?: string) => void;
   onPostpone:  (id: string, days: number) => void;
   onGoToToday: () => void;
+  /** Режим проекта: показать эти задачи вместо задач дня. */
+  listOverride?: Task[];
+  /** Заголовок секции в режиме проекта (имя проекта). */
+  overrideTitle?: string;
+  /** Карта projectId → цвет для метки задач проекта в дневном списке. */
+  projectColors?: Map<string, string>;
   onCreateTag?: (name: string, color: string, icon?: string | null) => Promise<Tag>;
 }
 
 export function TaskList({
   selectedDate, tasks, completions, isAdmin, userTags,
   onToggle, onDelete, onAdd, onUpdate, onPostpone, onGoToToday, onCreateTag,
+  listOverride, overrideTitle, projectColors,
 }: Props) {
+  const projectMode = listOverride !== undefined;
   const [now,           setNow]           = useState(new Date());
   const [createOpen,    setCreateOpen]    = useState(false);
   const [editingTask,   setEditingTask]   = useState<Task | null>(null);
@@ -332,7 +353,7 @@ export function TaskList({
     { todayStr, weatherShownLock },
   );
 
-  const hasPriorityTasks = dayTasks.some(t => t.priority && t.priority !== 'none');
+  const hasPriorityTasks = (projectMode ? listOverride! : dayTasks).some(t => t.priority && t.priority !== 'none');
 
   const sortedDayTasks = useMemo(() => {
     if (!sortByPriority) return dayTasks;
@@ -351,7 +372,8 @@ export function TaskList({
 
   // Future section: mandatory tasks ahead, excluding already completed ones
   const futureTasks = tasks
-    .filter(t => t.date > selectedStr && t.type === 'mandatory')
+    .filter((t): t is Task & { date: string } =>
+      !!t.date && t.date > selectedStr && t.type === 'mandatory')
     .map(t => {
       const status: TaskStatus = completions.has(completionKey(t.id, t.date)) ? 'done' : 'pending';
       return { ...t, status };
@@ -363,6 +385,10 @@ export function TaskList({
   const dateLabel = isToday
     ? 'Сегодня'
     : selectedDate.toLocaleDateString('ru', { day: 'numeric', month: 'long' });
+
+  // Список и заголовок секции с учётом режима проекта.
+  const mainList = projectMode ? (listOverride ?? []) : sortedDayTasks;
+  const sectionLabel = projectMode ? (overrideTitle ?? 'Проект') : dateLabel;
 
   return (
     <>
@@ -390,8 +416,8 @@ export function TaskList({
         <div className={styles.section}>
           <div className={styles.sectionHead}>
             <div className={styles.sectionHeadLeft}>
-              <span className={styles.sectionLabel}>{dateLabel}</span>
-              {holidayName && (
+              <span className={styles.sectionLabel}>{sectionLabel}</span>
+              {!projectMode && holidayName && (
                 <span className={styles.holidayBadge} title={holidayName}>{holidayName}</span>
               )}
             </div>
@@ -418,12 +444,12 @@ export function TaskList({
             </div>
           </div>
 
-          {sortedDayTasks.length === 0 ? (
+          {mainList.length === 0 ? (
             <EmptyState
               size="sm"
               icon={<CheckCircle2 size={48} strokeWidth={1.25} />}
-              title={isToday ? 'Сегодня свободно' : 'На этот день нет задач'}
-              description={isToday ? 'Заслуженно. Добавьте новую задачу, если нужно.' : 'Спокойный день. Можете добавить задачу.'}
+              title={projectMode ? 'В проекте нет задач' : isToday ? 'Сегодня свободно' : 'На этот день нет задач'}
+              description={projectMode ? 'Добавьте первую задачу проекта.' : isToday ? 'Заслуженно. Добавьте новую задачу, если нужно.' : 'Спокойный день. Можете добавить задачу.'}
               action={
                 <Button
                   variant="accent"
@@ -437,18 +463,20 @@ export function TaskList({
             />
           ) : (
             <motion.ul
-              key={selectedStr}
+              key={projectMode ? 'project' : selectedStr}
               className={styles.list}
               variants={listContainer}
               initial="hidden"
               animate="visible"
             >
-              {sortedDayTasks.map(t => (
+              {mainList.map(t => (
                 <TaskItem
                   key={t.id}
                   task={t}
-                  dateStr={selectedStr}
-                  isMandatoryDay={t.type === 'mandatory' && t.date === selectedStr}
+                  dateStr={projectMode ? (t.date ?? '') : selectedStr}
+                  dateLabel={projectMode ? (t.date ? formatRelativeDate(t.date) : 'без даты') : undefined}
+                  hidePostpone={projectMode}
+                  projectColor={!projectMode && t.projectId ? projectColors?.get(t.projectId) : undefined}
                   onToggle={onToggle}
                   onDelete={onDelete}
                   onEdit={setEditingTask}
@@ -460,7 +488,7 @@ export function TaskList({
         </div>
 
         {/* Future mandatory tasks */}
-        {futureTasks.length > 0 && (
+        {!projectMode && futureTasks.length > 0 && (
           <div className={styles.section}>
             <div className={styles.sectionHead}>
               <span className={styles.sectionLabel}>Обязательные впереди</span>
@@ -478,6 +506,7 @@ export function TaskList({
                   dateStr={t.date}
                   dateLabel={formatRelativeDate(t.date)}
                   hidePostpone
+                  projectColor={t.projectId ? projectColors?.get(t.projectId) : undefined}
                   onToggle={onToggle}
                   onDelete={onDelete}
                   onEdit={setEditingTask}

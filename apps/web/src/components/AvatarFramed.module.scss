@@ -1,4 +1,5 @@
 .wrap {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7,12 +8,9 @@
   flex-shrink: 0;
 }
 
-.wrapFramed {
-  // Лёгкая граница для лучшей читаемости поверх любого фона
-  box-shadow: 0 0 0 1px var(--border-subtle);
-}
-
 .inner {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   border-radius: 50%;
@@ -22,10 +20,6 @@
   justify-content: center;
   background: var(--brand-subtle);
   border: 1px solid var(--border-default);
-}
-
-.wrapFramed .inner {
-  border: none;
 }
 
 .img {
@@ -38,4 +32,126 @@
   font-weight: var(--weight-semibold);
   color: var(--brand);
   line-height: 1;
+}
+
+// ── Картинка-декорация (PNG-оверлей вокруг аватара, «как у Discord») ──
+// Центрируется поверх диска; выходит за его пределы (overflow у .wrap не режется,
+// т.к. border-radius без overflow:hidden). pointer-events:none — клики проходят.
+.deco {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  object-fit: contain;
+  z-index: 2;
+}
+
+// Каждая картинка-декорация (всё, кроме «Цепей») задаёт имя своих keyframes в
+// переменную. САМУ анимацию по умолчанию НЕ включаем — её добавляют только
+// активные селекторы ниже (наведение / главный аватар профиля). Поэтому в
+// статичных местах (хедер, комментарии, настройки без hover) декорация
+// полностью неподвижна.
+.animFlame { --deco-keyframes: decoFlame; }
+.animBlink { --deco-keyframes: decoBlink; }
+.animDrip  { --deco-keyframes: decoDrip; }
+
+// ── Программные CSS-кольца ──────────────────────────────────────
+// Кольцо рисуется в зоне padding: ::before заполняет весь .wrap, а .inner
+// (аватар) лежит сверху и закрывает центр — видно только кольцо.
+.cssFrame .inner {
+  border: none;
+}
+
+.cssFrame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 0;
+}
+
+.cssRgb::before {
+  background: conic-gradient(
+    from 0deg,
+    #ff0040, #ff8a00, #ffe600, #14ff7a, #00e5ff, #4d4dff, #c800ff, #ff0040
+  );
+}
+
+.cssBlackhole::before {
+  background: conic-gradient(
+    from 0deg,
+    #000, #3b0764, #7e22ce, #a855f7, #3b0764, #000
+  );
+}
+
+// Анимацию включаем ТОЛЬКО при наведении на аватар (.wrap:hover) либо постоянно
+// на главном аватаре профиля (.alwaysAnimate). По умолчанию свойства animation
+// нет вовсе → декорация статична везде, кроме этих случаев.
+.wrap:hover .decoAnim,
+.alwaysAnimate .decoAnim {
+  animation: var(--deco-keyframes) 7s ease-in-out infinite;
+}
+
+.cssRgb:hover::before,
+.alwaysAnimate.cssRgb::before,
+.cssBlackhole:hover::before,
+.alwaysAnimate.cssBlackhole::before {
+  animation: frameSpin 7s ease-in-out infinite;
+}
+
+.cssBlackhole:hover,
+.alwaysAnimate.cssBlackhole {
+  animation: blackholePulse 7s ease-in-out infinite;
+}
+
+// Все анимации: активная фаза ~2с, затем пауза 5с (28% от 7с цикла) — и заново.
+@keyframes frameSpin {
+  0%   { transform: rotate(0turn); }
+  28%  { transform: rotate(1turn); }
+  100% { transform: rotate(1turn); }
+}
+
+// Феникс — «пламя»: дрожь масштаба + покачивание + вспышки яркости.
+@keyframes decoFlame {
+  0%   { transform: translate(-50%, -50%) scale(1) rotate(0deg);   filter: brightness(1); }
+  6%   { transform: translate(-50%, -50%) scale(1.12) rotate(-3deg); filter: brightness(1.3); }
+  12%  { transform: translate(-50%, -50%) scale(1.04) rotate(3deg);  filter: brightness(1.1); }
+  18%  { transform: translate(-50%, -50%) scale(1.14) rotate(-2deg); filter: brightness(1.35); }
+  26%  { transform: translate(-50%, -50%) scale(1) rotate(0deg);   filter: brightness(1); }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(0deg);   filter: brightness(1); }
+}
+
+// Тёмное око — «моргание»: резкий пульс с провалом яркости и обратно.
+@keyframes decoBlink {
+  0%   { transform: translate(-50%, -50%) scale(1);    filter: brightness(1); }
+  9%   { transform: translate(-50%, -50%) scale(1.13); filter: brightness(1.4); }
+  18%  { transform: translate(-50%, -50%) scale(0.97); filter: brightness(0.7); }
+  27%  { transform: translate(-50%, -50%) scale(1);    filter: brightness(1); }
+  100% { transform: translate(-50%, -50%) scale(1);    filter: brightness(1); }
+}
+
+// В слезах — «капля»: покачивание вверх-вниз с лёгким масштабом.
+@keyframes decoDrip {
+  0%   { transform: translate(-50%, -50%) scale(1); }
+  14%  { transform: translate(-50%, -57%) scale(1.05); }
+  26%  { transform: translate(-50%, -45%) scale(1.05); }
+  34%  { transform: translate(-50%, -50%) scale(1); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes blackholePulse {
+  0%   { box-shadow: 0 0 6px 1px rgba(168, 85, 247, 0.45); }
+  14%  { box-shadow: 0 0 16px 5px rgba(168, 85, 247, 0.9); }
+  28%  { box-shadow: 0 0 6px 1px rgba(168, 85, 247, 0.45); }
+  100% { box-shadow: 0 0 6px 1px rgba(168, 85, 247, 0.45); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .decoAnim,
+  .cssRgb::before,
+  .cssBlackhole::before,
+  .cssBlackhole {
+    animation: none !important;
+  }
 }

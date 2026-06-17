@@ -25,6 +25,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../auth/types/authenticated-request';
+import { activityRange } from '../activity/activity.types';
 
 const ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.gif'];
 
@@ -159,5 +160,16 @@ export class ProfileController {
   @Get('achievements/:username')
   getAchievements(@Param('username') username: string) {
     return this.profileService.getAchievements(username);
+  }
+
+  // GET /profile/activity/:username?from=&to= (public) — клетки heatmap профиля
+  @Get('activity/:username')
+  getActivity(
+    @Param('username') username: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    const { fromDate, toDate } = activityRange(from, to);
+    return this.profileService.getActivity(username, fromDate, toDate);
   }
 }

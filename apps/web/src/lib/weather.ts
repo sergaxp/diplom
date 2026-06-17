@@ -81,6 +81,22 @@ export function weatherCodeToInfo(code: number): { label: string; icon: string }
   return { label: 'Облачно', icon: 'Cloud' };
 }
 
+// ── WMO коды погоды → эмодзи (для заголовка вкладки) ─────────
+// isDay управляет «ясной» иконкой: днём ☀️, ночью 🌙.
+export function weatherCodeToEmoji(code: number, isDay = true): string {
+  if (code === 0 || code === 1)   return isDay ? '☀️' : '🌙';
+  if (code === 2)                 return isDay ? '⛅' : '☁️';
+  if (code === 3)                 return '☁️';
+  if (code === 45 || code === 48) return '🌫️';
+  if (code >= 51 && code <= 57)   return '🌦️';
+  if (code >= 61 && code <= 67)   return '🌧️';
+  if (code >= 71 && code <= 77)   return '🌨️';
+  if (code >= 80 && code <= 82)   return '🌧️';
+  if (code >= 85 && code <= 86)   return '🌨️';
+  if (code >= 95)                 return '⛈️';
+  return '☁️';
+}
+
 // ── Геокодинг города ─────────────────────────────────────────
 interface GeoResult { lat: number; lon: number; timezone: string }
 

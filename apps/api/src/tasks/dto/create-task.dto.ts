@@ -5,7 +5,12 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
-import { TaskRepeat, TaskType, TaskPriority } from '../entities/task.entity';
+import {
+  TaskRepeat,
+  TaskType,
+  TaskPriority,
+  TaskDifficulty,
+} from '../entities/task.entity';
 
 export class CreateTaskDto {
   @IsString()
@@ -16,9 +21,10 @@ export class CreateTaskDto {
   @IsString()
   description?: string | null;
 
+  @IsOptional()
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
-  date: string;
+  date?: string | null;
 
   @IsOptional()
   @IsString()
@@ -55,6 +61,10 @@ export class CreateTaskDto {
   priority?: TaskPriority;
 
   @IsOptional()
+  @IsEnum(TaskDifficulty)
+  difficulty?: TaskDifficulty;
+
+  @IsOptional()
   @IsString({ each: true })
   tagIds?: string[];
 
@@ -70,4 +80,15 @@ export class CreateTaskDto {
 
   @IsOptional()
   dayOverrides?: Record<string, object> | null;
+
+  @IsOptional()
+  @IsString()
+  projectId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  milestoneId?: string | null;
+
+  @IsOptional()
+  completedAt?: string | null;
 }

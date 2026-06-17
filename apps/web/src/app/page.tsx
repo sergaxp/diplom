@@ -8,19 +8,21 @@ import { Skeleton } from '../components/ui';
 import { ManagerCalendar } from '../components/manager/calendar';
 import { MobileDayStrip } from '../components/manager/MobileDayStrip';
 import { TaskList } from '../components/manager/TaskList';
-import { WorkspaceSwitcher, type Workspace } from '../components/manager/WorkspaceSwitcher';
+import { WorkspaceSwitcher, WORKSPACE_LABELS, type Workspace } from '../components/manager/WorkspaceSwitcher';
 import { BoxView } from '../components/manager/box/BoxView';
 import { countOverdue } from '../components/manager/box/boxLogic';
-import { dayedSubtasks } from '../lib/board';
+import { dayedSubtasks, taskCardKey, boardApi, DEFAULT_COLUMNS, type BoardColumn, type BoardPlacement } from '../lib/board';
 import { BoardView } from '../components/manager/board/BoardView';
 import { ProjectsView } from '../components/manager/projects/ProjectsView';
-import { Task, DayOverride, SubtaskItem, tasksApi, completionKey, toDateStr, isSeriesTask, mergeSeriesSubtasks, prevDayStr } from '../lib/tasks';
+import { Task, TaskStatus, DayOverride, SubtaskItem, tasksApi, completionKey, toDateStr, isSeriesTask, mergeSeriesSubtasks, prevDayStr } from '../lib/tasks';
+import { projectsApi, type ProjectBoardState, type ProjectPlacement } from '../lib/projects';
 import { syncTaskReminders } from '../lib/reminders';
 import { DeleteScopeModal } from '../components/manager/DeleteScopeModal';
 import { Tag, tagsApi } from '../lib/tags';
 import { useAuthStore } from '../store/authStore';
 import { useAchievementStore } from '../store/achievementStore';
 import { authApi } from '../lib/auth';
+import { usePageTitle } from '../hooks/useTabTitle';
 import styles from './page.module.scss';
 
 export default function ManagerPage() {
@@ -42,6 +44,8 @@ export default function ManagerPage() {
 
   // Активная рабочая область (только десктоп). Персистим выбор.
   const [workspace, setWorkspace] = useState<Workspace>('manager');
+  // Открытый проект (во вкладке «Проекты»). null — список проектов.
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   useEffect(() => {
     try {
       const saved = localStorage.getItem('wt_workspace') as Workspace | null;
@@ -52,6 +56,9 @@ export default function ManagerPage() {
     setWorkspace(w);
     try { localStorage.setItem('wt_workspace', w); } catch { /* ignore */ }
   };
+
+  // Заголовок вкладки: «☀️ +24° Warmingtea · <активная вкладка>».
+  usePageTitle(WORKSPACE_LABELS[workspace]);
 
   useEffect(() => {
     if (ready && !user) router.replace('/auth');
@@ -99,6 +106,13 @@ export default function ManagerPage() {
   });
 
   const completions = useMemo(() => new Set(completionKeys), [completionKeys]);
+
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: projectsApi.getAll,
+    enabled: !!user,
+    staleTime: 30_000,
+  });
 
   // Бейдж «Коробки» — число просрочённых среди собственных задач.
   const overdueCount = useMemo(
@@ -303,7 +317,7 @@ export default function ManagerPage() {
     const base = tasks.find(t => t.id === delReq.id);
     if (base) {
       const { date } = delReq;
-      if (date <= base.date) {
+      if (!base.date || date <= base.date) {
         deleteMut.mutate(base.id);           // удаляем всю серию с самого начала
       } else {
         const cutoff = prevDayStr(date);
@@ -332,9 +346,10 @@ export default function ManagerPage() {
   // Если все подзадачи дня выполнены — отмечаем выполненной и саму задачу.
   const syncCompletionWithSubtasks = (
     taskId: string,
-    dateStr: string,
+    dateStr: string | null | undefined,
     sections?: Task['subtasks'],
   ) => {
+    if (!dateStr) return;            // бэклог без даты — нет per-date отметки
     const items = (sections ?? []).flatMap(s =>
       s.items.filter(i => (i.kind ?? 'subtask') === 'subtask'),
     );
@@ -382,16 +397,23 @@ export default function ManagerPage() {
     }
     // Несерийное обновление: сохраняем переопределения дней, чтобы удалённые
     // дни многодневной задачи не возвращались при правке (payload их не несёт).
-    const merged = base?.dayOverrides && data.dayOverrides === undefined
-      ? { ...data, dayOverrides: base.dayOverrides }
-      : data;
+    // Также сохраняем привязку к проекту/этапу и completedAt — форма задачи их
+    // не несёт (иначе правка задачи отвязала бы её от проекта/сняла «выполнено»).
+    const merged: Omit<Task, 'id' | 'status'> = {
+      ...(base?.dayOverrides && data.dayOverrides === undefined
+        ? { ...data, dayOverrides: base.dayOverrides }
+        : data),
+      projectId:   data.projectId   !== undefined ? data.projectId   : (base?.projectId   ?? null),
+      milestoneId: data.milestoneId !== undefined ? data.milestoneId : (base?.milestoneId ?? null),
+      completedAt: data.completedAt !== undefined ? data.completedAt : (base?.completedAt ?? null),
+    };
     updateMut.mutate({ id, data: merged });
     syncCompletionWithSubtasks(id, occDate ?? data.date, data.subtasks);
   };
 
   const handlePostpone = (id: string, days: number) => {
     const task = tasks.find(t => t.id === id);
-    if (!task) return;
+    if (!task || !task.date) return;   // бэклог без даты переносить нечего
     const shiftDate = (s: string) => {
       const d = new Date(s + 'T00:00:00');
       d.setDate(d.getDate() + days);
@@ -468,6 +490,43 @@ export default function ManagerPage() {
   const createTask = async (data: Omit<Task, 'id' | 'status'>): Promise<Task> =>
     (await createMut.mutateAsync(data)).task;
 
+  // Переключить «выполнено» задачи проекта (done на доске проекта = Task.completedAt).
+  const setProjectTaskDone = (taskId: string, done: boolean) => {
+    const base = tasks.find(t => t.id === taskId);
+    if (!base) return;
+    updateMut.mutate({
+      id: taskId,
+      data: { ...stripRuntime(base), completedAt: done ? new Date().toISOString() : null },
+    });
+  };
+
+  // Подзадача задачи проекта: меняем done; если все выполнены — задача done (completedAt).
+  const setProjectSubtaskDone = (taskId: string, itemId: string, done: boolean) => {
+    const base = tasks.find(t => t.id === taskId);
+    if (!base) return;
+    const subtasks = (base.subtasks ?? []).map(s => ({
+      ...s, items: s.items.map(i => i.id === itemId ? { ...i, done } : i),
+    }));
+    const items = subtasks.flatMap(s => s.items).filter(i => (i.kind ?? 'subtask') === 'subtask');
+    const allDone = items.length > 0 && items.every(i => i.done);
+    updateMut.mutate({ id: taskId, data: {
+      ...stripRuntime(base), subtasks,
+      completedAt: allDone ? (base.completedAt ?? new Date().toISOString()) : null,
+    } });
+  };
+
+  const setProjectAllSubtasksDone = (taskId: string, done: boolean) => {
+    const base = tasks.find(t => t.id === taskId);
+    if (!base) return;
+    const subtasks = (base.subtasks ?? []).map(s => ({
+      ...s, items: s.items.map(i => (i.kind ?? 'subtask') === 'subtask' ? { ...i, done } : i),
+    }));
+    updateMut.mutate({ id: taskId, data: {
+      ...stripRuntime(base), subtasks,
+      completedAt: done ? (base.completedAt ?? new Date().toISOString()) : null,
+    } });
+  };
+
   // Правка/удаление отдельной подзадачи (определения общие для серии).
   const updateSubtaskItem = (taskId: string, item: SubtaskItem) => {
     const base = tasks.find(t => t.id === taskId);
@@ -485,6 +544,85 @@ export default function ManagerPage() {
   const goToToday = () => {
     const d = new Date(); d.setHours(0, 0, 0, 0); setSelectedDate(d);
   };
+
+  // ── Проекты: режим левой панели (показываем задачи открытого проекта) ──
+  const projectMode = workspace === 'projects' && !!selectedProjectId;
+  const selectedProject = projects.find(p => p.id === selectedProjectId) ?? null;
+  const projectTasks = useMemo<Task[] | undefined>(() => {
+    if (!projectMode || !selectedProjectId) return undefined;
+    return tasks
+      .filter(t => t.projectId === selectedProjectId)
+      .map(t => ({ ...t, status: (t.completedAt ? 'done' : 'pending') as TaskStatus }))
+      .sort((a, b) => {
+        if (!!a.date !== !!b.date) return a.date ? -1 : 1;     // датированные выше бэклога
+        return (a.date ?? '').localeCompare(b.date ?? '') || (a.time ?? '').localeCompare(b.time ?? '');
+      });
+  }, [projectMode, selectedProjectId, tasks]);
+
+  // Колонка «Начатые» доски (fallback на «Не начатые», если doing удалили).
+  const doingColumnId = (columns: BoardColumn[]): string =>
+    columns.find(c => c.role === 'doing')?.id
+    ?? columns.find(c => c.role === 'todo')?.id
+    ?? 'doing';
+
+  // Снятие выполнения из списка → карточка-задача переезжает в «Начатые» дневной доски.
+  const moveDayCardToDoing = (taskId: string, dateStr: string) => {
+    type BoardState = { columns: BoardColumn[]; placements: BoardPlacement[] };
+    const state = qc.getQueryData<BoardState>(['board']);
+    const columns = state?.columns?.length ? state.columns : DEFAULT_COLUMNS;
+    const v: BoardPlacement = {
+      cardKey: taskCardKey(taskId), date: dateStr,
+      columnId: doingColumnId(columns), position: Date.now(),
+    };
+    qc.setQueryData<BoardState>(['board'], old => old
+      ? { ...old, placements: [...old.placements.filter(p => !(p.cardKey === v.cardKey && p.date === v.date)), v] }
+      : old);
+    void boardApi.setPlacement(v);
+  };
+
+  // Снятие выполнения из списка проекта → карточка в «Начатые» доски проекта.
+  const moveProjectCardToDoing = (projectId: string, taskId: string) => {
+    const key = ['project-board', projectId] as const;
+    const state = qc.getQueryData<ProjectBoardState>(key);
+    const columns = state?.columns?.length ? state.columns : DEFAULT_COLUMNS;
+    const p: ProjectPlacement = {
+      cardKey: taskCardKey(taskId), columnId: doingColumnId(columns), position: Date.now(),
+    };
+    qc.setQueryData<ProjectBoardState>(key, old => old
+      ? { ...old, placements: [...old.placements.filter(x => x.cardKey !== p.cardKey), p] }
+      : old);
+    void projectsApi.setPlacement(projectId, p);
+  };
+
+  const handleToggleList = (taskId: string, dateStr: string) => {
+    if (taskId.startsWith('opt_')) return;   // ещё не сохранённая задача — нет id на сервере
+    const base = tasks.find(t => t.id === taskId);
+    if (projectMode) {
+      const willBeDone = !base?.completedAt;
+      setProjectTaskDone(taskId, willBeDone);
+      // Карточка с подзадачами на доске разбита на карточки-подзадачи — её не двигаем.
+      if (!willBeDone && base && selectedProjectId && dayedSubtasks(base, '').length === 0) {
+        moveProjectCardToDoing(selectedProjectId, taskId);
+      }
+    } else {
+      handleToggle(taskId, dateStr);
+      const willBeDone = !completions.has(completionKey(taskId, dateStr));
+      if (!willBeDone && base && dayedSubtasks(base, dateStr).length === 0) {
+        moveDayCardToDoing(taskId, dateStr);
+      }
+    }
+  };
+  const handleDeleteList = (id: string, date: string) =>
+    projectMode ? deleteTaskWhole(id) : requestDelete(id, date);
+  const handleAddList = (data: Omit<Task, 'id' | 'status'>) =>
+    handleAdd(projectMode && selectedProjectId ? { ...data, projectId: selectedProjectId } : data);
+
+  // Цвет проекта для метки задач проекта в дневном списке.
+  const projectColors = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of projects) if (p.color) m.set(p.id, p.color);
+    return m;
+  }, [projects]);
 
   // ── Guards ────────────────────────────────────────────────────
   if (!ready) {
@@ -531,12 +669,15 @@ export default function ManagerPage() {
               isAdmin={user.role === 'admin'}
               userTags={userTags}
               onCreateTag={handleCreateTag}
-              onToggle={handleToggle}
-              onDelete={requestDelete}
-              onAdd={handleAdd}
+              onToggle={handleToggleList}
+              onDelete={handleDeleteList}
+              onAdd={handleAddList}
               onUpdate={handleUpdate}
               onPostpone={handlePostpone}
               onGoToToday={goToToday}
+              listOverride={projectTasks}
+              overrideTitle={selectedProject?.name}
+              projectColors={projectColors}
             />
           </div>
           <div className={styles.switcher}>
@@ -585,7 +726,25 @@ export default function ManagerPage() {
               onDeleteSubtask={deleteSubtaskItem}
             />
           )}
-          {workspace === 'projects' && <ProjectsView />}
+          {workspace === 'projects' && (
+            <ProjectsView
+              projects={projects}
+              tasks={tasks}
+              userTags={userTags}
+              isAdmin={user.role === 'admin'}
+              selectedProjectId={selectedProjectId}
+              onSelectProject={setSelectedProjectId}
+              onCreateTask={createTask}
+              onUpdateTask={handleUpdate}
+              onDeleteTask={deleteTaskWhole}
+              onSetTaskDone={setProjectTaskDone}
+              onSetSubtaskDone={setProjectSubtaskDone}
+              onSetAllSubtasksDone={setProjectAllSubtasksDone}
+              onUpdateSubtask={updateSubtaskItem}
+              onDeleteSubtask={deleteSubtaskItem}
+              onCreateTag={handleCreateTag}
+            />
+          )}
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import { TagsService } from '../tags/tags.service';
 import { AchievementsService } from '../achievements/achievements.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RemindersService } from '../reminders/reminders.service';
+import { ActivityService } from '../activity/activity.service';
 
 type RepoMock<T extends ObjectLiteral> = jest.Mocked<Repository<T>>;
 
@@ -31,6 +32,7 @@ describe('TasksService', () => {
   let achievements: jest.Mocked<AchievementsService>;
   let notifications: jest.Mocked<NotificationsService>;
   let reminders: jest.Mocked<RemindersService>;
+  let activity: jest.Mocked<ActivityService>;
 
   beforeEach(() => {
     taskRepo = repoMock<Task>();
@@ -48,6 +50,9 @@ describe('TasksService', () => {
     reminders = {
       deleteForTask: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<RemindersService>;
+    activity = {
+      log: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<ActivityService>;
 
     service = new TasksService(
       taskRepo,
@@ -57,6 +62,7 @@ describe('TasksService', () => {
       achievements,
       notifications,
       reminders,
+      activity,
     );
   });
 

@@ -9,15 +9,27 @@ import { fadeInUp, listContainer, listItem } from '../../lib/motion';
 import { Header } from '../../components/Header';
 import { AvatarFramed } from '../../components/AvatarFramed';
 import { useAuthStore } from '../../store/authStore';
+import { usePageTitle } from '../../hooks/useTabTitle';
 import { shopApi, ShopItem } from '../../lib/shop';
 import { authApi } from '../../lib/auth';
 import { Button, Card, Badge, Skeleton, EmptyState, CoinIcon } from '../../components/ui';
+import { HeatmapGrid } from '../../components/manager/heatmap/HeatmapGrid';
+import { DayCount } from '../../lib/activity';
 import styles from './page.module.scss';
+
+/** Демо-данные для превью heatmap в карточке магазина. */
+const HEATMAP_SAMPLE: DayCount[] = Array.from({ length: 120 }, (_, i) => {
+  const d = new Date();
+  d.setDate(d.getDate() - i);
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return { date, count: (i * 7) % 5 };
+});
 
 export default function ShopPage() {
   const { user, ready, setUser } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
+  usePageTitle('Магазин');
 
   useEffect(() => {
     if (ready && !user) router.replace('/auth');
@@ -47,6 +59,7 @@ export default function ShopPage() {
 
   const frames = items.filter(i => i.kind === 'frame');
   const backgrounds = items.filter(i => i.kind === 'background');
+  const showcases = items.filter(i => i.kind === 'showcase');
 
   return (
     <div className={styles.root}>
@@ -126,6 +139,29 @@ export default function ShopPage() {
                   </motion.div>
                 </>
               )}
+
+              {showcases.length > 0 && (
+                <>
+                  <h2 className={styles.section}>Витрины профиля</h2>
+                  <motion.div
+                    className={styles.grid}
+                    variants={listContainer}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    {showcases.map(item => (
+                      <motion.div key={item.id} variants={listItem} className={styles.gridItem}>
+                        <ShopItemCard
+                          item={item}
+                          user={user}
+                          onBuy={() => buyMut.mutate(item.id)}
+                          busy={buyMut.isPending && buyMut.variables === item.id}
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </>
+              )}
             </>
           )}
         </Card>
@@ -181,6 +217,7 @@ function BgPreview({
 function ShopItemCard({ item, user, onBuy, busy }: ItemCardProps) {
   const color = item.meta?.color;
   const isBackground = item.kind === 'background';
+  const isShowcase = item.kind === 'showcase';
   const animated = item.meta?.animated === '1';
 
   return (
@@ -189,20 +226,28 @@ function ShopItemCard({ item, user, onBuy, busy }: ItemCardProps) {
       className={[styles.itemCard, item.owned ? styles.itemCardOwned : ''].join(' ')}
     >
       <div className={styles.preview}>
-        {isBackground ? (
+        {isShowcase ? (
+          <div className={styles.showcasePreview}>
+            <HeatmapGrid days={HEATMAP_SAMPLE} weeks={16} caption="" />
+          </div>
+        ) : isBackground ? (
           <BgPreview
             gradient={item.meta?.gradient}
             video={item.meta?.video}
             animated={animated}
           />
         ) : (
-          <AvatarFramed
-            avatarUrl={user.avatarUrl}
-            displayName={user.displayName}
-            username={user.username}
-            frameId={item.id}
-            size={80}
-          />
+          <>
+            <AvatarFramed
+              avatarUrl={user.avatarUrl}
+              displayName={user.displayName}
+              username={user.username}
+              frameId={item.id}
+              size={80}
+              animate
+            />
+            {animated && <span className={styles.bgPreviewTag}>анимир.</span>}
+          </>
         )}
       </div>
       <div className={styles.itemTitle} style={color ? { color } : undefined}>

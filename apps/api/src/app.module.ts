@@ -39,6 +39,11 @@ import { RemindersModule } from './reminders/reminders.module';
 import { ReminderInstance } from './reminders/entities/reminder-instance.entity';
 import { BoardModule } from './board/board.module';
 import { BoardPlacement } from './board/entities/board-placement.entity';
+import { ProjectsModule } from './projects/projects.module';
+import { Project } from './projects/entities/project.entity';
+import { ProjectBoardPlacement } from './projects/entities/project-board-placement.entity';
+import { ActivityModule } from './activity/activity.module';
+import { ActivityEvent } from './activity/entities/activity-event.entity';
 
 @Module({
   imports: [
@@ -85,6 +90,9 @@ import { BoardPlacement } from './board/entities/board-placement.entity';
         PushSubscription,
         ReminderInstance,
         BoardPlacement,
+        Project,
+        ProjectBoardPlacement,
+        ActivityEvent,
       ],
       synchronize: process.env.NODE_ENV !== 'production', // в проде схему накатывают миграции (см. src/migrations)
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
@@ -109,6 +117,8 @@ import { BoardPlacement } from './board/entities/board-placement.entity';
     PushModule,
     RemindersModule,
     BoardModule,
+    ProjectsModule,
+    ActivityModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

@@ -16,7 +16,7 @@ import { FeedbackDropdown } from './feedback/FeedbackDropdown';
 import { Button } from './ui';
 import styles from './Header.module.scss';
 
-export function Header() {
+export function Header({ sticky = false }: { sticky?: boolean } = {}) {
   const { user, ready } = useAuthStore();
   const { theme, toggle } = useThemeStore();
   const router = useRouter();
@@ -41,7 +41,7 @@ export function Header() {
   };
 
   return (
-    <header className={styles.header}>
+    <header className={[styles.header, sticky ? styles.sticky : ''].join(' ')}>
       <Link href="/" className={styles.logo} aria-label="Warmingtea — на главную">
         <OwlMark size={28} className={styles.logoMark} />
         <span className={styles.logoWord}>warming<span className={styles.logoAccent}>tea</span></span>

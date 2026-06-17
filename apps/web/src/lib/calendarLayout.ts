@@ -95,6 +95,7 @@ export function taskBlockHeight(t: Task, hourH: number = HOUR_H): number {
 
 /** Активна ли повторяющаяся многодневная задача на dateStr */
 export function isRepeatMultiDayActiveOn(t: Task, dateStr: string): boolean {
+  if (!t.date) return false;
   if (t.repeatUntil && dateStr > t.repeatUntil) return false;
   const occ = getMultiDayOccurrence(t, dateStr);
   return occ != null && occ.startStr > t.date;
@@ -102,6 +103,7 @@ export function isRepeatMultiDayActiveOn(t: Task, dateStr: string): boolean {
 
 /** Активна ли задача на данной дате (учитывает endDate и repeat) */
 export function taskActiveOn(t: Task, dateStr: string): boolean {
+  if (!t.date) return false;            // бэклог без даты — нигде не активна
   if (t.endDate) {
     if (t.date <= dateStr && t.endDate >= dateStr) return true;
     if (t.repeat !== 'none' && t.date < dateStr) return isRepeatMultiDayActiveOn(t, dateStr);
@@ -334,8 +336,8 @@ export function computeMonthSpans(year: number, month: number, tasks: Task[], ho
     for (const [rs, re] of runs) {
       spans.push({
         task, sd: rs, ed: re, slot,
-        cL: rs === 1   && task.date < `${mStr}-01`,
-        cR: re === dim && (task.endDate ?? task.date) > `${mStr}-${String(dim).padStart(2, '0')}`,
+        cL: rs === 1   && (task.date ?? '') < `${mStr}-01`,
+        cR: re === dim && (task.endDate ?? task.date ?? '') > `${mStr}-${String(dim).padStart(2, '0')}`,
       });
     }
   }

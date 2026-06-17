@@ -56,6 +56,7 @@ export function enumerateOccurrences(
   toStr: string,
   completions: Set<string> = new Set(),
 ): Occurrence[] {
+  if (!task.date) return [];   // задача без даты (бэклог) — вхождений/напоминаний нет
   // Снимаем погодные/праздничные фильтры (оставляем months/cyclic/interval/endAfter).
   const stripped: Task =
     task.repeatConfig

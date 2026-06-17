@@ -8,6 +8,7 @@ import { UsersModule } from '../users/users.module';
 import { ShopModule } from '../shop/shop.module';
 import { AchievementsModule } from '../achievements/achievements.module';
 import { StorageModule } from '../storage/storage.module';
+import { ActivityModule } from '../activity/activity.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { StorageModule } from '../storage/storage.module';
     ShopModule,
     AchievementsModule,
     StorageModule,
+    ActivityModule,
   ],
   controllers: [ProfileController],
   providers: [ProfileService],

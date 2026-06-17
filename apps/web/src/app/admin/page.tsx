@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Lock, X as XIcon, Plus, MessageSquare, Bug } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { useAuthStore } from '../../store/authStore';
+import { usePageTitle } from '../../hooks/useTabTitle';
 import { adminApi, AdminUser, GlobalTask } from '../../lib/admin';
 import { IconPicker } from '../../components/IconPicker';
 import { Icon, hasIcon } from '../../lib/icons';
@@ -547,6 +548,7 @@ export default function AdminPage() {
   const { user, ready, setUser } = useAuthStore();
   const router = useRouter();
   const qc = useQueryClient();
+  usePageTitle('Админ');
   const searchDebRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');

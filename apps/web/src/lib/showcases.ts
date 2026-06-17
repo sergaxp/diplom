@@ -1,7 +1,7 @@
 import { api } from './api';
 
 /** Зеркало apps/api/src/profile/showcase.types.ts */
-export type ShowcaseType = 'stats' | 'favorites' | 'featuredPosts';
+export type ShowcaseType = 'stats' | 'favorites' | 'featuredPosts' | 'heatmap';
 
 export interface ShowcaseBlock {
   id: string;
@@ -22,6 +22,7 @@ export const SHOWCASE_LABELS: Record<ShowcaseType, string> = {
   stats: 'Статистика',
   favorites: 'Любимые рамки',
   featuredPosts: 'Избранные посты',
+  heatmap: 'Активность',
 };
 
 /** Сгенерировать пустой блок витрины указанного типа. */
