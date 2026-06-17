@@ -15,7 +15,7 @@ export class AddCollaboration1781900000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // ── task_collaborators ──────────────────────────────────────
     await queryRunner.query(
-      `CREATE TABLE "task_collaborators" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "taskId" character varying NOT NULL, "userId" character varying NOT NULL, "invitedById" character varying NOT NULL, "status" character varying(16) NOT NULL DEFAULT 'pending', "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "respondedAt" TIMESTAMP WITH TIME ZONE, CONSTRAINT "PK_task_collaborators_id" PRIMARY KEY ("id"), CONSTRAINT "UQ_task_collaborator" UNIQUE ("taskId", "userId"))`,
+      `CREATE TABLE "task_collaborators" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "taskId" uuid NOT NULL, "userId" uuid NOT NULL, "invitedById" character varying NOT NULL, "status" character varying(16) NOT NULL DEFAULT 'pending', "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "respondedAt" TIMESTAMP WITH TIME ZONE, CONSTRAINT "PK_task_collaborators_id" PRIMARY KEY ("id"), CONSTRAINT "UQ_task_collaborator" UNIQUE ("taskId", "userId"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_task_collaborators_task" ON "task_collaborators" ("taskId")`,
@@ -32,7 +32,7 @@ export class AddCollaboration1781900000000 implements MigrationInterface {
 
     // ── project_collaborators ───────────────────────────────────
     await queryRunner.query(
-      `CREATE TABLE "project_collaborators" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "projectId" character varying NOT NULL, "userId" character varying NOT NULL, "invitedById" character varying NOT NULL, "status" character varying(16) NOT NULL DEFAULT 'pending', "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "respondedAt" TIMESTAMP WITH TIME ZONE, CONSTRAINT "PK_project_collaborators_id" PRIMARY KEY ("id"), CONSTRAINT "UQ_project_collaborator" UNIQUE ("projectId", "userId"))`,
+      `CREATE TABLE "project_collaborators" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "projectId" uuid NOT NULL, "userId" uuid NOT NULL, "invitedById" character varying NOT NULL, "status" character varying(16) NOT NULL DEFAULT 'pending', "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "respondedAt" TIMESTAMP WITH TIME ZONE, CONSTRAINT "PK_project_collaborators_id" PRIMARY KEY ("id"), CONSTRAINT "UQ_project_collaborator" UNIQUE ("projectId", "userId"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_project_collaborators_project" ON "project_collaborators" ("projectId")`,
@@ -49,7 +49,7 @@ export class AddCollaboration1781900000000 implements MigrationInterface {
 
     // ── collab_comments ─────────────────────────────────────────
     await queryRunner.query(
-      `CREATE TABLE "collab_comments" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "taskId" character varying, "projectId" character varying, "authorId" character varying NOT NULL, "text" character varying(2000) NOT NULL, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_collab_comments_id" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "collab_comments" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "taskId" uuid, "projectId" uuid, "authorId" uuid NOT NULL, "text" character varying(2000) NOT NULL, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_collab_comments_id" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_collab_comments_task" ON "collab_comments" ("taskId", "createdAt")`,

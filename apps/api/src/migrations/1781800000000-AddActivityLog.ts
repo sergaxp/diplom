@@ -40,7 +40,7 @@ export class AddActivityLog1781800000000 implements MigrationInterface {
       `INSERT INTO "activity_events" ("userId", "projectId", "taskId", "type", "summary", "createdAt")
        SELECT tc."userId", t."projectId", t."id", 'task_completed',
               'Завершена задача «' || t."title" || '»', tc."completedAt"
-       FROM "task_completions" tc JOIN "tasks" t ON t."id" = tc."taskId"`,
+       FROM "task_completions" tc JOIN "tasks" t ON t."id"::text = tc."taskId"`,
     );
   }
 

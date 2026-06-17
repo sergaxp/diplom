@@ -13,7 +13,7 @@ export class AddProjects1781600000000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TABLE "projects" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "userId" character varying NOT NULL, "name" character varying(255) NOT NULL, "description" text, "tagId" character varying, "color" character varying(20), "icon" character varying(64), "deadline" character varying(10), "archived" boolean NOT NULL DEFAULT false, "boardColumns" json, "milestones" json, "position" integer NOT NULL DEFAULT 0, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_projects_id" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "projects" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "userId" uuid NOT NULL, "name" character varying(255) NOT NULL, "description" text, "tagId" character varying, "color" character varying(20), "icon" character varying(64), "deadline" character varying(10), "archived" boolean NOT NULL DEFAULT false, "boardColumns" json, "milestones" json, "position" integer NOT NULL DEFAULT 0, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_projects_id" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_projects_user" ON "projects" ("userId")`,
@@ -29,9 +29,7 @@ export class AddProjects1781600000000 implements MigrationInterface {
       `CREATE INDEX "IDX_project_board_placements_project" ON "project_board_placements" ("projectId")`,
     );
 
-    await queryRunner.query(
-      `ALTER TABLE "tasks" ADD "projectId" character varying`,
-    );
+    await queryRunner.query(`ALTER TABLE "tasks" ADD "projectId" uuid`);
     await queryRunner.query(
       `ALTER TABLE "tasks" ADD "milestoneId" character varying(64)`,
     );
