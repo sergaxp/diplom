@@ -568,6 +568,10 @@ export class CollabService {
     },
   ): Promise<void> {
     const recipients = await this.recipientIds(entityType, entityId, ownerId);
+    // Deep-link для пуша: клик по системному уведомлению о задаче открывает её
+    // обсуждение (проекты пока открываем на главной).
+    const url =
+      entityType === 'task' ? `/?task=${entityId}&ctab=discussion` : '/';
     for (const uid of recipients) {
       if (uid === excludeUserId) continue;
       await this.notifications.create({
@@ -583,7 +587,7 @@ export class CollabService {
         .sendToUser(uid, {
           title: n.title,
           body: n.body,
-          url: '/',
+          url,
           fromUserId: excludeUserId,
         })
         .catch(() => undefined);

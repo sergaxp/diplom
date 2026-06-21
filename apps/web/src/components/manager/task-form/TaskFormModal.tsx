@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { X, Bell } from 'lucide-react';
 import { Task, TaskRepeat, TaskType, TaskPriority, TaskDifficulty, RepeatConfig, SubtaskSection, ReminderRule, toDateStr, getSeriesDays } from '../../../lib/tasks';
 import { DatePickerPopup, getDateButtonLabel } from '../date-picker';
@@ -42,9 +42,11 @@ interface Props {
   /** When set (edit mode), section changes (add/delete subtask, add attachment, etc.)
    *  immediately persist to the server, independent of the form's Save button. */
   onSectionsLiveUpdate?: (sections: SubtaskSection[]) => void;
+  /** Стартовая мобильная вкладка. 'discussion' — при переходе из уведомления о комментарии. */
+  initialTab?: 'task' | 'discussion';
 }
 
-export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, onDelete, onCreateTag, onSectionsLiveUpdate }: Props) {
+export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, onDelete, onCreateTag, onSectionsLiveUpdate, initialTab }: Props) {
   const isEdit      = !!task;
   const me          = useAuthStore(s => s.user);
   // Владелец задачи: для личных ownerId совпадает с me; для совместных — создатель.
@@ -79,6 +81,9 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
   // поднято в форму, чтобы оба инстанса WeatherWidget (моб./десктоп) делили одну модалку.
   const [weatherDetailDate, setWeatherDetailDate] = useState<string | null>(null);
   const [creatingTag,      setCreatingTag]      = useState(false);
+  // Мобильная вкладка: «Задача» (контент) или «Обсуждение» (участники + комментарии).
+  // На десктопе игнорируется — обсуждение всегда живёт в правой колонке.
+  const [mobileTab,        setMobileTab]        = useState<'task' | 'discussion'>(initialTab ?? 'task');
   const dateBtnRef      = useRef<HTMLButtonElement>(null);
 
   const {
@@ -284,6 +289,38 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
     [chips, me],
   );
 
+  // ── Непрочитанные комментарии (только от других пользователей) ──
+  // «Последний просмотр обсуждения» храним в localStorage по id задачи
+  // (per-device): индикатор не зависит от колокольчика и не требует БД.
+  const seenKey = task ? `wt_comments_seen:${task.id}` : null;
+  const [lastSeen, setLastSeen] = useState<string | null>(() => {
+    if (!seenKey || typeof window === 'undefined') return null;
+    try { return localStorage.getItem(seenKey); } catch { return null; }
+  });
+  const meId = me?.id;
+  const unreadComments = useMemo(() => {
+    if (!isEdit || !meId) return 0;
+    return collab.comments.filter(
+      c => c.author.id !== meId && (!lastSeen || c.createdAt > lastSeen),
+    ).length;
+  }, [collab.comments, meId, lastSeen, isEdit]);
+
+  const markCommentsSeen = useCallback(() => {
+    if (!seenKey) return;
+    const now = new Date().toISOString();
+    try { localStorage.setItem(seenKey, now); } catch { /* ignore */ }
+    setLastSeen(now);
+  }, [seenKey]);
+
+  // Помечаем просмотренным, когда обсуждение реально видно: на десктопе —
+  // всегда (правая колонка), на мобиле — на активной вкладке «Обсуждение».
+  useEffect(() => {
+    if (!isEdit || unreadComments === 0) return;
+    const isMobile = typeof window !== 'undefined'
+      && window.matchMedia?.('(max-width: 768px)').matches;
+    if (!isMobile || mobileTab === 'discussion') markCommentsSeen();
+  }, [isEdit, mobileTab, unreadComments, markCommentsSeen]);
+
   const renderCollab = () => {
     if (!isEdit) return null;
     return (
@@ -330,12 +367,49 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
       noPadding
       hideCloseButton
       ariaLabel={isEdit ? 'Редактирование задачи' : 'Новая задача'}
-      className={styles.taskModalChrome}
+      className={[
+        styles.taskModalChrome,
+        isEdit && (mobileTab === 'discussion' ? styles.mTabDiscussion : styles.mTabTask),
+      ].filter(Boolean).join(' ')}
     >
-        {/* Mobile-only: weather at the very top + collab panel under it */}
+        {/* Mobile-only: переключатель «Задача / Обсуждение» (только при наличии collab) */}
+        {isEdit && (
+          <div className={styles.mobileTabBar} role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mobileTab === 'task'}
+              className={`${styles.mTab} ${mobileTab === 'task' ? styles.mTabActive : ''}`}
+              onClick={() => setMobileTab('task')}
+            >
+              Задача
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mobileTab === 'discussion'}
+              className={`${styles.mTab} ${mobileTab === 'discussion' ? styles.mTabActive : ''}`}
+              onClick={() => setMobileTab('discussion')}
+            >
+              Обсуждение
+              {unreadComments > 0 && (
+                <span className={styles.mTabCount}>{unreadComments}</span>
+              )}
+            </button>
+            <IconButton
+              icon={<X size={20} />}
+              aria-label="Закрыть"
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className={styles.mobileTabClose}
+            />
+          </div>
+        )}
+
+        {/* Mobile-only: weather at the very top (collab переехал во вкладку «Обсуждение») */}
         <div className={styles.weatherTopMobile}>
           <WeatherWidget date={isEdit ? toDateStr(date) : formDate} variant="compact" onOpenDetail={setWeatherDetailDate} />
-          {renderCollab()}
         </div>
 
         {/* ── Top: иконка + название + описание + мета-поля + теги ── */}
@@ -517,11 +591,18 @@ export function TaskFormModal({ task, date, isAdmin, userTags, onSave, onClose, 
               </button>
             </div>
 
-            {/* RIGHT – погода + участники/комментарии */}
+            {/* RIGHT – погода + участники/комментарии (десктоп) */}
             <div className={styles.right}>
               <WeatherWidget date={isEdit ? toDateStr(date) : formDate} variant="full" onOpenDetail={setWeatherDetailDate} />
               {renderCollab()}
             </div>
+
+            {/* Mobile-only: вкладка «Обсуждение» — участники + комментарии */}
+            {isEdit && (
+              <div className={styles.mobileDiscussion}>
+                {renderCollab()}
+              </div>
+            )}
           </div>
 
           {/* Footer */}

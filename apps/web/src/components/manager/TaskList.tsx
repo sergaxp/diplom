@@ -302,18 +302,35 @@ interface Props {
   /** Карта projectId → цвет для метки задач проекта в дневном списке. */
   projectColors?: Map<string, string>;
   onCreateTag?: (name: string, color: string, icon?: string | null) => Promise<Tag>;
+  /** Внешний запрос открыть задачу (deep-link из уведомления). */
+  openRequest?: { id: string; tab: 'task' | 'discussion' } | null;
+  /** Вызывается, когда запрос обработан (задача найдена и открыта). */
+  onOpenHandled?: () => void;
 }
 
 export function TaskList({
   selectedDate, tasks, completions, isAdmin, userTags,
   onToggle, onDelete, onAdd, onUpdate, onPostpone, onGoToToday, onCreateTag,
-  listOverride, overrideTitle, projectColors,
+  listOverride, overrideTitle, projectColors, openRequest, onOpenHandled,
 }: Props) {
   const projectMode = listOverride !== undefined;
   const [now,           setNow]           = useState(new Date());
   const [createOpen,    setCreateOpen]    = useState(false);
   const [editingTask,   setEditingTask]   = useState<Task | null>(null);
+  // Стартовая вкладка модалки: 'discussion' при открытии из уведомления о комментарии.
+  const [editInitialTab, setEditInitialTab] = useState<'task' | 'discussion'>('task');
   const [sortByPriority, setSortByPriority] = useState(false);
+
+  // Deep-link из уведомления: открыть задачу по id на нужной вкладке.
+  // Ждём, пока задача появится в списке (tasks могут ещё грузиться).
+  useEffect(() => {
+    if (!openRequest) return;
+    const found = tasks.find(t => t.id === openRequest.id);
+    if (!found) return;
+    setEditInitialTab(openRequest.tab);
+    setEditingTask(found);
+    onOpenHandled?.();
+  }, [openRequest, tasks, onOpenHandled]);
 
   // Sync editingTask with fresh server data so external changes (other devices) propagate into the modal.
   // Важно: сохраняем контекст вхождения (occurrenceDate) и применяем переопределение дня
@@ -494,7 +511,7 @@ export function TaskList({
                   projectColor={!projectMode && t.projectId ? projectColors?.get(t.projectId) : undefined}
                   onToggle={onToggle}
                   onDelete={onDelete}
-                  onEdit={setEditingTask}
+                  onEdit={t => { setEditInitialTab('task'); setEditingTask(t); }}
                   onPostpone={onPostpone}
                 />
               ))}
@@ -524,7 +541,7 @@ export function TaskList({
                   projectColor={t.projectId ? projectColors?.get(t.projectId) : undefined}
                   onToggle={onToggle}
                   onDelete={onDelete}
-                  onEdit={setEditingTask}
+                  onEdit={t => { setEditInitialTab('task'); setEditingTask(t); }}
                   onPostpone={onPostpone}
                 />
               ))}
@@ -553,6 +570,7 @@ export function TaskList({
           date={selectedDate}
           isAdmin={isAdmin}
           userTags={userTags}
+          initialTab={editInitialTab}
           onSave={(data) => onUpdate(editingTask.id, data, editingTask.occurrenceDate)}
           onClose={() => setEditingTask(null)}
           onDelete={() => { onDelete(editingTask.id, editingTask.occurrenceDate ?? selectedStr); setEditingTask(null); }}

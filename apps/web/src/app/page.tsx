@@ -21,6 +21,7 @@ import { DeleteScopeModal } from '../components/manager/DeleteScopeModal';
 import { Tag, tagsApi } from '../lib/tags';
 import { useAuthStore } from '../store/authStore';
 import { useAchievementStore } from '../store/achievementStore';
+import { useTaskOpenStore } from '../store/taskOpenStore';
 import { authApi } from '../lib/auth';
 import { usePageTitle } from '../hooks/useTabTitle';
 import styles from './page.module.scss';
@@ -41,6 +42,10 @@ export default function ManagerPage() {
     const d = new Date(); d.setHours(0, 0, 0, 0); return d;
   });
   const [mobileExpanded, setMobileExpanded] = useState(false);
+  // Запрос открыть задачу (из колокольчика / deep-link). Стор, чтобы открывалось
+  // даже когда страница уже смонтирована.
+  const openTaskReq = useTaskOpenStore(s => s.request);
+  const clearOpenTaskReq = useTaskOpenStore(s => s.clear);
 
   // Активная рабочая область (только десктоп). Персистим выбор.
   const [workspace, setWorkspace] = useState<Workspace>('manager');
@@ -73,6 +78,18 @@ export default function ManagerPage() {
       if (!Number.isNaN(d.getTime())) setSelectedDate(d);
       router.replace('/');
     }
+  }, [router]);
+
+  // Deep-link по прямой ссылке (холодный старт): ?task=<id>&ctab=discussion →
+  // кладём запрос в стор, дальше его обрабатывает TaskList.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const taskId = params.get('task');
+    if (!taskId) return;
+    const tab = params.get('ctab') === 'discussion' ? 'discussion' : 'task';
+    useTaskOpenStore.getState().open(taskId, tab);
+    router.replace('/');
   }, [router]);
 
   const { data: tasks = [] } = useQuery({
@@ -678,6 +695,8 @@ export default function ManagerPage() {
               listOverride={projectTasks}
               overrideTitle={selectedProject?.name}
               projectColors={projectColors}
+              openRequest={openTaskReq}
+              onOpenHandled={clearOpenTaskReq}
             />
           </div>
           <div className={styles.switcher}>

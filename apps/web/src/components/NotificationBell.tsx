@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bell } from 'lucide-react';
@@ -8,6 +9,7 @@ import { popLayer } from '../lib/motion';
 import { notificationsApi, NotificationItem } from '../lib/notifications';
 import { collabApi, type CollabEntity } from '../lib/collab';
 import { getCollabSocket } from '../lib/collabSocket';
+import { useTaskOpenStore } from '../store/taskOpenStore';
 import { Icon, hasIcon } from '../lib/icons';
 import { Button, EmptyState, Skeleton } from './ui';
 import styles from './NotificationBell.module.scss';
@@ -23,8 +25,24 @@ function relativeTime(iso: string): string {
 
 export function NotificationBell() {
   const qc = useQueryClient();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Уведомление ведёт на обсуждение задачи (комментарий/присоединение участника).
+  const taskNavTarget = (n: NotificationItem): string | null =>
+    n.data?.entityType === 'task' &&
+    n.data.entityId &&
+    (n.kind === 'collab_comment' || n.kind === 'collab_accepted')
+      ? n.data.entityId
+      : null;
+
+  const openTaskInStore = useTaskOpenStore(s => s.open);
+  const openTaskDiscussion = (entityId: string) => {
+    setOpen(false);
+    openTaskInStore(entityId, 'discussion');
+    router.push('/'); // если мы не на менеджере — переходим туда; иначе no-op
+  };
 
   const { data: unread = 0 } = useQuery({
     queryKey: ['notifications', 'unread-count'],
@@ -163,6 +181,7 @@ export function NotificationBell() {
             )}
 
             {items.map(n => {
+              const navTarget = taskNavTarget(n);
               return (
                 <div key={n.id} className={[styles.item, !n.read ? styles.itemUnread : ''].join(' ')}>
                   <div
@@ -171,7 +190,13 @@ export function NotificationBell() {
                   >
                     {hasIcon(n.icon) ? <Icon name={n.icon} size={16} strokeWidth={1.75} /> : <Bell size={15} strokeWidth={1.75} />}
                   </div>
-                  <div className={styles.itemBody}>
+                  <div
+                    className={[styles.itemBody, navTarget ? styles.itemBodyClickable : ''].join(' ')}
+                    role={navTarget ? 'button' : undefined}
+                    tabIndex={navTarget ? 0 : undefined}
+                    onClick={navTarget ? () => openTaskDiscussion(navTarget) : undefined}
+                    onKeyDown={navTarget ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTaskDiscussion(navTarget); } } : undefined}
+                  >
                     <span className={styles.itemTitle}>{n.title}</span>
                     {n.body && <span className={styles.itemText}>{n.body}</span>}
                     <span className={styles.itemTime}>{relativeTime(n.createdAt)}</span>
